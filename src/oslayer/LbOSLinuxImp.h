@@ -6,11 +6,7 @@
     Copyright (C) 2000  University of Warwick Computing Society
 
     Contributors to this file:
-       David Black
-       James Ross
-       David Capps
-       Chris Skepper
-       Henry Southgate
+        Henry Southgate
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,64 +21,56 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 *********************************************************************************/
 
 #ifndef __LBOSLINUXIMP__
 
 #define __LBOSLINUXIMP__
 
-
-#include <SDL.h>
-
-#ifdef WIN32
-#include "winamp_in.h"
-#include "winamp_out.h"
-#endif
-
-
+// temporary defines until i finish the port
+#define HINSTANCE long
+#define DWORD unsigned int
+#define HWND      unsigned int
+#define HDC       unsigned int
+#define MSG       long
+#define LARGE_INTEGER unsigned long
 
 using namespace std;
 
-
-
 class LbOSLayerSoundImp : public LbOSLayerSound
 {
+ public:
+  virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+  virtual bool PlayMusic(char *fname);
+  virtual void StopMusic();
+  virtual void PauseMusic();
+  virtual void SetMusicVolume(int level);
+  virtual void SetMusicPan(int slope);
+  virtual void PlayWave(char *image);
 
-public:
+  LbOSLayerSoundImp();
+  ~LbOSLayerSoundImp();
 
-virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
-virtual bool PlayMusic(char *fname);
-virtual void StopMusic();
-virtual void PauseMusic();
-virtual void SetMusicVolume(int level);
-virtual void SetMusicPan(int slope);
-virtual void PlayWave(char *image);
 
-LbOSLayerSoundImp();
+ private:
+  virtual bool InitPlugins(HINSTANCE hInst, HWND hWnd);
 
-~LbOSLayerSoundImp();
-
-private:
-
-virtual bool InitPlugins(HINSTANCE hInst, HWND hWnd);
-
-Winamp_Input_Module *plugin_in;
-Winamp_Output_Module *plugin_out;
-bool init_ok;
-HINSTANCE WinampIn, WinampOut;
-
+  bool init_ok;
 };
 
 
 
 class LbOSLayerInputImp : public LbOSLayerInput
 {
-  
  public:
+
   virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
   //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
   virtual char getNextTextKey ( ) ;
+
   virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+
   virtual void OnWmChar(char c);
   virtual bool IsTabDown ( ) ;
   virtual void OnWmKeyDown(int c) ;
@@ -91,27 +79,28 @@ class LbOSLayerInputImp : public LbOSLayerInput
   LbOSLayerInputImp();
   ~LbOSLayerInputImp();
 
- private:
+private:
+
   bool tabdown ;
-  LPDIRECTINPUT7  lpDInput;
-  LPDIRECTINPUTDEVICE7 lpDIDevKeyb;
-  
+  long lpDInput;
+  long lpDIDevKeyb;
+
   bool di_InitOK;
   int TickStart;
+
   bool InitDInput(HINSTANCE hInst,HWND hWnd);
 
   deque<char> textkeybuffer ;
 };
 
 
+
 class LbOSLinuxImp : public LbOSLayerSys
 {
  public:
-
   /*
   ** LbOSLayerSys methods
   */
-
   virtual bool PollEvent(LbOSLayerEvent &os_event);
   virtual void SwapDoubleBuffers();
   virtual int GLTextListBase();
@@ -119,26 +108,24 @@ class LbOSLinuxImp : public LbOSLayerSys
   virtual char* GetDesktop32();
   virtual void InitiateNetwork() ;
 
-  virtual LbOSLayerInput *GetOSInput() {
+  virtual LbOSLayerInput *GetOSInput()  {
     return os_input;
   }
 
-  virtual LbOSLayerSound *GetOSSound() {
+  virtual LbOSLayerSound *GetOSSound()  {
     return os_sound;
   }
-
 
   /*
   ** LbOSLinuxImp methods
   */
-  
   LbOSLinuxImp();
   ~LbOSLinuxImp();
-  
+
   void Init();
-  
+
  private:
-  
+
   void CreateMainWindow();
   void DestroyMainWindow();
   void CreateOGLContext(HWND hwnd);
@@ -147,28 +134,29 @@ class LbOSLinuxImp : public LbOSLayerSys
   void PerformResize();
   void DestroyOGLContext();
   void GetDesktopImage();
-  
-  static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
-  LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+
+  //static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+  //LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+
   static LbOSLinuxImp *the_oslayer;
-  
-  HINSTANCE hInstance;
-  HWND hwnd_main;
-  HDC hDC;
-  HGLRC hRC;
-  
-  
+
+  //HINSTANCE hInstance;
+  //HWND hwnd_main;
+  //HDC hDC;
+  //HGLRC hRC;
+
   bool quit_flag;
   int TextBase;
-  LARGE_INTEGER freq;
+  unsigned long freq;
   char *desktop;
-  
-  
+
   int TickStart,PerfStart;
-  
+
   LbOSLayerInputImp *os_input;
   LbOSLayerSoundImp *os_sound;
-
 };
+
+
+
 #endif
 

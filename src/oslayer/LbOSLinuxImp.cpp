@@ -28,24 +28,22 @@
 
 #include "LbStandard.h"
 #include "LbPublic.h"
-#include "LbOSWin32Imp.h"
-
-
-
+#include "LbOSLinuxImp.h"
+#include <SDL/SDL.h>
 
 #define WM_USER_TCP_EVENT WM_USER+1
 
-LbOSWin32Imp *LbOSWin32Imp::the_oslayer=NULL;
+LbOSLinuxImp *LbOSLinuxImp::the_oslayer=NULL;
 
 /*
 ** LbOSLayerSys methods
 */
-bool LbOSWin32Imp::PollEvent(LbOSLayerEvent &os_event)
+bool LbOSLinuxImp::PollEvent(LbOSLayerEvent &os_event)
 {
     MSG msg;
 
     // dispatch any windows messages
-    while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE))
+    /*ile(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE))
         {
         if(GetMessage(&msg,NULL,0,0)>0)
             {
@@ -54,7 +52,7 @@ bool LbOSWin32Imp::PollEvent(LbOSLayerEvent &os_event)
             DispatchMessage(&msg);// send to window proc
             }
         }
-
+    */
     /*
     ** TODO: we should impliment a queue of LB events.
     ** window proc creates events, then we return
@@ -71,31 +69,31 @@ bool LbOSWin32Imp::PollEvent(LbOSLayerEvent &os_event)
     return false;
 }
 
-void LbOSWin32Imp::SwapDoubleBuffers()
+void LbOSLinuxImp::SwapDoubleBuffers()
 {
-    SwapBuffers(hDC);
+  //    SwapBuffers(hDC);
 }
 
-int LbOSWin32Imp::GLTextListBase()
+int LbOSLinuxImp::GLTextListBase()
 {
     return TextBase;
 }
 
-int LbOSWin32Imp::GetMS()
+int LbOSLinuxImp::GetMS()
 {
     LARGE_INTEGER rslt;
     QueryPerformanceCounter(&rslt);
     return (int)( 1000 * rslt.QuadPart / freq.QuadPart) - PerfStart;
 }
 
-char* LbOSWin32Imp::GetDesktop32()
+char* LbOSLinuxImp::GetDesktop32()
 {
     char *rslt = new char[1024 * 512 * 4];
     memcpy(rslt, desktop, 1024*512*4);
     return rslt;
 }
 
-void LbOSWin32Imp::GetDesktopImage()
+void LbOSLinuxImp::GetDesktopImage()
 {
     HWND dWnd = GetDesktopWindow();
     HDC dDC = GetDC(0);
@@ -114,9 +112,9 @@ void LbOSWin32Imp::GetDesktopImage()
 }
 
 /*
-** LbOSWin32Imp methods
+** LbOSLinuxImp methods
 */
-void LbOSWin32Imp::Init()
+void LbOSLinuxImp::Init()
 {
     LARGE_INTEGER rslt;
 
@@ -148,7 +146,7 @@ void LbOSWin32Imp::Init()
 
 }
 
-LbOSWin32Imp::LbOSWin32Imp()
+LbOSLinuxImp::LbOSLinuxImp()
 {
     // there can only be one...
     assert(the_oslayer==NULL);
@@ -165,7 +163,7 @@ LbOSWin32Imp::LbOSWin32Imp()
     os_input=NULL;
 }
 
-LbOSWin32Imp::~LbOSWin32Imp()
+LbOSLinuxImp::~LbOSLinuxImp()
 {
     if(os_input!=NULL)
         delete os_input;
@@ -180,7 +178,7 @@ LbOSWin32Imp::~LbOSWin32Imp()
     the_oslayer=NULL;
 }
 
-void LbOSWin32Imp::CreateMainWindow()
+void LbOSLinuxImp::CreateMainWindow()
 {
     DestroyMainWindow(); // be safe
 
@@ -222,7 +220,7 @@ void LbOSWin32Imp::CreateMainWindow()
 
 }
 
-void LbOSWin32Imp::DestroyMainWindow()
+void LbOSLinuxImp::DestroyMainWindow()
 {
     if(hwnd_main!=NULL)
         DestroyWindow(hwnd_main);
@@ -232,12 +230,12 @@ void LbOSWin32Imp::DestroyMainWindow()
     while(PollEvent(dummy_event));
 }
 
-LONG WINAPI LbOSWin32Imp::MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+LONG WINAPI LbOSLinuxImp::MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
     return the_oslayer->MainWndProc(hwnd,uMsg,wParam,lParam);
 }
 
-LONG WINAPI LbOSWin32Imp::MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+LONG WINAPI LbOSLinuxImp::MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
     switch(uMsg)
         {
@@ -283,7 +281,7 @@ LONG WINAPI LbOSWin32Imp::MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM l
 
 
 
-void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
+void LbOSLinuxImp::CreateOGLContext(HWND hwnd)
 {
     DestroyOGLContext();
 
@@ -307,7 +305,7 @@ void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
     //actually send the font bitmaps to OGL
 }
 
-void LbOSWin32Imp::SetupPixelFormat(HDC dc)
+void LbOSLinuxImp::SetupPixelFormat(HDC dc)
 {
     PIXELFORMATDESCRIPTOR pfd;
 
@@ -349,7 +347,7 @@ void LbOSWin32Imp::SetupPixelFormat(HDC dc)
     SetupPalette(dc);
 }
 
-void LbOSWin32Imp::SetupPalette(HDC dc)
+void LbOSLinuxImp::SetupPalette(HDC dc)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int pixel_fmt;
@@ -361,7 +359,7 @@ void LbOSWin32Imp::SetupPalette(HDC dc)
     assert(!(pfd.dwFlags & PFD_NEED_PALETTE));
 }
 
-void LbOSWin32Imp::PerformResize()
+void LbOSLinuxImp::PerformResize()
 {
     if(hRC==NULL)
         return;
@@ -375,7 +373,7 @@ void LbOSWin32Imp::PerformResize()
 }
 
 
-void LbOSWin32Imp::DestroyOGLContext()
+void LbOSLinuxImp::DestroyOGLContext()
 {
     if(TextBase!=-1) {
         glDeleteLists(TextBase,256);
@@ -401,7 +399,7 @@ void LbOSWin32Imp::DestroyOGLContext()
 ** Set up the networking API.  In this case it's Berkeley sockets for
 ** Windows which is called WINSOCK version 2.
 */
-void LbOSWin32Imp::InitiateNetwork()
+void LbOSLinuxImp::InitiateNetwork()
 {
     // This structure can be used to get information about the version of
     // winsock in use.
@@ -416,7 +414,7 @@ void LbOSWin32Imp::InitiateNetwork()
 
 LbOSLayerSys *CreateOSLayerSys()
 {
-    LbOSWin32Imp *rval=new LbOSWin32Imp;
+    LbOSLinuxImp *rval=new LbOSLinuxImp;
     assert(rval!=NULL);
 
     rval->Init();

@@ -29,8 +29,11 @@
 #include "LbMath.h"
 #include "LbXmlParse.h"
 
-#include "winamp_in.h" //until someone can be arsed to write better music code,
-#include "winamp_out.h"//we're going to use Winamp plugins dammit!
+#ifdef WIN32
+  #include "winamp_in.h" //until someone can be arsed to write better music code,
+  #include "winamp_out.h"//we're going to use Winamp plugins dammit!
+#endif
+
 #include "LbOSLayer.h"
 #include "LbGame.h"
 #include "LbGraphics.h"
