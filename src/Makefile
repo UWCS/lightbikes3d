@@ -5,7 +5,9 @@ MISC_H_FILES=\
 	..\include\LbInput.h \
 	..\include\LbSound.h \
 	..\include\LbNet.h \
-	..\include\LbGame.h
+	..\include\LbGame.h \
+	..\include\LbMath.h
+
 MISC_C_FILES=\
 	LbMain.cpp \
 	SDL_main.c

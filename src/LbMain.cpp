@@ -9,10 +9,10 @@ LbGameSys *main_game=CreateGameSys();
 ** TODO: process any command line options...
 */
 
-int ret_val=main_game->RunGame();
-
-delete main_game;
-main_game=NULL;
-
-return ret_val;
+ int ret_val=main_game->RunGame();
+ 
+ delete main_game;
+ main_game=NULL;
+ 
+ return ret_val;
 }
