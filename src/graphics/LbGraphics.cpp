@@ -277,7 +277,7 @@ void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
     glEnd();
 
     FinishOrtho();
-    
+
     glEnable(GL_DEPTH_TEST);
 
 }
@@ -414,14 +414,14 @@ void LbGraphicsImp::DrawEffect()
 
 void LbGraphicsImp::StartFrame()
 {
-	// Initalise the 'scene'...
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	
-	// ***********************************************************************
-	// Code is here for initial testing ONLY! REMOVE THIS CODE BEFORE RELEASE!
-	// ***********************************************************************
-	glLoadIdentity();
+    // Initalise the 'scene'...
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glMatrixMode(GL_MODELVIEW);
+
+    // ***********************************************************************
+    // Code is here for initial testing ONLY! REMOVE THIS CODE BEFORE RELEASE!
+    // ***********************************************************************
+    glLoadIdentity();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
@@ -438,13 +438,13 @@ void LbGraphicsImp::StartFrame()
 
     glRotatef(((GLfloat)progress / 50), 0.0f, 0.0f, -1.0f);
     glTranslatef(-1.5f, 0.0f, -8.0f);
-	glBegin(GL_TRIANGLES);
+    glBegin(GL_TRIANGLES);
         glColor3f(0.0f, 0.4f, 0.8f);
         glVertex3f( 0.0f, 1.0f, 0.0f);
         glVertex3f( 1.0f,-1.0f, 0.0f);
         glVertex3f(-1.0f,-1.0f, 0.0f);
-	glEnd();
-	
+    glEnd();
+
     glPopMatrix(); //restore the camera matrix for next block of drawing...
     glPushMatrix();//and push it again to save a copy
 
@@ -453,46 +453,46 @@ void LbGraphicsImp::StartFrame()
     glRotatef(((GLfloat)progress / 70), 0.0f, 1.0f, 0.0f);
     glRotatef(((GLfloat)progress / 110), 0.0f, 0.0f, 1.0f);
 
-	glBegin(GL_QUADS);
-		// TOP
+    glBegin(GL_QUADS);
+        // TOP
         glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
-		// BOTTOM
+        // BOTTOM
         glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f( 1.0f,-1.0f,-1.0f);
-		// FRONT
+        // FRONT
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
-		// BACK
+        // BACK
         glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
         glVertex3f( 1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
-		// LEFT
+        // LEFT
         glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
-		// RIGHT
+        // RIGHT
         glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
         glVertex3f( 1.0f,-1.0f,-1.0f);
-	glEnd();
+    glEnd();
 
-    
+
     glPopMatrix();
 
 /*  SetupOrtho();
@@ -511,11 +511,11 @@ void LbGraphicsImp::StartFrame()
     glEnd();
     FinishOrtho();
 */
-	// ***********************************************************************
+    // ***********************************************************************
 
     if (glGetError()) {
                 MessageBox(NULL, "Error rendering.", "LbGraphics::StartFrame()", MB_ICONSTOP);
-	}
+    }
 }
 
 void LbGraphicsImp::EndFrame()
@@ -531,18 +531,18 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
     os = os_sys;
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);       // Clear to black.
     glClearDepth(1.0f);              // Enables clearing of depth buffer.
-	glDepthFunc(GL_LESS);				// Depth test to use.
-	glEnable(GL_DEPTH_TEST);			// Actually enables depth testing.
-	glShadeModel(GL_SMOOTH);			// Enables smooth colouring.
-	
-	// Set up Projection...
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+    glDepthFunc(GL_LESS);               // Depth test to use.
+    glEnable(GL_DEPTH_TEST);            // Actually enables depth testing.
+    glShadeModel(GL_SMOOTH);            // Enables smooth colouring.
+
+    // Set up Projection...
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
-	
-	if (glGetError()) {
-		MessageBox(NULL, "Error initalising OpenGL.", "LbGraphics::Init()", MB_ICONSTOP);
-	}
+
+    if (glGetError()) {
+        MessageBox(NULL, "Error initalising OpenGL.", "LbGraphics::Init()", MB_ICONSTOP);
+    }
     frameCount = os->GetMS();
     cureffect = LB_GFX_NONE;
 

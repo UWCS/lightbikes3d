@@ -118,7 +118,6 @@ void LbNetImp::SendGameEvent ( LbGameEvent &e , bool includeourself )
         case LB_GAME_CHAT :  cmd = "CHAT" ;  break ;
         case LB_GAME_NEWGAME :  cmd = "NEWGAME" ;  break ;
         case LB_GAME_CHANGESERVER :  cmd = "CHANGESERVER" ;  break ;
-        case LB_GAME_RESETSERVER :  cmd = "RESETSERVER" ;  break ;
     }
 
     // Construct the message.
@@ -188,7 +187,6 @@ void LbNetImp::ProcessMessages ( )
         else if ( commandstring == "CHAT" ) t.id = LB_GAME_CHAT ;
         else if ( commandstring == "NEWGAME" ) t.id = LB_GAME_NEWGAME ;
         else if ( commandstring ==  "CHANGE" ) t.id = LB_GAME_CHANGESERVER ;
-        else if ( commandstring ==  "RESET" ) t.id = LB_GAME_RESETSERVER ;
 
         // Copy the message text.
         t.message=msgtext;

@@ -64,23 +64,29 @@ int LbGameImp::RunGame()
     startms = lastms = os_sys->GetMS();
 
     string textbuf = "";
-    txtmsgs [ 0 ] = "" ;
-    txtmsgs [ 1 ] = "" ;
-    txtmsgs [ 2 ] = "" ;
+
     char k ;
+    int i , p ;
+    bool showscores = false ;
+
+    for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
+        txtmsgs [ i ] = "" ;
+
+    for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
+        scoremsgs [ i ] = "" ;
+
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
 
-        // Clear stuuf.
-        NewGame ( ) ;
-
+    // Clear stuff.
+    NewGame ( ) ;
 
     while(!quit_flag)
     {
-        scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
+        scroll = scroll + ( change* ( os_sys->GetMS() - startms) / 50.0f );
         startms = os_sys->GetMS();
         if (scroll > 15) change=-0.1f;
         if (scroll < -15) change=0.1f;
@@ -111,25 +117,23 @@ int LbGameImp::RunGame()
         // Get text entered.
         while ( ( k = input_sys->getNextTextKey ( ) ) != 0 )
         {
-            //Get ASCII codes.
-            //char temp[20] ;
-            //itoa ( (int)k , temp , 10 ) ;
-            //MessageBox ( NULL , temp, "Werd Up Bitch", MB_ICONSTOP ) ;
-            if ( k == '\r' )
+            switch ( k )
             {
-
-                ProcessCommand ( textbuf ) ;
-                textbuf.erase() ;
+                case '\r' :
+                    ProcessCommand ( textbuf ) ;
+                    textbuf.erase() ;
+                    break ;
+                case 27 : // Escape key.
+                    textbuf.erase ( ) ;
+                    break ;
+                case 8 : // Backspace key.
+                    if ( textbuf.size ( ) > 0 )
+                        textbuf.erase ( textbuf.size ( ) - 1 ) ;
+                    break ;
+                default:
+                    textbuf += k ;
+                break ;
             }
-            else if ( k == 27 ) // Escape key.
-                textbuf.erase ( ) ;
-            else if ( k == 8 ) // Backspace key.
-            {
-                if ( textbuf.size ( ) > 0 )
-                    textbuf.erase ( textbuf.size ( ) - 1 ) ;
-            }
-            else
-                textbuf += k ;
         }
 
         graph_sys->StartFrame();
@@ -148,12 +152,18 @@ int LbGameImp::RunGame()
         graph_sys->DrawText ( 0.0f , 0.02f , 0.75f , textbuf.c_str ( ) ) ;
 
         // Display the chat or status messages.
-        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.9f , 0.5f , txtmsgs[0].c_str ( ) ) ;
-        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.86f , 0.5f , txtmsgs[1].c_str ( ) ) ;
-        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.82f , 0.5f , txtmsgs[2].c_str ( ) ) ;
+        for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
+        {
+            graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+            graph_sys->DrawText ( 0.05f , 0.9f - 0.04 * i , 0.5f , txtmsgs[i].c_str ( ) ) ;
+        }
+
+        // Display the players' frag count, overlayed Counter Strike style.
+        for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
+        {
+            graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+            graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.5f , scoremsgs[i].c_str ( ) ) ;
+        }
 
         graph_sys->EndFrame();
 
@@ -186,13 +196,13 @@ int LbGameImp::RunGame()
             // Process Network messages (Networking) ie. convert them from strings
             // and packets to game messages, and add them to the network module's
             // queue of game messages.
-            net_sys->ProcessMessages();
+            net_sys->ProcessMessages ( ) ;
 
             // Probably won't do this ultimately.
-            net_sys->PollSockets();
+            net_sys->PollSockets ( ) ;
 
 
-        // Read in Network messages (Networking)...
+            // Read in Network messages (Networking)...
             /* Game Events - Messages from network:
            **  Start game
            **  Player position updates
@@ -200,66 +210,64 @@ int LbGameImp::RunGame()
            **  Send level data
            */
 
-        // Deal with network messages.
-        while ( net_sys->GetNextGameEvent ( game_event ) )
-        {
-            switch ( game_event.id )
+            // Deal with network messages.
+            while ( net_sys->GetNextGameEvent ( game_event ) )
             {
-                // Deal with players joining.
-                case LB_GAME_PLAYERJOIN :
-                    AddPlayer ( game_event.playerHash , game_event.message ) ;
-                    ShowStatusMessage (
-                        GetPlayerHandle ( game_event.playerHash ) +
-                        string ( " has joined the game." ) ) ;
-                    break;
+                switch ( game_event.id )
+                {
+                    // Deal with players joining.
+                    case LB_GAME_PLAYERJOIN :
+                        AddPlayer ( game_event.playerHash , game_event.message ) ;
+                        ShowStatusMessage (
+                            GetPlayerHandle ( game_event.playerHash ) +
+                            string ( " has joined the game." ) ) ;
+                        break;
 
-                // Deal with players going.
-                case LB_GAME_PLAYERLEAVE :
-                    ShowStatusMessage (
-                        GetPlayerHandle ( game_event.playerHash ) +
-                        string ( " has left the game." ) +
-                        game_event.message ) ;
-                    RemovePlayer ( game_event.playerHash ) ;
-                    break;
+                    // Deal with players going.
+                    case LB_GAME_PLAYERLEAVE :
+                        ShowStatusMessage (
+                            GetPlayerHandle ( game_event.playerHash ) +
+                            string ( " has left the game." ) +
+                            game_event.message ) ;
+                        RemovePlayer ( game_event.playerHash ) ;
+                        break;
 
-                // Deal with players changing name.
-                case LB_GAME_HANDCHANGE :
-                    ShowStatusMessage (
-                        GetPlayerHandle ( game_event.playerHash ) +
-                        string ( " is now known as " ) +
-                        game_event.message + string ( "." ) ) ;
-                    SetPlayerHandle ( game_event.playerHash , game_event.message ) ;
-                    break;
+                    // Deal with players changing name.
+                    case LB_GAME_HANDCHANGE :
+                        ShowStatusMessage (
+                            GetPlayerHandle ( game_event.playerHash ) +
+                            string ( " is now known as " ) +
+                            game_event.message + string ( "." ) ) ;
+                        SetPlayerHandle ( game_event.playerHash ,
+                                          game_event.message ) ;
+                        break;
 
-                // Deal with incoming chat messages.
-                case LB_GAME_CHAT:
-                    ShowStatusMessage (
-                        string ("<" ) +
-                        GetPlayerHandle ( game_event.playerHash ) +
-                        string ( "> " ) + game_event.message ) ;
-                   break;
+                    // Deal with incoming chat messages.
+                    case LB_GAME_CHAT:
+                        ShowStatusMessage (
+                            string ("<" ) +
+                            GetPlayerHandle ( game_event.playerHash ) +
+                            string ( "> " ) + game_event.message ) ;
+                       break;
 
-                // New game message.  Abandon any current games.
-                case LB_GAME_NEWGAME:
-                    NewGame ( ) ;
-                break ;
+                    // New game message.  Abandon any current games.
+                    case LB_GAME_NEWGAME:
+                        NewGame ( ) ;
+                        break ;
 
-                // A new server, switch to this server.
-                case LB_GAME_CHANGESERVER :
-                // Hmm, need to think about what we're doing with this.
-                case LB_GAME_RESETSERVER :
-                     MessageBox ( NULL , "message from server/client" , "Werd Up", MB_ICONSTOP ) ;
-                break;
+                    // A new server, switch to this server.
+                    case LB_GAME_CHANGESERVER :
+                        break;
+                }
+
+                // Rebroadcast iff we are server and it didn't come from us,
+                // because otherwise we would have already broadcast it.
+                if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
+                     game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
+                        net_sys->SendGameEvent ( game_event , false ) ;
             }
 
-            // Rebroadcast iff we are server and it didn't come from us,
-            // because otherwise we would have already broadcast it.
-            if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
-                 game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
-                    net_sys->SendGameEvent ( game_event , false ) ;
         }
-
-    }
 
         // Update game state (Game Logic)...
             /* Updateing actions:
@@ -273,8 +281,24 @@ int LbGameImp::RunGame()
             **      Messages --> Network
             */
 
-        // Send network -> send game messages
-        // send messages to network module to send to server.
+        // Put a scoreboard together.  BTW I think we should be able to detect
+        // 'kills' (when you cut in front of someone) fairly accurately,
+        // experiments needed to distinguish between accidental deaths and
+        // kills.
+        p = 0 ;
+        scoremsgs[0] = "Player Name       Kills      Deaths     Ping" ;
+        scoremsgs[1] = "                                            " ;
+        for ( i = 2 ; i < MAX_SCOREBOARD_LINES ; i++ )
+        {
+            while ( players [ p ].valid == false ) p++ ;
+            if ( p >= MAX_PLAYERS - 1 ) break;
+            scoremsgs [ i ] =
+                    " " + Pad ( players [ p ] . handle , 18 ) +
+                    Pad ( ItoS ( players [ p ] . kills ) , 11 ) +
+                    Pad ( ItoS ( players [ p ] . deaths ) , 11 ) +
+                    ItoS ( players [ p ] . ping ) ;
+            p ++ ;
+        }
     }
 
     delete eye;
@@ -285,23 +309,45 @@ int LbGameImp::RunGame()
 }
 
 /**
+ ** To go in a library at some point, or be replaced.
+ **/
+string LbGameImp::Pad ( string s , int l )
+{
+    if ( s.size ( ) > l ) return s.substr ( 0 , l ) ;
+    else if ( s.size ( ) == l ) return s ;
+    else return s + string ( l - s.size ( ) , ' ' ) ;
+}
+
+/**
+ ** To go in a library at some point, or be replaced.
+ **/
+string LbGameImp::ItoS ( int i )
+{
+    char temp [ 20 ] ;
+    itoa ( i , temp , 10 ) ;
+    return string ( temp ) ;
+}
+
+/**
  ** Add the message to the messages at the top of the screen.
+ ** Implements a nice shifting scrolling effect.
  **/
 void LbGameImp::ShowStatusMessage ( const string & txt )
 {
-    // Implements a nice shifting scrolling effect.
-    if ( txtmsgs [ 0 ] == "" )
-        txtmsgs [ 0 ] = txt ;
-    else if ( txtmsgs [ 1 ] == "" )
-        txtmsgs [ 1 ] = txt ;
-    else if ( txtmsgs [ 2 ] == "" )
-        txtmsgs [ 2 ] = txt ;
-    else
-    {
-        txtmsgs [ 0 ] = txtmsgs [ 1 ] ;
-        txtmsgs [ 1 ] = txtmsgs [ 2 ] ;
-        txtmsgs [ 2 ] = txt ;
-    }
+    int i ;
+
+    // Fill first unfilled line.
+    for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
+        if ( txtmsgs [ i ] == "" )
+        {
+            txtmsgs [ i ] = txt ;
+            return ;
+        }
+
+    // Otherwise shift up, and fill last line.
+    for ( i = 0 ; i < MAX_MESSAGE_LINES - 1 ; i ++ )
+        txtmsgs [ i ] = txtmsgs [ i + 1 ] ;
+    txtmsgs [ MAX_MESSAGE_LINES - 1 ] = txt ;
 }
 
 /**
@@ -311,21 +357,20 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid && playerhash == players [ i ].hash )
+        if ( players [ i ].valid == true && playerhash == players [ i ].hash )
             if ( players [ i ] .handle != "" )
                 return players [ i ] .handle ;
-            else return "Unnamed" ;
-    return "Unknown" ;
+    return string ( "Not playing" ) ;
 }
 
 /**
- ** Set the (handle) name of a player.
+ ** Set the handle (name) of a player.
  **/
 void LbGameImp::SetPlayerHandle ( int hash , const string & handle )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid && hash == players [ i ].hash )
+        if ( players [ i ].valid == true && hash == players [ i ].hash )
             players [ i ] .handle = handle ;
 }
 
@@ -336,11 +381,13 @@ void LbGameImp::AddPlayer ( int hash , const string & handle )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( ! players [ i ].valid )
+        if ( players [ i ].valid == false )
         {
             players [ i ] .valid = true ;
             players [ i ] .hash = hash ;
-            players [ i ] .handle = handle ;
+            if ( handle == "" )
+                players [ i ] .handle = "New Player" ;
+            else players [ i ] .handle = handle ;
             return ;
         }
     // No spare slots.
@@ -353,7 +400,7 @@ void LbGameImp::RemovePlayer ( int hash  )
 {
     int i;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid && hash == players [ i ].hash )
+        if ( players [ i ].valid == true && hash == players [ i ].hash )
             players [ i ].valid = false ;
 }
 
@@ -414,7 +461,7 @@ void LbGameImp::ProcessCommand ( string t )
         j = t.find_last_not_of ( "\n\r \t" ) ;
 
         // If the user only entered whitespace then forget it.
-        if ( j == - 1 ) return ;
+        if ( j == -1 ) return ;
 
         // Copy the non-whitespace part of the entry.
         e.message = t.substr ( i , j - i + 1 ) ;

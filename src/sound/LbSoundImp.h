@@ -29,11 +29,12 @@ class LbSoundImp : public LbSoundSys
 {
 public:
 
+LbSoundImp();
+~LbSoundImp();
+
 bool PlayMusicFile(char *fname);
 bool StopMusic();
 
-LbSoundImp();
-~LbSoundImp();
 
 void Init(LbOSLayerSys *os_sys);
 virtual int CacheWaveFile(char *fname);

@@ -1,156 +1,312 @@
 /*********************************************************************************
+
     LbOSWin32Imp.h
+
     Header file for the LightBikes2001 OS layer for Win32
+
+
 
     Copyright (C) 2000  University of Warwick Computing Society
 
+
+
     Contributors to this file:
+
        David Black
+
        James Ross
+
        David Capps
+
        Chris Skepper
 
+
+
     This program is free software; you can redistribute it and/or modify
+
     it under the terms of the GNU General Public License as published by
+
     the Free Software Foundation; either version 2 of the License, or
+
     (at your option) any later version.
 
+
+
     This program is distributed in the hope that it will be useful,
+
     but WITHOUT ANY WARRANTY; without even the implied warranty of
+
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+
     GNU General Public License for more details.
 
+
+
     You should have received a copy of the GNU General Public License
+
     along with this program; if not, write to the Free Software
+
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 *********************************************************************************/
+
 #ifndef __LBOSWIN32IMP__
+
 #define __LBOSWIN32IMP__
 
+
+
 #define DIRECTINPUT_VERSION 0x0700
+
 #include <dinput.h>
+
 #include "winamp_in.h"
+
 #include "winamp_out.h"
+
+
 
 using namespace std;
 
+
+
 class LbOSLayerSoundImp : public LbOSLayerSound
+
 {
+
 public:
 
-void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+
+
+virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+
 virtual bool PlayMusic(char *fname);
+
 virtual void StopMusic();
+
 virtual void PauseMusic();
+
 virtual void SetMusicVolume(int level);
+
 virtual void SetMusicPan(int slope);
+
 virtual void PlayWave(char *image);
 
+
+
 LbOSLayerSoundImp();
+
 ~LbOSLayerSoundImp();
+
+
 
 private:
 
-bool InitPlugins(HINSTANCE hInst, HWND hWnd);
+
+
+virtual bool InitPlugins(HINSTANCE hInst, HWND hWnd);
+
+
 
 Winamp_Input_Module *plugin_in;
+
 Winamp_Output_Module *plugin_out;
+
 bool init_ok;
+
 HINSTANCE WinampIn, WinampOut;
+
+
 
 };
 
+
+
 class LbOSLayerInputImp : public LbOSLayerInput
+
 {
+
 public:
 
+
+
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
+
     //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
+
 virtual char getNextTextKey ( ) ;
 
-void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
-void OnWmChar(char c);
+
+
+virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+
+virtual void OnWmChar(char c);
+
+
 
 LbOSLayerInputImp();
+
 ~LbOSLayerInputImp();
+
+
 
 private:
 
+
+
 LPDIRECTINPUT7  lpDInput;
-LPDIRECTINPUTDEVICE7 lpDIDevKeyb; 
+
+LPDIRECTINPUTDEVICE7 lpDIDevKeyb;
+
 bool di_InitOK;
+
 int TickStart;
+
+
 
 bool InitDInput(HINSTANCE hInst,HWND hWnd);
 
+
+
 deque<char> textkeybuffer ;
+
 };
 
 
+
+
+
 class LbOSWin32Imp : public LbOSLayerSys
+
 {
+
 public:
 
+
+
 /*
+
 ** LbOSLayerSys methods
+
 */
+
+
 
 virtual bool PollEvent(LbOSLayerEvent &os_event);
+
 virtual void SwapDoubleBuffers();
+
 virtual int GLTextListBase();
+
 virtual int GetMS();
+
 virtual char* GetDesktop32();
+
 virtual void InitiateNetwork() ;
 
-virtual LbOSLayerInput *GetOSInput()
-	{
-	return os_input;
-	}
 
-virtual LbOSLayerSound *GetOSSound()
+
+virtual LbOSLayerInput *GetOSInput()
+
     {
-    return os_sound;
+
+    return os_input;
+
     }
 
+
+
+virtual LbOSLayerSound *GetOSSound()
+
+    {
+
+    return os_sound;
+
+    }
+
+
+
 /*
+
 ** LbOSWin32Imp methods
+
 */
+
 LbOSWin32Imp();
+
 ~LbOSWin32Imp();
+
+
 
 void Init();
 
+
+
 private:
 
+
+
 void CreateMainWindow();
+
 void DestroyMainWindow();
+
 void CreateOGLContext(HWND hwnd);
+
 void SetupPixelFormat(HDC dc);
+
 void SetupPalette(HDC dc);
+
 void PerformResize();
+
 void DestroyOGLContext();
+
 void GetDesktopImage();
 
+
+
 static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+
 LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
+
+
 
 static LbOSWin32Imp *the_oslayer;
 
+
+
 HINSTANCE hInstance;
+
 HWND hwnd_main;
+
 HDC hDC;
+
 HGLRC hRC;
 
+
+
 bool quit_flag;
+
 int TextBase;
+
 LARGE_INTEGER freq;
+
 char *desktop;
+
+
+
 
 
 int TickStart,PerfStart;
 
+
+
 LbOSLayerInputImp *os_input;
+
 LbOSLayerSoundImp *os_sound;
+
 };
 
+
+
 #endif
+

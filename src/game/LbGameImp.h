@@ -25,13 +25,17 @@
 #define __LBGAMEIMP__
 
 #define MAX_PLAYERS 10
+#define MAX_MESSAGE_LINES 4
+#define MAX_SCOREBOARD_LINES 10
 
 struct LbPlayer
 {
     int hash ;
     string handle ;
+    int kills ;
+    int deaths ;
+    int ping ;
     bool valid ;
-    int frags ;
 };
 
 using namespace std;
@@ -47,12 +51,16 @@ class LbGameImp : public LbGameSys
     private:
         virtual void InitSubsystems();
         virtual void DeInitSubsystems();
-        virtual void ProcessCommand ( string t ) ;        virtual void LbGameImp::ShowStatusMessage ( const string & txt ) ;
+        virtual void ProcessCommand ( string t ) ;        virtual void ShowStatusMessage ( const string & txt ) ;
         virtual string GetPlayerHandle ( int hash ) ;
         virtual void SetPlayerHandle ( int hash , const string & handle ) ;
         virtual void RemovePlayer ( int hash ) ;
         virtual void AddPlayer ( int hash , const string & handle ) ;
         virtual void NewGame ( ) ;
+
+        // Will get rid of this l8r.
+        virtual string Pad ( string s , int l ) ;
+        virtual string ItoS ( int i ) ;
 
         LbOSLayerSys *os_sys;
         LbGraphicsSys *graph_sys;
@@ -61,7 +69,8 @@ class LbGameImp : public LbGameSys
         LbNetSys *net_sys;
 
         bool quit_flag;
-        string txtmsgs [ 3 ] ;
+        string txtmsgs [ MAX_MESSAGE_LINES ] ;
+        string scoremsgs [ MAX_SCOREBOARD_LINES ] ;
 
         LbPlayer players [ MAX_PLAYERS ] ;
 };
