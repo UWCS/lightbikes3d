@@ -293,12 +293,14 @@ int LbGameImp::RunGame()
         for ( i = 2 ; i < MAX_SCOREBOARD_LINES ; i++ )
         {
             while ( players [ p ].valid == false ) p++ ;
-            if ( p >= MAX_PLAYERS - 1 ) break;
-            scoremsgs [ i ] =
-                    " " + Pad ( players [ p ] . handle , 18 ) +
-                    Pad ( ItoS ( players [ p ] . kills ) , 11 ) +
-                    Pad ( ItoS ( players [ p ] . deaths ) , 11 ) +
-                    ItoS ( players [ p ] . ping ) ;
+            if ( p >= MAX_PLAYERS - 1 )
+                scoremsgs [ i ] = "" ;
+            else
+                scoremsgs [ i ] =
+                        " " + Pad ( players [ p ] . handle , 18 ) +
+                        Pad ( ItoS ( players [ p ] . kills ) , 11 ) +
+                        Pad ( ItoS ( players [ p ] . deaths ) , 11 ) +
+                        ItoS ( players [ p ] . ping ) ;
             p ++ ;
         }
     }

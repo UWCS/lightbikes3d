@@ -36,8 +36,7 @@ enum LbGameEventId
     LB_GAME_HANDCHANGE = 2 ,
     LB_GAME_CHAT = 3 ,
     LB_GAME_NEWGAME = 4 ,
-    LB_GAME_CHANGESERVER = 20 ,
-    LB_GAME_RESETSERVER = 21
+    LB_GAME_CHANGESERVER = 20
 };
 
 struct LbGameEvent

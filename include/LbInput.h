@@ -37,6 +37,8 @@ virtual void Init(LbOSLayerSys *os_sys)=0;
 
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
 virtual char getNextTextKey ()=0;
+virtual bool IsTabDown ( ) = 0 ;
+
 };
 
 LbInputSys *CreateInputSys(LbOSLayerSys *os_sys);
