@@ -46,8 +46,8 @@ class LbNetImp : public LbNetSys
         LbNetImp();
         ~LbNetImp();
 
-        virtual void InitiateServerUDP  ( const char * address , int port ) ;
-        virtual void ConnectServerUDP  ( const char * address , int port ) ;
+        virtual void InitialiseServerUDP ( int server_port , int client_port ) ;
+        virtual void InitialiseClientUDP ( int server_port , int client_port ) ;
         virtual bool GetNextPositionUpdate ( LbGamePositionUpdate & u ) ;
         virtual void PollSocketsUDP ( ) ;
         virtual void SendPositionUpdate( LbGamePositionUpdate & u ) ;
@@ -94,14 +94,19 @@ class LbNetImp : public LbNetSys
 
         // type of operation ( client, server, disconnected )
         int mode ;
+
+        const char * serveraddress ;
 
+        // Socket to be used for UDP whether as client or server.
         SOCKET udpsocket ;
 
-        const char * serveraddress ;
-        int serverport ;
+        // UDP ports.
+        int server_udp_port ;
+        int client_udp_port ;
 
-        SOCKADDR_IN clientaddress[10] ;
-        int clientaddresscount ;
+        // Queues for incoming and outgoing position updates.
+        queue<LbGamePositionUpdate> gameUpdateReceiveQueue ;
+        queue<LbGamePositionUpdate> gameUpdateTransmitQueue ;
     };
 
 #endif

@@ -150,14 +150,14 @@ int LbGameImp::RunGame()
     // HARD CODED START POSITIONS.
     //   THIS WILL BE IN THE LEVEL FILE ULTIMATELY
 
-    start [ 0 ] = LbVector ( -10  , 10 , 0 ) ;
-    start [ 1 ] = LbVector ( 10 , 10 , 0 ) ;
-    start [ 2 ] = LbVector ( 10 , -10 , 0 ) ;
-    start [ 3 ] = LbVector ( -10 , -10 , 0 ) ;
+    start [ 0 ] = LbVector ( 0  , 100 , 0 ) ;
+    start [ 1 ] = LbVector ( 0 , -100 , 0 ) ;
+    start [ 2 ] = LbVector ( 10 , 0 , 0 ) ;
+    start [ 3 ] = LbVector ( -10 , 0 , 0 ) ;
 
-    dirns [ 0 ] = 0 ;
-    dirns [ 1 ] = 1 ;
-    dirns [ 2 ] = 2 ;
+    dirns [ 0 ] = 2 ;
+    dirns [ 1 ] = 0 ;
+    dirns [ 2 ] = 1 ;
     dirns [ 3 ] = 3 ;
 
     cols [ 0 ] = LbRGBAColor ( 0.0f , 0.2f , 1.0f , 0.2f ) ;
@@ -179,7 +179,8 @@ int LbGameImp::RunGame()
             startms = os_sys->GetMS();
             //if (scroll > 10) change=-0.02f;
             //if (scroll < -10) change=0.02f;
-            if ( !(count++ % 20) ) {
+            if ( !(count++ % 20) )
+            {
                 lastms = (os_sys->GetMS() - lastms);
                 fps = lastms ? (20000 / lastms) : 0;
                 lastms = os_sys->GetMS();
@@ -355,51 +356,56 @@ int LbGameImp::RunGame()
 
         graph_sys->EndFrame();
 
-        // Move all the bikes forward.
-        for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( gameinprogress )
         {
-            if ( players[i]->IsPlaying ( ) )
+
+            // Move all the bikes forward.
+            for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
             {
-                switch ( players[i]->GetDirection ( ) )
+                if ( players[i]->IsPlaying ( ) )
                 {
-                    case 0:
+                    switch ( players[i]->GetDirection ( ) )
                     {
-                        LbVector * v = new LbVector (
-                            players[i]->GetPosition()->getX(),
-                            players[i]->GetPosition()->getY() + step,
-                            players[i]->GetPosition()->getZ() ) ;
-                        players[i]->SetPosition( v ) ;
+                        case 0:
+                        {
+                            LbVector * v = new LbVector (
+                                players[i]->GetPosition()->getX(),
+                                players[i]->GetPosition()->getY() + step,
+                                players[i]->GetPosition()->getZ() ) ;
+                            players[i]->SetPosition( v ) ;
+                        }
+                        break;
+                        case 1:
+                        {
+                            LbVector * v = new LbVector (
+                                players[i]->GetPosition()->getX() + step ,
+                                players[i]->GetPosition()->getY() ,
+                                players[i]->GetPosition()->getZ() ) ;
+                            players[i]->SetPosition( v ) ;
+                        }
+                        break;
+                        case 2:
+                        {
+                            LbVector * v = new LbVector (
+                                players[i]->GetPosition()->getX(),
+                                players[i]->GetPosition()->getY() - step,
+                                players[i]->GetPosition()->getZ() ) ;
+                            players[i]->SetPosition( v ) ;
+                        }
+                        break;
+                        case 3:
+                        {
+                            LbVector * v = new LbVector (
+                                players[i]->GetPosition()->getX() - step,
+                                players[i]->GetPosition()->getY() ,
+                                players[i]->GetPosition()->getZ() ) ;
+                            players[i]->SetPosition( v ) ;
+                        }
+                        break;
                     }
-                    break;
-                    case 1:
-                    {
-                        LbVector * v = new LbVector (
-                            players[i]->GetPosition()->getX() + step ,
-                            players[i]->GetPosition()->getY() ,
-                            players[i]->GetPosition()->getZ() ) ;
-                        players[i]->SetPosition( v ) ;
-                    }
-                    break;
-                    case 2:
-                    {
-                        LbVector * v = new LbVector (
-                            players[i]->GetPosition()->getX(),
-                            players[i]->GetPosition()->getY() - step,
-                            players[i]->GetPosition()->getZ() ) ;
-                        players[i]->SetPosition( v ) ;
-                    }
-                    break;
-                    case 3:
-                    {
-                        LbVector * v = new LbVector (
-                            players[i]->GetPosition()->getX() - step,
-                            players[i]->GetPosition()->getY() ,
-                            players[i]->GetPosition()->getZ() ) ;
-                        players[i]->SetPosition( v ) ;
-                    }
-                    break;
                 }
             }
+
         }
 
         // Poll the event queue.
@@ -525,28 +531,37 @@ int LbGameImp::RunGame()
 
             while ( net_sys->GetNextPositionUpdate(u) )
             {
-               // Update stuff.
-                  // Find the player matching the hash.
-                     // Add the segment.
+                // Debug code to display the packet.
+                char f [ 256 ] ;
+                sprintf ( ( char * ) & f ,
+                    "Player Hash: %d\nSequence Number: %d\nLevel: %d \n"\
+                    "Old Coord: %f , %f\nNew Coord: %f , %f\n"\
+                    "New Direction: %d " ,
+                    u.playerHash , u.sequence , u.level ,
+                    u.x1 , u.y1 , u.x2 , u.y2 , u.direction ) ;
+                //MessageBox ( NULL , ( char * ) & f , "Packet" , MB_ICONSTOP ) ;
+
+                // Ignore any packets relating to us, since we know about
+                // ourselves, minimize effect of hacked players.
+                if ( u.playerHash != net_sys->GetOwnPlayerHash ( ) )
+                {
+                    // TODO: Check the sequence numbers.
+
+                    // Update our records.
+                    LbPlayer * movedplayer ;
+                    movedplayer = GetPlayer ( u.playerHash ) ;
+                    movedplayer -> SetDirection ( u.direction ) ;
+                    movedplayer -> SetLevel ( u.level ) ;
+                    movedplayer -> GetBike ( ) -> AddSegment (
+                        LbVector ( u.x2 , u.y2 , 0 ) ) ;
+                }
 
                 // Resend the message if we are a server.
-                //if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
-                //    net_sys->SendPositionUpdate ( ) ;
-
+                if ( net_sys -> GetStatus ( ) == LB_NET_SERVER )
+                {
+                    net_sys -> SendPositionUpdate ( u ) ;
+                }
             }
-        }
-        else
-        {
-            /*int a = 162 ;
-            char p[8];
-            memcpy ( &p , &a , 4 ) ;
-            int z ;
-            memcpy ( &z , &p , 4 ) ;
-
-                char bud [ 200 ] ;
-                sprintf ( (char*)&bud , "value %d" , z ) ;
-                    MessageBox ( NULL , (char*)&bud ,"Numbber" ,
-                                 MB_ICONSTOP ) ;*/
         }
 
         // Put a scoreboard together.  BTW I think we should be able to detect
@@ -630,6 +645,20 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
             if ( players[i]->GetHandle ( ) != "" )
                 return players[i]->GetHandle ( ) ;
     return "Noname" ;
+}
+
+/**
+ ** Return player.
+ **/
+LbPlayer * LbGameImp::GetPlayer ( int playerhash )
+{
+    int i ;
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( players[i]->IsValid ( ) == true &&
+             playerhash == players[i]->GetHash ( ) )
+            if ( players[i]->GetHandle ( ) != "" )
+                return players[i] ;
+    return NULL ;
 }
 
 /**
@@ -820,7 +849,7 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
-            net_sys -> ConnectServerUDP ( prm.c_str() , LB_SERVER_UDP_PORT ) ;
+            net_sys -> InitialiseClientUDP ( LB_SERVER_UDP_PORT , LB_CLIENT_UDP_PORT ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
@@ -839,7 +868,7 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
-            net_sys -> InitiateServerUDP ( "" /*prm.c_str()*/ , LB_SERVER_UDP_PORT ) ;
+            net_sys -> InitialiseServerUDP ( LB_SERVER_UDP_PORT , LB_CLIENT_UDP_PORT ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;

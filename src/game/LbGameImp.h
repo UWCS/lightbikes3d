@@ -52,6 +52,7 @@ class LbGameImp : public LbGameSys
         virtual void NewGame ( ) ;
         virtual void NewRound ( ) ;
         virtual void EndGame ( ) ;
+        virtual LbPlayer * GetPlayer ( int playerhash ) ;
 
         // Will get rid of this l8r.
         virtual string Pad ( string s , int l ) ;

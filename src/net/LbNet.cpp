@@ -50,19 +50,19 @@
 
 LbNetImp::LbNetImp ( )
 {
-    clientaddresscount = 0 ;
 }
 
 // ----- UDP stuff ---------------
 
 /**
- ** Start listening on a port.
+ ** Bind a socket to a port for a server to send and receive packets on.
  **/
-void LbNetImp::InitiateServerUDP  ( const char * address , int port )
+void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
 {
-    udpsocket = socket(AF_INET,     // Address family
-                          SOCK_DGRAM,  // Socket type
-                          IPPROTO_UDP);// Protocol
+    // Create the socket.
+    udpsocket = socket(AF_INET,          // Address family = Internet.
+                       SOCK_DGRAM,       // Socket type = datagram.
+                       IPPROTO_UDP);     // Protocol = User Datagram Protocol.
 
     if ( udpsocket == INVALID_SOCKET )
         MessageBox ( NULL , "There was an error opening socket." ,
@@ -70,17 +70,17 @@ void LbNetImp::InitiateServerUDP  ( const char * address , int port )
 
     SOCKADDR_IN sockName;
     sockName.sin_family = AF_INET;
-    sockName.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-    sockName.sin_port = htons ( 32002 );      // Use port passed from user
+    sockName.sin_addr.s_addr = INADDR_ANY;      // Let WinSock assign address.
+    sockName.sin_port = htons ( server_port );  // Use given port.
 
     // Set the port and address, and report the error.
     PSOCKADDR_IN pSockName ;
     pSockName = &sockName ;
 
-    int nRet = bind(udpsocket,              // Socket descriptor
-                (LPSOCKADDR)&sockName,  // Address to bind to
-                sizeof(struct sockaddr) // Size of address
-                );
+    // Bind the socket to a port and address, and report any errors.
+    int nRet = bind ( udpsocket,                    // Socket descriptor
+                      ( LPSOCKADDR ) & sockName ,  // Address to which to bind.
+                      sizeof ( struct sockaddr ) ) ;// Size of address
 
     if ( nRet == SOCKET_ERROR )
     {
@@ -88,16 +88,20 @@ void LbNetImp::InitiateServerUDP  ( const char * address , int port )
                           "application may be using this port." , "Error" ,
                           MB_ICONSTOP ) ;
     }
+
+    server_udp_port = server_port ;
+    client_udp_port = client_port ;
 }
 
 /**
- ** Connect to the given UDP server.
+ ** Bind a socket to a port for a client to send and receive packets on.
  **/
-void LbNetImp::ConnectServerUDP  ( const char * address , int port )
+void LbNetImp::InitialiseClientUDP  ( int server_port , int client_port )
 {
-    udpsocket = socket(AF_INET,     // Address family
-                       SOCK_DGRAM,  // Socket type
-                       IPPROTO_UDP);// Protocol
+    // Create the socket.
+    udpsocket = socket(AF_INET,           // Address family = Internet.
+                       SOCK_DGRAM,        // Socket type = datagram.
+                       IPPROTO_UDP ) ;     // Protocol = User Datagram Protocol.
 
     if ( udpsocket == INVALID_SOCKET )
         MessageBox ( NULL , "There was an error opening socket." ,
@@ -105,91 +109,32 @@ void LbNetImp::ConnectServerUDP  ( const char * address , int port )
 
     SOCKADDR_IN sockName;
     sockName.sin_family = AF_INET;
-    sockName.sin_addr.s_addr = INADDR_ANY; // Let WinSock assign address
-    sockName.sin_port = htons ( 32003 );      // Use port passed from user
+    sockName.sin_addr.s_addr = INADDR_ANY;      // Let WinSock assign address
+    sockName.sin_port = htons ( client_port );  // Use port given.
 
-    // Set the port and address, and report the error.
-    PSOCKADDR_IN pSockName ;
-    pSockName = &sockName ;
-
-    int nRet = bind(udpsocket,              // Socket descriptor
-                (LPSOCKADDR)&sockName,  // Address to bind to
-                sizeof(struct sockaddr) // Size of address
-                );
+    // Bind the socket to a port and address, and report any errors.
+    int nRet = bind ( udpsocket,                    // Socket descriptor
+                      ( LPSOCKADDR ) & sockName ,  // Address to which to bind.
+                      sizeof ( struct sockaddr ) ) ;// Size of address
 
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the server UDP port.  Another " \
+       MessageBox ( NULL, "Error binding to the client UDP port.  Another " \
                           "application may be using this port." , "Error" ,
                           MB_ICONSTOP ) ;
     }
+
+    server_udp_port = server_port ;
+    client_udp_port = client_port ;
 }
 
 /**
- ** Send position update to the server, unless we are the server
- ** otherwise send it to the clients.
+ ** Add position update to a queue to be sent to the server or clients.
  **/
-void LbNetImp::SendPositionUpdate( LbGamePositionUpdate & u )
+void LbNetImp::SendPositionUpdate ( LbGamePositionUpdate & u )
 {
-    // Create the packet.
-    char buf [ 30 ] ;
-    strcpy ( buf , "MOVE                          " ) ;
-    memcpy ( & buf [ 4 ] , & u.playerHash , 4 ) ;
-    memcpy ( & buf [ 8 ] , & u.sequence , 4 ) ;
-    memcpy ( & buf [ 12 ] , & u.x1 , 4 ) ;
-    memcpy ( & buf [ 16 ] , & u.y1 , 4 ) ;
-    memcpy ( & buf [ 20 ] , & u.x2 , 4 ) ;
-    memcpy ( & buf [ 24 ] , & u.y2 , 4 ) ;
-    memcpy ( & buf [ 28 ] , & u.level , 1 ) ;
-    memcpy ( & buf [ 29 ] , & u.direction , 1 ) ;
-
-    if ( mode == LB_NET_CONNECTEDTOSERVER )
-    {
-        char * szBuf = (char * ) & buf ;
-
-        SOCKADDR_IN saServer;
-
-        PSOCKADDR_IN pSaServer ;
-        pSaServer = &saServer ;
-        pSaServer->sin_family = PF_INET ;
-        pSaServer->sin_addr.S_un.S_addr = inet_addr ( "127.0.0.1" ) ;
-        pSaServer->sin_port = htons ( 32002 );
-
-        int nRet = sendto(udpsocket,    // Socket
-              szBuf,                    // Data buffer
-              30,            // Length of data
-              0,                        // Flags
-              (LPSOCKADDR)pSaServer,    // Server address
-              sizeof(struct sockaddr)); // Length of address
-    }
-    else if ( mode == LB_NET_SERVER )
-    {
-        char * szBuf = (char * ) & buf ;
-
-        int i ;
-        // Send message to all clients.
-        for ( i = 0 ; i < clientaddresscount ; i++ )
-        {
-
-      MessageBox ( NULL , "client UDP data send" ,
-                            "" , MB_ICONSTOP ) ;
-
-            PSOCKADDR_IN pSaServer ;
-            pSaServer =  & (SOCKADDR_IN)clientaddress[i] ;
-            pSaServer->sin_family = PF_INET ;
-            pSaServer->sin_addr.S_un.S_addr = inet_addr ( "127.0.0.1" ) ;
-            pSaServer->sin_port = htons ( 32003 );
-
-            int nRet = sendto(udpsocket,    // Socket
-                  szBuf,                    // Data buffer
-                  30,            // Length of data
-                  0 ,                        // Flags
-                  (LPSOCKADDR)pSaServer,    // Server address
-                  sizeof(struct sockaddr)); // Length of address
-
-          }
-    }
-
+    // Add to queue.
+    gameUpdateTransmitQueue.push ( u ) ;
 }
 
 /**
@@ -197,14 +142,25 @@ void LbNetImp::SendPositionUpdate( LbGamePositionUpdate & u )
  **/
 bool LbNetImp::GetNextPositionUpdate ( LbGamePositionUpdate & u )
 {
-    //MessageBox ( NULL , "Getting next UDP message" ,
-    //    "poo" , MB_ICONSTOP ) ;
-
+    if ( ! gameUpdateReceiveQueue.empty ( ) )
+    {
+        LbGamePositionUpdate t = gameUpdateReceiveQueue.front();
+        gameUpdateReceiveQueue.pop();
+        u = t ;
+        return true ;
+    }
     return false ;
 }
 
+/**
+ ** Poll Sockets.  Receive any waiting packets, then send packets.  Position
+ ** updates are sent to the server, unless we are the server in which case we
+ ** send it to all the clients and it is interpreted as being authorative.
+ **/
 void LbNetImp::PollSocketsUDP ( )
 {
+    // Receive ------------------------
+
     // Construct read sockets.
     fd_set readscks , writescks , errscks;
     errscks.fd_count = writescks.fd_count = readscks.fd_count = 1 ;
@@ -216,7 +172,7 @@ void LbNetImp::PollSocketsUDP ( )
     timeout.tv_sec = 0 ;
     timeout.tv_usec = 0 ;
 
-    // Keep getting data and writing it until we run out.
+    // Keep getting data while their are ports waiting to be read.
 
         // Call to check the sockets.
         select ( 0 , ( fd_set * ) & readscks ,
@@ -235,7 +191,7 @@ void LbNetImp::PollSocketsUDP ( )
             if ( recvfrom ( udpsocket , (char*)& buf , 30 , 0 ,
                    (LPSOCKADDR)&saClient , & s ) )
             {
-                if ( mode== LB_NET_SERVER )
+                /*if ( mode== LB_NET_SERVER )
                 {
                     MessageBox ( NULL ,  (char*)&buf , "Server - UDP data received." ,
                                  MB_ICONSTOP ) ;
@@ -244,8 +200,7 @@ void LbNetImp::PollSocketsUDP ( )
                 {
                     MessageBox ( NULL , (char*)&buf ,"Client UDP data received" ,
                                  MB_ICONSTOP ) ;
-                }
-
+                }*/
 
                 LbGamePositionUpdate u ;
 
@@ -259,36 +214,71 @@ void LbNetImp::PollSocketsUDP ( )
                 memcpy ( & u.level , & buf [ 28 ] ,  1 ) ;
                 memcpy ( & u.direction , & buf [ 29 ] ,  1 ) ;
 
-                char f [ 256 ] ;
-                sprintf ( (char*) &f , "playerhash %d , sequence %d " ,
-                          u.playerHash , u.sequence ) ;
-                MessageBox ( NULL , (char*)& f ,"Packet" ,
-                 MB_ICONSTOP ) ;
+                // Add the update to the queue.
+                gameUpdateReceiveQueue.push ( u ) ;
             }
 
-            // See if we already have this client address, if not then store
-            // it.
-            if ( mode == LB_NET_SERVER )
-            {
-                bool found = false ;
-                int i = 0 ;
-                for ( i = 0 ; i < clientaddresscount ; i++ )
-                {
-                    if ( clientaddress [ i ].sin_port == saClient.sin_port &&
-                         clientaddress [ i ].sin_addr.S_un.S_addr == saClient.sin_addr.S_un.S_addr )
-                    {
-                        found = true ;
-                        break ;
-                    }
-                }
-
-                if ( !found )
-                {
-                    clientaddress[clientaddresscount] = saClient ;
-                    clientaddresscount ++ ;
-                }
-            }
         }
+
+    // Transmit ---------------------
+    while ( ! gameUpdateTransmitQueue.empty ( ) )
+    {
+        LbGamePositionUpdate u = gameUpdateTransmitQueue.front();
+        gameUpdateTransmitQueue.pop();
+
+        // Create the packet.
+        char buf [ 30 ] ;
+        strcpy ( buf , "MOVE                          " ) ;
+        memcpy ( & buf [ 4 ] , & u.playerHash , 4 ) ;
+        memcpy ( & buf [ 8 ] , & u.sequence , 4 ) ;
+        memcpy ( & buf [ 12 ] , & u.x1 , 4 ) ;
+        memcpy ( & buf [ 16 ] , & u.y1 , 4 ) ;
+        memcpy ( & buf [ 20 ] , & u.x2 , 4 ) ;
+        memcpy ( & buf [ 24 ] , & u.y2 , 4 ) ;
+        memcpy ( & buf [ 28 ] , & u.level , 1 ) ;
+        memcpy ( & buf [ 29 ] , & u.direction , 1 ) ;
+
+        if ( mode == LB_NET_CONNECTEDTOSERVER )
+        {
+            SOCKADDR_IN saServer;
+            PSOCKADDR_IN pSaServer ;
+            pSaServer = &saServer ;
+            pSaServer->sin_family = PF_INET ;
+            pSaServer->sin_addr.S_un.S_addr = inet_addr ( "127.0.0.1" ) ;
+            pSaServer->sin_port = htons ( server_udp_port );
+
+            int nRet = sendto(udpsocket,    // Socket
+                  (char * ) & buf,          // Data buffer
+                  30,                       // Length of data
+                  0,                        // Flags
+                  (LPSOCKADDR)pSaServer,    // Server address
+                  sizeof(struct sockaddr)); // Length of address
+        }
+        else if ( mode == LB_NET_SERVER )
+        {
+            int i ;
+
+            // Send message to all clients.
+            for ( i = 1 ; i < lbsockets.size() ; i++ )
+            {
+                SOCKADDR_IN saClient ;
+                PSOCKADDR_IN pSaServer ;
+                pSaServer = & saClient ;
+                pSaServer->sin_family = PF_INET ;
+                pSaServer->sin_addr.S_un.S_addr =
+                    lbsockets[i].remoteAddress.sin_addr.S_un.S_addr ;
+                pSaServer->sin_port = htons ( client_udp_port );
+
+                int nRet = sendto ( udpsocket , // Socket
+                  (char * ) & buf ,             // Data buffer
+                  30,                           // Length of data
+                  0 ,                           // Flags
+                  (LPSOCKADDR)pSaServer,        // Server address
+                  sizeof(struct sockaddr));     // Length of address
+             }
+          }
+    }
+
 
 }
 

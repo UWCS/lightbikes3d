@@ -27,6 +27,8 @@
 // The port on the server to be used for connections.
 #define LB_SERVER_TCP_PORT 32001
 #define LB_SERVER_UDP_PORT 32002
+#define LB_CLIENT_UDP_PORT 32003
+
 // The number of bytes for storing text waiting to be sent or processed to/from
 // the network.
 #define SOCKET_BUFFER_SIZE 256
@@ -50,19 +52,19 @@ class LbBaseBlock
 };
 class LbLevel
 {
-	public:
-		virtual void SetBlockAt(int x, int y, LbBaseBlock &block)=0;
-		virtual LbBaseBlock * GetBlockAt(int x, int y)=0;
+    public:
+        virtual void SetBlockAt(int x, int y, LbBaseBlock &block)=0;
+        virtual LbBaseBlock * GetBlockAt(int x, int y)=0;
 
-		virtual int GetXSize()=0;
-		virtual int GetYSize()=0;
+        virtual int GetXSize()=0;
+        virtual int GetYSize()=0;
 };
 
 class LbArena
 {
-	public:
-		virtual LbLevel * GetLevel(int level)=0;
-		virtual int GetZSize()=0;
+    public:
+        virtual LbLevel * GetLevel(int level)=0;
+        virtual int GetZSize()=0;
 };
 
 class LbGameSys
