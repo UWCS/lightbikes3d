@@ -1,4 +1,11 @@
 *.obj
+*.lib
 *.tds
 *.exe
 *.dll
+*.ncb
+*.opt
+*.plg
+*.ilk
+Debug
+Release
