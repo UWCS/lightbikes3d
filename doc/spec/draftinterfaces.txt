@@ -1,0 +1,109 @@
+===========================================
+Draft Specification
+This is *very* work-in-progress, and some
+of the original notes have sparse (no)
+usefull comments. I have included all the
+seemingly useful stuff, so you'll have to
+take your minds back to when we dreamt this
+stuff up.
+
+Chris
+===========================================
+
+
+Game Logic
+==========
+
+[Game State]
+  |                               GraphicsLevel CreateGraphicsLevel(int x, int y)
+[Bike]                            void          SetGraphicsBlock(Block(ptr) block, int x, int y)
+  |                               void          SetCameraPos(Vec3D position, Vec3D target, Vec3D up)
+  L Colour                        void          DrawGraphicsLevel(GraphicsLevel(ptr) level, int height, target)
+  L Texture                       void          AddSegment(nextpoint)
+  L AnyOthersGraphicsStuff        GraphicsBike  CreateGraphicsBike(Bike bike)
+                                  void          DrawSegment(startpoint, endpoint)
+                                  void          DrawText(float x, float y, text)   //x, y are fraction of screen size (for text position?)
+
+Graphics
+========
+   creates structure to store level geometry
+
+[GraphicsBike]
+  L AddSegment
+  L DrawSegment
+
+[Graphics]
+  L SetCameraPos(Vec3D posn, Vec3D targ, Vec3D up)
+  L Init
+  L SetMode
+
+[GraphicsLevel]
+  L Blocks
+  L x, y - size of level
+  L SetGraphicsBlock
+
+Networking
+==========
+(32-bit floats)
+
+Server to Client
+----------------
+
+              <32-><32-><---8--->
+player info   [ x ][ y ][ level ]
+
+This is repeated by number of players * number of turns backlogged
+
+[seq no][player ack][player info]
+
+player ack    [next seq num needed][bitmap of packets after <- received]
+
+Networking Interface for Server to Client
+-----------------------------------------
+
+NB. playerId = 0 for current player (i.e. at client end)
+
+UpdatePlayerPosition(int playerId,x,y,level)
+UpdatePlayerTurn(int playerId, int turnId ,x,y,level)
+DispatchMessages()
+boolean GetNextTurn(int playerId, turn* T)
+boolean GetNextMessage(Msg* M)
+StartGame(playerlist)
+EndGame()
+
+Client to Server
+----------------
+
+                            <current pos><-last turn->
+[seq #][acks (see svr->cli)][x][y][level][x][y][level]
+
+Networking Interface for Client to Server
+-----------------------------------------
+
+UpdatePosition(x,y, level)   //internally UpdatePlayerPosition(0, x,y,level)
+UpdateTurn(x,y,level) //internally UpdatePlayerTurn(0, 0, x, y, level)?
+SendString(String S)
+boolean GetNextTurn(int playerId, turn* T)
+boolean GetNextMessage(Msg* M)
+Connect(Server)
+Server[] GetLocalServers()
+
+
+Input
+=====
+
+Game Logic -----------(EventBuffer)----------- Input
+                 [timestamp][actionId] <- Queue
+
+
+boolean GetNextEvent(Event*) //returns true if an event passed
+void DoPoll() //called once a frame, joystick poll, sticking stuff in buffer etc
+boolean GetNextString(String*) //true if there has been an event passed
+
+Sound
+=====
+Play() //once
+Loop() //forever
+Stop() //stop. duh
+
+Sound CreateSound(String filename)
