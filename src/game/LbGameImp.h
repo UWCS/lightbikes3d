@@ -24,6 +24,8 @@
 #ifndef __LBGAMEIMP__
 #define __LBGAMEIMP__
 
+#include "LbPlayer.h"
+
 #define MAX_PLAYERS 10
 #define MAX_MESSAGE_LINES 4
 #define MAX_SCOREBOARD_LINES 10
@@ -103,8 +105,6 @@ class LbEmptyBlock : public LbBaseBlockImp
 	** LbBaseBlock methods
 
 	*/
-
-
 
 	virtual void GetGeometrySize(int &num_points,int &num_normals);
 	virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
@@ -252,6 +252,30 @@ class LbPlayerImp : public LbPlayer
 		// Set player valid.
 		virtual void SetValid ( bool v ) ;
 
+		// Get the graphics bike.
+		virtual LbGraphicsBike * GetBike ( ) ;
+
+		// Get the position.
+		virtual LbVector * GetPosition ( ) ;
+
+		// Get the graphics bike.
+		virtual void SetBike ( LbGraphicsBike * g ) ;
+
+		// Get the position.
+		virtual void SetPosition ( LbVector * v ) ;
+
+		// Set player valid.
+		virtual void SetPlaying ( bool v ) ;
+
+		// Get player kills.
+		virtual bool IsPlaying ( ) ;
+
+		// Set player the direction.
+		virtual void SetDirection ( int d ) ;
+
+		// Get player direction.
+		virtual int GetDirection ( ) ;
+
 		// END
 
 		/*
@@ -267,6 +291,10 @@ class LbPlayerImp : public LbPlayer
 		int deaths ;
 		int ping ;
 		bool valid ;
+		LbGraphicsBike * bike ;
+		LbVector * bikepos ;
+		bool playing ;
+		int direction ;
 };
 
 

@@ -109,6 +109,54 @@ void LbPlayerImp::SetValid ( bool v )
 	valid = v ;
 }
 
+// Get the graphics bike.
+LbGraphicsBike * LbPlayerImp::GetBike ( )
+{
+	return bike ;
+}
+
+// Get the position.
+LbVector * LbPlayerImp::GetPosition ( )
+{
+	return bikepos ;
+}
+
+// Get the graphics bike.
+void LbPlayerImp::SetBike ( LbGraphicsBike * g )
+{
+	bike = g ;
+}
+
+// Get the position.
+void LbPlayerImp::SetPosition ( LbVector * v )
+{
+	bikepos = v ;
+}
+
+// Set player valid.
+void LbPlayerImp::SetPlaying ( bool v )
+{
+	playing = v ;
+}
+
+// Get player kills.
+bool LbPlayerImp::IsPlaying ( )
+{
+	return playing ;
+}
+
+// Set player the direction.
+void LbPlayerImp::SetDirection ( int d )
+{
+	direction = d ;
+}
+
+// Get player direction.
+int LbPlayerImp::GetDirection ( )
+{
+	return direction ;
+}
+
 /*
 ** LbGraphicsBikeImp methods
 */

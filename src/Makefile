@@ -25,6 +25,7 @@ MISC_H_FILES=\
     ..\include\LbMath.h \
     ..\include\LbOSLayer.h \
     ..\include\LbMiscTypes.h \
+    ..\include\LbPlayer.h \    
     ..\include\LbXmlParse.h
 
 MISC_C_FILES=\

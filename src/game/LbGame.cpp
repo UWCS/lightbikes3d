@@ -61,11 +61,9 @@ int LbGameImp::RunGame()
     int lpress=0, rpress=0;
     char msg[16] = "", inp[32] = "", keymsg[32] = "";
     LbOSLayerKeypress keys[32];
-    LbGraphicsBike *lbbike;
 
     // DEBUG CODE - TO BE REMOVED WHEN GameLogic IS WORKING
-    LbVector bikePos(0, 0, 0);
-    int direction = 0;		// 0 = y+, 1 = x+, 2 = y-, 3 = x-
+    //Directions		// 0 = y+, 1 = x+, 2 = y-, 3 = x-
     float step = 0;
     float dist = 0;
     float Vacc = 0;
@@ -98,6 +96,9 @@ int LbGameImp::RunGame()
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         allplayers [ i ]->SetValid ( false ) ;
 
+    //for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+    //    allplayers [ i ]->SetPlaying ( false ) ;
+
     // Clear the typed messages.
     for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
         txtmsgs [ i ] = "" ;
@@ -113,12 +114,32 @@ int LbGameImp::RunGame()
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
 
     // Create a single player
-    graph_sys->CreateGraphicsBike();
 
     // DEBUG
     // Add start point for bike
-    lbbike = graph_sys->GetBike(0);
-    lbbike->AddSegment( LbVector(0, 0, 0) );
+
+    graph_sys->CreateGraphicsBike();
+    graph_sys->CreateGraphicsBike();
+	graph_sys->CreateGraphicsBike();
+
+    allplayers[0]->SetBike( graph_sys->GetBike ( 0 ) ) ;
+    allplayers[0]->GetBike()->AddSegment( LbVector(0, 0, 0) );
+	allplayers[0]->SetPlaying ( true ) ;
+	allplayers[0]->SetPosition( & LbVector ( 0 , 0 , 0 ) ) ;
+	allplayers[0]->SetDirection( 1 ) ;
+
+    allplayers[1]->SetBike( graph_sys->GetBike(1) );
+    allplayers[1]->GetBike()->AddSegment( LbVector(10, 10, 0) );
+	allplayers[1]->SetPlaying ( true ) ;
+	allplayers[1]->SetPosition( & LbVector ( 10 , 10 , 0 ) ) ;
+	allplayers[1]->SetDirection( 0 ) ;
+
+    allplayers[2]->SetBike( graph_sys->GetBike(2) );
+    allplayers[2]->GetBike()->AddSegment( LbVector(50, 50, 0) );
+	allplayers[2]->SetPlaying ( true ) ;
+	allplayers[2]->SetPosition( & LbVector ( 50 , 50 , 0 ) ) ;
+	allplayers[2]->SetDirection( 0 ) ;
+
     // END
 
 
@@ -166,36 +187,38 @@ int LbGameImp::RunGame()
             sprintf(msg,"FPS:%d  Step:%.2f",fps, step);
         }
 
+		// Set eye to point to bike
+
         //eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
-        dist = sqrt( pow(bikePos.getX() - eye.getX(), 2) +
-                     pow(bikePos.getY() - eye.getY(), 2) +
-                     pow(bikePos.getZ() - eye.getZ(), 2) );
-        eye = LbVector( bikePos.getX() + (eye.getX() - bikePos.getX()) * (20 / dist),
-                        bikePos.getY() + (eye.getY() - bikePos.getY()) * (20 / dist),
-                        bikePos.getZ() + 10 );
+        dist = sqrt( pow(allplayers[0]->GetPosition()->getX() - eye.getX(), 2) +
+                     pow(allplayers[0]->GetPosition()->getY() - eye.getY(), 2) +
+                     pow(allplayers[0]->GetPosition()->getZ() - eye.getZ(), 2) );
+        eye = LbVector( allplayers[0]->GetPosition()->getX() + (eye.getX() - allplayers[0]->GetPosition()->getX()) * (20 / dist),
+                        allplayers[0]->GetPosition()->getY() + (eye.getY() - allplayers[0]->GetPosition()->getY()) * (20 / dist),
+                        allplayers[0]->GetPosition()->getZ() + 10 );
         //target = LbVector(0, scroll, 0);
-        graph_sys->SetCamera(eye,bikePos,up);
+        graph_sys->SetCamera(eye, * allplayers[0]->GetPosition(),up);
 
         keycount = 32;
-        inp[0] = 0;
+        //inp[0] = 0;
         if (input_sys->GetOSKey(&keys[0], &keycount)) {
             for (int i=0; i<keycount; i++) {
                 if (keys[i].down)
                     switch (keys[i].which) {
-                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; sound_sys->PlayWaveFile(wave);
+                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press");
+							lpress++; sound_sys->PlayWaveFile(wave);
                             // DEBUG
                             // Add turing point
-                            lbbike = graph_sys->GetBike(0);
-                            lbbike->AddSegment( bikePos );
-                            direction = (direction + 3) % 4;
+
+                            allplayers[0]->GetBike()->AddSegment( * allplayers[0]->GetPosition() );
+                            allplayers[0]->SetDirection( ( allplayers[0]->GetDirection() + 3 ) % 4 );
                             // END
                             break;
                         case LB_OSKEY_RIGHT:sprintf(inp, "Right Key Press"); rpress++;
                             // DEBUG
                             // Add turing point
-                            lbbike = graph_sys->GetBike(0);
-                            lbbike->AddSegment( bikePos );
-                            direction = (direction + 1) % 4;
+                            allplayers[0]->GetBike()->AddSegment( * allplayers[0]->GetPosition() );
+                            allplayers[0]->SetDirection( ( allplayers[0]->GetDirection() + 1 ) % 4 );
                             // END
                             break;
                     }
@@ -233,36 +256,80 @@ int LbGameImp::RunGame()
         }
 
         // DEBUG CODE
-        if (( abs(Vacc) > 0.001 ) || ( bikePos.getZ() > 0.001 )) {
-            lbbike = graph_sys->GetBike(0);
-            lbbike->AddSegment( bikePos );
+        /*if (( abs(Vacc) > 0.001 ) || ( bikePos.getZ() > 0.001 )) {
+            allplayers[0]->SetBike( graph_sys->GetBike(0) );
+            allplayers[0]->GetBike() ->AddSegment( bikePos );
+
             Vacc -= 9.81 * (step / change);
             bikePos = LbVector( bikePos.getX(), bikePos.getY(), bikePos.getZ() + Vacc * (step / change) );
             if (bikePos.getZ() < 0) {
                 bikePos = LbVector( bikePos.getX(), bikePos.getY(), 0 );
-                lbbike->AddSegment( bikePos );
+                allplayers[0]->GetBike()->AddSegment( bikePos );
                 Vacc = 0;
             }
-        }
+        }*/
         // END
 
         graph_sys->StartFrame();
         // draw here
 
-        // Draw trials...
-        lbbike = graph_sys->GetBike(0);
-        lbbike->DrawTrail();
-        lbbike->DrawSegment( lbbike->GetLastSegment(), bikePos );
-
-        // DEBUG
-        switch ( direction )
+        // Draw trials for all bikes.
+        for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         {
-            case 0: bikePos = LbVector( bikePos.getX(), bikePos.getY() + step, bikePos.getZ() ); break;
-            case 1: bikePos = LbVector( bikePos.getX() + step, bikePos.getY(), bikePos.getZ() ); break;
-            case 2: bikePos = LbVector( bikePos.getX(), bikePos.getY() - step, bikePos.getZ() ); break;
-            case 3: bikePos = LbVector( bikePos.getX() - step, bikePos.getY(), bikePos.getZ() ); break;
-        }
-        // END
+			if ( allplayers[i]->IsPlaying() )
+			{
+        		allplayers[i]->GetBike()->DrawTrail() ;
+        		allplayers[i]->GetBike()->DrawSegment( allplayers[i]->GetBike()->GetLastSegment(), * allplayers[i]->GetPosition() );
+			}
+		}
+
+
+		// Move all the bikes forward.
+		for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+		{
+			if ( allplayers[i]->IsPlaying ( ) )
+			{
+        		switch ( allplayers[i]->GetDirection ( ) )
+        		{
+        		    case 0:
+        		    {
+        		    	LbVector * v = new LbVector (
+							allplayers[i]->GetPosition()->getX(),
+							allplayers[i]->GetPosition()->getY() + step,
+							allplayers[i]->GetPosition()->getZ() ) ;
+        		    	allplayers[i]->SetPosition( v ) ;
+					}
+        		    break;
+        		    case 1:
+        		    {
+        		    	LbVector * v = new LbVector (
+							allplayers[i]->GetPosition()->getX() + step ,
+							allplayers[i]->GetPosition()->getY() ,
+							allplayers[i]->GetPosition()->getZ() ) ;
+        		    	allplayers[i]->SetPosition( v ) ;
+					}
+        		    break;
+        		    case 2:
+        		    {
+        		    	LbVector * v = new LbVector (
+							allplayers[i]->GetPosition()->getX(),
+							allplayers[i]->GetPosition()->getY() - step,
+							allplayers[i]->GetPosition()->getZ() ) ;
+        		    	allplayers[i]->SetPosition( v ) ;
+					}
+        		    break;
+        		    case 3:
+        		    {
+        		    	LbVector * v = new LbVector (
+							allplayers[i]->GetPosition()->getX() - step,
+							allplayers[i]->GetPosition()->getY() ,
+							allplayers[i]->GetPosition()->getZ() ) ;
+        		    	allplayers[i]->SetPosition( v ) ;
+					}
+        		    break;
+				}
+        	}
+		}
 
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
         graph_sys->DrawText(0.5f,0.82f,1.0f,"LightBikes3d");

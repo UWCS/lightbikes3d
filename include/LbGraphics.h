@@ -90,7 +90,7 @@ virtual void StartFrame()=0;
 virtual void EndFrame()=0;
 
 virtual LbGraphicsBike *GetBike(int index)=0;
- 
+
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbGraphicsSys(){}
 };
