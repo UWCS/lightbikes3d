@@ -29,44 +29,59 @@
 
 LbSoundImp::LbSoundImp()
 {
-    musicIn = 0;
-    musicOut = 0;
-    musicOK = false;
+    musicOK = true;
 }
 
 LbSoundImp::~LbSoundImp()
 {
-    DeinitMusic();
+    char *image;
+    while (!soundcache.empty()) {
+        image = soundcache.front();
+        soundcache.pop_front();
+        free(image);
+    }
 }
 
 void LbSoundImp::Init(LbOSLayerSys *os_sys) {
     os = os_sys;
-    InitMusic();
+    os_sound = os_sys->GetOSSound();
 }
 
 bool LbSoundImp::PlayMusicFile(char *fname) {
     if (!musicOK) return false;
     if (!StopMusic()) return false;
-    return (musicIn->Play(fname) == 0);
+    return os_sound->PlayMusic(fname);
 }
 
 bool LbSoundImp::StopMusic() {
     if (!musicOK) return false;
-    musicIn->Stop();
+    os_sound->StopMusic();
     return true;
 }
 
-void LbSoundImp::InitMusic() {
-    musicOK = os->SetupWinampCompatPlugins(&musicIn, &musicOut);
+int LbSoundImp::CacheWaveFile(char *fname) {
+    ifstream fin(fname, ios::binary);
+    fin.seekg(0, ios::end); // End of file
+    int size = fin.tellg();
+    if (size < 80) {
+        fin.close();
+        return -1;
+    }
+    fin.seekg(0, ios::beg); // End of file
+
+    char *image = (char*)malloc (size);
+    fin.read( image, size);
+    fin.close();
+    soundcache.push_back(image);
+    return soundcache.size()-1;
 }
 
-void LbSoundImp::DeinitMusic() {
-    if (!musicOK) return;
-    StopMusic();
-    musicIn->Quit();
-    musicOut->Quit();
-    musicOK = false;
-    musicIn = 0; musicOut = 0;
+bool LbSoundImp::PlayWaveFile(int cachenumber) {
+    if ( (cachenumber < 0) || (cachenumber >= soundcache.size() ) )
+        return false;
+    char *image = soundcache[cachenumber];
+    os_sound->PlayWave(image);
+    return true;
 }
 
 LbSoundSys *CreateSoundSys(LbOSLayerSys *os_sys)

@@ -36,17 +36,16 @@ LbSoundImp();
 ~LbSoundImp();
 
 void Init(LbOSLayerSys *os_sys);
+virtual int CacheWaveFile(char *fname);
+virtual bool PlayWaveFile(int cachenumber);
 
 private:
 
-WA_InputPtr musicIn;
-WA_OutputPtr musicOut;
 LbOSLayerSys *os;
+LbOSLayerSound *os_sound;
 bool musicOK; //is music inited and OK
 
-void InitMusic();
-void DeinitMusic();
-
+deque<char*> soundcache ;
 };
 
 #endif

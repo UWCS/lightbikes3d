@@ -27,9 +27,6 @@
 #ifndef __LBOSLAYER__
 #define __LBOSLAYER__
 
-typedef Winamp_Input_Module* WA_InputPtr;
-typedef Winamp_Output_Module* WA_OutputPtr;
-
 enum LbOSLayerEventId
     {
     LB_OSEVENT_QUIT     =0,
@@ -55,6 +52,7 @@ int sequence;           //when pressed relative to other keypress messages
 };
 
 class LbOSLayerInput;
+class LbOSLayerSound;
 
 class LbOSLayerSys
 {
@@ -65,10 +63,10 @@ virtual void SwapDoubleBuffers()=0;
 virtual int GLTextListBase()=0;
 virtual int GetMS()=0; //get accurate millisecond count
 virtual char* GetDesktop32()=0; //get an image of the desktop. Bwahaha!
-virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
 virtual void InitiateNetwork ( ) = 0 ;
 
 virtual LbOSLayerInput *GetOSInput()=0;
+virtual LbOSLayerSound *GetOSSound()=0;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}
@@ -83,10 +81,25 @@ virtual char getNextTextKey ( ) = 0 ;
 
 
 // empty virtual destructor to ensure proper cleanup
-virtual ~LbOSLayerInput(){};
+virtual ~LbOSLayerInput(){}
 };
 
-/// Create an implimentation of the graphics subsystem.
+class LbOSLayerSound
+{
+public:
+
+virtual bool PlayMusic(char *fname)=0;
+virtual void StopMusic()=0;
+virtual void PauseMusic()=0;
+virtual void SetMusicVolume(int level)=0;
+virtual void SetMusicPan(int slope)=0;
+virtual void PlayWave(char *image)=0;
+
+// empty virtual thingummy for unknown mystical C++ reasons
+virtual ~LbOSLayerSound(){};
+};
+
+/// Create an implimentation of the graphics (? surely OS? DC) subsystem.
 LbOSLayerSys *CreateOSLayerSys();
 
 #endif

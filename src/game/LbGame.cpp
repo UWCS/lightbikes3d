@@ -70,6 +70,9 @@ int LbGameImp::RunGame()
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     //net_sys->Test();
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
+
+    int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
+
     while(!quit_flag)
     {
         scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
@@ -93,7 +96,7 @@ int LbGameImp::RunGame()
             for (int i=0; i<keycount; i++) {
                 if (keys[i].down)
                     switch (keys[i].which) {
-                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; break;
+                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; sound_sys->PlayWaveFile(wave); break;
                         case LB_OSKEY_RIGHT:sprintf(inp, "Right Key Press"); rpress++; break;
                     }
             }

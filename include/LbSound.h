@@ -30,9 +30,11 @@ public:
 
 virtual bool PlayMusicFile(char *fname)=0;
 virtual bool StopMusic()=0;
+virtual int CacheWaveFile(char *fname)=0;
+virtual bool PlayWaveFile(int cachenumber)=0;
 
 // empty virtual destructor to ensure proper cleanup
-virtual ~LbSoundSys(){}
+virtual ~LbSoundSys(){};
 };
 
 LbSoundSys *CreateSoundSys(LbOSLayerSys *os_sys);

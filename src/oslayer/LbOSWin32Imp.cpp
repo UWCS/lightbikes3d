@@ -134,7 +134,12 @@ void LbOSWin32Imp::Init()
         throw LbError("Cannot alloc mem for OS input class");
     os_input->Init(hInstance,hwnd_main,TickStart);
 
-	WinampIn = WinampOut = NULL;
+    os_sound=new LbOSLayerSoundImp;
+    if (os_sound==NULL)
+        throw LbError("Cannot alloc mem for OS sound class. Be afraid.");
+    os_sound->Init(hInstance,hwnd_main,TickStart);
+
+//    WinampIn = WinampOut = NULL;
 
     ShowWindow(hwnd_main,SW_SHOWNORMAL); //Finally, once init is done
     UpdateWindow (hwnd_main);            //show the window
@@ -165,7 +170,7 @@ LbOSWin32Imp::~LbOSWin32Imp()
         delete os_input;
 
     DestroyMainWindow();
-    Deinit_WinampPlugins();
+//    Deinit_WinampPlugins();
 
     if(desktop!=NULL)
         delete[] desktop;
@@ -358,78 +363,6 @@ void LbOSWin32Imp::PerformResize()
     InvalidateRect(hwnd_main,NULL,TRUE);
 }
 
-
-//Start of crappy useless Winamp functions. Yay!
-
-void WA_SetInfo1(int bitrate, int srate, int stereo, int synched) { }
-int WA_Dsp_IsActive1() { return 0; }
-int WA_Dsp_DoSamples1(short *samples, int numsamples, int bps, int nch, int srate) { return numsamples; }
-void WA_SA_VSA_Init1(int maxlatency, int srate) { }
-void WA_SA_VSA_DeInit1() { }
-void WA_SA_AddPCMData1(void *data, int nch, int bps, int timestamp) { }
-int WA_SA_GetMode1() { return 1; }
-void WA_SA_Add1(void *data, int timestamp, int csa) { }
-void WA_VSA_AddPCMData1(void *data, int nch, int bps, int timestamp) { }
-int WA_VSA_GetMode1(int *specnch, int *wavench) { return 0; }
-void WA_VSA_Add1(void *data, int timestamp) { }
-void WA_VSA_SetInfo1(int nch, int srate) { }
-
-//End of crappy useless Winamp functions
-
-bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp) {
-      
-    Winamp_GetInModule GetInModule;
-    Winamp_GetOutModule GetOutModule;
-//    Winamp_Input_Module* __stdcall (* GetInModule ) (void);
-//    Winamp_Output_Module* __stdcall (* GetOutModule) (void);
-
-
-    WinampIn = LoadLibrary("MUSICIN.DLL");
-    if (!WinampIn) return false;
-
-    GetInModule = ( Winamp_GetInModule )GetProcAddress(WinampIn, "winampGetInModule2");
-    if (!GetInModule) return false;
-    *inp = GetInModule();
-
-    WinampOut = LoadLibrary("MUSICOUT.DLL");
-    if (!WinampOut) return false ;
-
-    GetOutModule = (Winamp_GetOutModule )GetProcAddress(WinampOut, "winampGetOutModule");
-    if (!GetOutModule) return false;
-    *outp = GetOutModule();
-
-    (*inp)->hMainWindow = hwnd_main;
-    (*inp)->hDllInstance = hInstance;
-    (*inp)->outMod = *outp;
-    (*inp)->SetInfo = WA_SetInfo1;
-    (*inp)->dsp_isactive = WA_Dsp_IsActive1;
-    (*inp)->dsp_dosamples = WA_Dsp_DoSamples1;
-    (*inp)->SAVSAInit = WA_SA_VSA_Init1;
-    (*inp)->SAVSADeInit = WA_SA_VSA_DeInit1;
-    (*inp)->SAAddPCMData = WA_SA_AddPCMData1;
-    (*inp)->SAGetMode = WA_SA_GetMode1;
-    (*inp)->SAAdd = WA_SA_Add1;
-    (*inp)->VSASetInfo = WA_VSA_SetInfo1;
-    (*inp)->VSAAddPCMData = WA_VSA_AddPCMData1;
-    (*inp)->VSAGetMode = WA_VSA_GetMode1;
-    (*inp)->VSAAdd = WA_VSA_Add1;
-    (*inp)->Init();
-
-    (*outp)->hMainWindow = hwnd_main;
-    (*outp)->hDllInstance = hInstance;
-    (*outp)->Init();
-    (*outp)->SetVolume(255);    //max volume
-    (*outp)->SetPan(0);         //centre pan
-
-    (*inp)->outMod = *outp;
-    return true;
-}
-
-void LbOSWin32Imp::Deinit_WinampPlugins() {
-    if (WinampIn) FreeLibrary(WinampIn);
-    if (WinampOut) FreeLibrary(WinampOut);
-    WinampIn = WinampOut = 0;
-}
 
 void LbOSWin32Imp::DestroyOGLContext()
 {

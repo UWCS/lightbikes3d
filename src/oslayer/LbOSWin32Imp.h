@@ -29,8 +29,36 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
+#include "winamp_in.h"
+#include "winamp_out.h"
 
 using namespace std;
+
+class LbOSLayerSoundImp : public LbOSLayerSound
+{
+public:
+
+void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
+virtual bool PlayMusic(char *fname);
+virtual void StopMusic();
+virtual void PauseMusic();
+virtual void SetMusicVolume(int level);
+virtual void SetMusicPan(int slope);
+virtual void PlayWave(char *image);
+
+LbOSLayerSoundImp();
+~LbOSLayerSoundImp();
+
+private:
+
+bool InitPlugins(HINSTANCE hInst, HWND hWnd);
+
+Winamp_Input_Module *plugin_in;
+Winamp_Output_Module *plugin_out;
+bool init_ok;
+HINSTANCE WinampIn, WinampOut;
+
+};
 
 class LbOSLayerInputImp : public LbOSLayerInput
 {
@@ -72,13 +100,17 @@ virtual void SwapDoubleBuffers();
 virtual int GLTextListBase();
 virtual int GetMS();
 virtual char* GetDesktop32();
-virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
 virtual void InitiateNetwork() ;
 
 virtual LbOSLayerInput *GetOSInput()
 	{
 	return os_input;
 	}
+
+virtual LbOSLayerSound *GetOSSound()
+    {
+    return os_sound;
+    }
 
 /*
 ** LbOSWin32Imp methods
@@ -98,14 +130,13 @@ void SetupPalette(HDC dc);
 void PerformResize();
 void DestroyOGLContext();
 void GetDesktopImage();
-void Deinit_WinampPlugins();
 
 static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
 static LbOSWin32Imp *the_oslayer;
 
-HINSTANCE hInstance, WinampIn, WinampOut;
+HINSTANCE hInstance;
 HWND hwnd_main;
 HDC hDC;
 HGLRC hRC;
@@ -119,6 +150,7 @@ char *desktop;
 int TickStart,PerfStart;
 
 LbOSLayerInputImp *os_input;
+LbOSLayerSoundImp *os_sound;
 };
 
 #endif
