@@ -241,7 +241,7 @@ int LbGameImp::RunGame()
                                 //u.ypos = ??
                                 //u.level = ??
                                 //u.sequence = ??
-                                //u.direction = ??
+                                //u.direction = thisplayer -> GetDirection ( ) ;
                                 //net_sys->sendPositionUpdate ( u ) ;
                             break;
                         }

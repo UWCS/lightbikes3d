@@ -58,7 +58,7 @@ struct LbGamePositionUpdate
     int level ;
     int sequence ;
     int direction ;
-}
+} ;
 
 class LbNetSys
 {
