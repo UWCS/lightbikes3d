@@ -68,6 +68,7 @@ class LbNetImp : public LbNetSys
         virtual LbSocket * PlayerhashToSocket ( int playerHash ) ;
         virtual int SocketToPlayerhash ( LbSocket * s ) ;
         virtual void ResetConnections ( ) ;
+        virtual void LbNetImp::CloseSocket  ( LbSocket &s ) ;
 
         // Store the game messages ready to be collected by the game logic.
         queue<LbGameEvent> gameMessageQueue ;

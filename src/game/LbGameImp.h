@@ -36,10 +36,11 @@ public:
 
 private:
 
-    void InitSubsystems();
-    void DeInitSubsystems();
-    void ProcessCommand ( string t ) ;
-    string GetPlayerHandle ( int playerhash ) ;
+    virtual void InitSubsystems();
+    virtual void DeInitSubsystems();
+    virtual void ProcessCommand ( string t ) ;
+    virtual string GetPlayerHandle ( int playerhash ) ;    virtual void LbGameImp::ShowStatusMessage ( const string & txt ) ;
+    virtual void LbGameImp::SetPlayerHandle ( int playerhash , const string & playerhandle ) ;
 
     LbOSLayerSys *os_sys;
     LbGraphicsSys *graph_sys;
@@ -48,6 +49,7 @@ private:
     LbNetSys *net_sys;
 
     bool quit_flag;
+    string txtmsgs [ 3 ] ;
 };
 
 /*

@@ -64,11 +64,12 @@ int LbGameImp::RunGame()
     startms = lastms = os_sys->GetMS();
 
     string textbuf = "";
+    txtmsgs [ 0 ] = "" ;
+    txtmsgs [ 1 ] = "" ;
+    txtmsgs [ 2 ] = "" ;
     char k ;
-    string chatmessages [ 3 ] = { "" , "" ,"" } ;
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
-    //net_sys->Test();
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
@@ -144,11 +145,11 @@ int LbGameImp::RunGame()
 
         // Display the chat or status messages.
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.9f , 0.5f , chatmessages[0].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.9f , 0.5f , txtmsgs[0].c_str ( ) ) ;
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.82f , 0.5f , chatmessages[1].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.86f , 0.5f , txtmsgs[1].c_str ( ) ) ;
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.74f , 0.5f , chatmessages[2].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.82f , 0.5f , txtmsgs[2].c_str ( ) ) ;
 
         graph_sys->EndFrame();
 
@@ -199,25 +200,45 @@ int LbGameImp::RunGame()
         {
             switch ( game_event.id )
             {
+                // Deal with players joining.
                 case LB_GAME_PLAYERJOIN:
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " has joined the game." ) +
+                        game_event.message ) ;
+                    break;
+
+                // Deal with players going.
                 case LB_GAME_PLAYERLEAVE:
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " has left the game." ) +
+                        game_event.message ) ;
+                    break;
+
+                // Deal with players changing name.
                 case LB_GAME_HANDCHANGE:
-                case LB_GAME_NEWGAME:
-                case LB_GAME_CHANGESERVER :
-                case LB_GAME_RESETSERVER :
-                     MessageBox ( NULL , "message from server/client" , "Werd Up", MB_ICONSTOP ) ;
-                break;
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " is now known as " ) +
+                        game_event.message + string ( "." ) ) ;
+                    break;
 
                 // Deal with incoming chat messages.
                 case LB_GAME_CHAT:
-                {
-                    chatmessages [ 0 ] = chatmessages [ 1 ] ;
-                    chatmessages [ 1 ] = chatmessages [ 2 ] ;
-                    chatmessages [ 2 ] =
-                        string ("<" );
-                        //GetPlayerHandle (game_event.playerHash) +
-//                        string ( "> " ) + game_event.message;
-                }
+                    ShowStatusMessage (
+                        string ("<" ) +
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( "> " ) + game_event.message ) ;
+                   break;
+
+                // New game message.  Abandon any current games.
+                case LB_GAME_NEWGAME:
+                // A new server has been elected, switch to this server.
+                case LB_GAME_CHANGESERVER :
+                // Hmm, need to think about what we're doing with this.
+                case LB_GAME_RESETSERVER :
+                     MessageBox ( NULL , "message from server/client" , "Werd Up", MB_ICONSTOP ) ;
                 break;
             }
 
@@ -248,9 +269,26 @@ int LbGameImp::RunGame()
 
     delete eye;
 
-    DeInitSubsystems();
+    DeInitSubsystems ( ) ;
 
     return 0;
+}
+
+void LbGameImp::ShowStatusMessage ( const string & txt )
+{
+    // Implements a nice shifting scrolling effect.
+    if ( txtmsgs [ 0 ] == "" )
+        txtmsgs [ 0 ] = txt ;
+    else if ( txtmsgs [ 1 ] == "" )
+        txtmsgs [ 1 ] = txt ;
+    else if ( txtmsgs [ 2 ] == "" )
+        txtmsgs [ 2 ] = txt ;
+    else
+    {
+        txtmsgs [ 0 ] = txtmsgs [ 1 ] ;
+        txtmsgs [ 1 ] = txtmsgs [ 2 ] ;
+        txtmsgs [ 2 ] = txt ;
+    }
 }
 
 /**
@@ -259,9 +297,17 @@ int LbGameImp::RunGame()
  **/
 string LbGameImp::GetPlayerHandle ( int playerhash )
 {
-    char temp[20] ;
+    char temp [ 20 ] ;
     itoa ( playerhash , temp , 10 ) ;
-    return string(temp);
+    return string ( temp ) ;
+}
+
+/**
+ ** Set the name of a player.
+ **/
+void LbGameImp::SetPlayerHandle ( int playerhash , const string & playerhandle )
+{
+
 }
 
 /**
@@ -277,6 +323,7 @@ void LbGameImp::ProcessCommand ( string t )
         string cmd = t.substr ( 1 , m - 1 ) ,
                prm = t.substr ( m + 1 , t.size ( ) - m - 2 ) ;
 
+        // See which command was typed.
         if ( cmd == "quit" )
             { quit_flag = true ; return ; }
         else if ( cmd == "connect" )
@@ -290,14 +337,27 @@ void LbGameImp::ProcessCommand ( string t )
         else if ( cmd == "leave" )
             e.id = LB_GAME_PLAYERLEAVE ;
 
-        e.message=prm;
+        // For standard commands add the parameter's typed.
+        e.message = prm ;
     }
     else
     {
+        // No command means it's chat.
         e.id = LB_GAME_CHAT ;
-        e.message=t;
+
+        // Strip whitespace from the start and end of t.
+        int i , j ;
+        i = t.find_first_not_of ( "\n\r \t_" , 0 ) ;
+        j = t.find_last_not_of ( "\n\r \t_" ) ;
+
+        // If the user only entered whitespace then forget it.
+        if ( j == - 1 ) return ;
+
+        // Copy the non-whitespace part of the entry.
+        e.message = t.substr ( i , j - i + 1 ) ;
     }
 
+    // Attach our player hash and dispatch the message.
     e.playerHash = net_sys->GetOwnPlayerHash ( ) ;
     net_sys->SendGameEvent ( e , ( net_sys->GetStatus ( ) == LB_NET_SERVER ) ) ;
 }

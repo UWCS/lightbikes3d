@@ -93,7 +93,7 @@ bool LbNetImp::GetNextGameEvent ( LbGameEvent &e )
         LbGameEvent t = gameMessageQueue.front();
         gameMessageQueue.pop();
         e.id = t.id ;
-        memcpy ( ( char * ) & e.message , ( char * ) & t.message  , 19 ) ;
+        e.message = t.message ;
         e.playerHash = t.playerHash ;
         return true ;
     }
@@ -160,15 +160,15 @@ void LbNetImp::ProcessMessages ( )
 
     while ( GetTCPMessage ( & s , messagebuf ) )
     {
-        // NOTE: CRASHES WITH INVALID MESSAGE!
         // Assign the buffer to a proper string object, parse for command
         // and playerhash.
         string completemessage = messagebuf ;
-        int n = completemessage.find_first_of ( " " , 0 );
-        int m = completemessage.find_first_of ( " " , n + 1 );
+        int n = completemessage.find_first_of ( " " , 0 ) ;
+        int m = completemessage.find_first_of ( " " , n + 1 ) ;
+        int q = completemessage.find_last_not_of ( "\r\n" ) ;
         string commandstring = completemessage.substr ( 0 , n ) ;
         string playerhashstring = completemessage.substr ( n , m - n ) ;
-        string msgtext = completemessage.substr ( m + 1, completemessage.size() - 2 - m ) ;
+        string msgtext = completemessage.substr ( m + 1, q - m ) ;
         int playerhash = atoi ( playerhashstring.c_str ( ) ) ;
 
         if ( commandstring == "WELCOME" )
@@ -241,7 +241,7 @@ void LbNetImp::PollSockets ( )
     timeval timeout;
     timeout.tv_sec = 0 ;
     timeout.tv_usec = 0 ;
-	 int i;
+     int i;
 
     // Construct read sockets.
     fd_set readscks , writescks , errscks;
@@ -270,6 +270,17 @@ void LbNetImp::PollSockets ( )
             if ( writescks.fd_array [ i ] == lbsockets [ j ].socket )
                 SendData ( j ) ;
     }
+
+    // Check for sockets ready to write.
+    for (i = 0 ; i < errscks.fd_count ; i ++ )
+    {
+         MessageBox ( NULL, "err scks" ,
+                    "Error" , MB_ICONSTOP ) ;
+        for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
+            if ( errscks.fd_array [ i ] == lbsockets [ j ].socket )
+                ;//;
+    }
+
 }
 
 /**
@@ -450,9 +461,11 @@ void LbNetImp::ReadData  ( int c )
     int nRet  = recv ( lbsockets [ c ].socket ,
                   ( LPSTR )&lbsockets [ c ].readBuffer +
                   lbsockets [ c ] .readBufferSize , MAX_READ_SIZE , 0 ) ;
-    if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) != WSAEWOULDBLOCK )
-        MessageBox ( NULL, "An error occured reading data from the "\
-                           "connection.", "Error.", MB_ICONSTOP ) ;
+    if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET ) // && WSAGetLastError ( ) != WSAEWOULDBLOCK )
+    {
+        // We have lost the connection.  A leave game message must be generated, and the socket close
+        CloseSocket ( lbsockets [ c ] ) ;
+    }
     else lbsockets [ c ].readBufferSize += nRet ;
 
     // See if we have an end of line character indicating the message
@@ -462,6 +475,18 @@ void LbNetImp::ReadData  ( int c )
         readSocketQueue.push ( &lbsockets [ c ] ) ;
 }
 
+
+/**
+ ** Called by server to close connection and report the player as gone.
+ **/
+void LbNetImp::CloseSocket  ( LbSocket &s )
+{
+    LbGameEvent e ;
+    e.id = LB_GAME_PLAYERLEAVE ;
+    e.message = "Connection closed." ;
+    e.playerHash = SocketToPlayerhash ( &s ) ;
+    gameMessageQueue.push ( e ) ;
+}
 
 /**
  ** Called to send data when socket is available to send data in queue.
