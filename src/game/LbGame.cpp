@@ -210,6 +210,7 @@ int LbGameImp::RunGame()
                         {
                             // Left key press means add a turning point.
                             case LB_OSKEY_LEFT:
+                            {
                                 sprintf(inp, "Left Key Press");
                                 lpress++;
                                 sound_sys->PlayWaveFile(wave);
@@ -217,32 +218,39 @@ int LbGameImp::RunGame()
                                 thisplayer->SetDirection( ( thisplayer->GetDirection() + 3 ) % 4 );
 
                                 // Send message.
-                                //LbPositionUpdate u ;
-                                //u.playerHash = ???
-                                //u.xpos =??
-                                //u.ypos = ??
-                                //u.level = ??
-                                //u.sequence = ??
-                                //u.direction = ??
-                                //net_sys->sendPositionUpdate ( u ) ;
+                                LbGamePositionUpdate u ;
+                                u.playerHash = thisplayer->GetHash ( ) ;
+                                u.x1 = 0 ;
+                                u.y1 = 0 ;
+                                u.x2 = thisplayer->GetPosition()->getX() ;
+                                u.y2 = thisplayer->GetPosition()->getY() ;
+                                u.level = thisplayer->GetLevel() ;
+                                u.sequence = thisplayer->GetNextSequenceNumber() ;
+                                u.direction = thisplayer -> GetDirection ( ) ;
+                                net_sys->SendPositionUpdate ( u ) ;
+                            }
                             break;
 
                             // Right key press means add a turning point.
                             case LB_OSKEY_RIGHT:
+                            {
                                 sprintf(inp, "Right Key Press");
                                 rpress++;
                                 thisplayer->GetBike()->AddSegment( * thisplayer->GetPosition() );
                                 thisplayer->SetDirection( ( thisplayer->GetDirection() + 1 ) % 4 );
 
                                 // Send message.
-                                //LbPositionUpdate u ;
-                                //u.playerHash = ???
-                                //u.xpos =??
-                                //u.ypos = ??
-                                //u.level = ??
-                                //u.sequence = ??
-                                //u.direction = thisplayer -> GetDirection ( ) ;
-                                //net_sys->sendPositionUpdate ( u ) ;
+                                LbGamePositionUpdate u ;
+                                u.playerHash = thisplayer->GetHash ( ) ;
+                                u.x1 = 0 ;
+                                u.y1 = 0 ;
+                                u.x2 = thisplayer->GetPosition()->getX() ;
+                                u.y2 = thisplayer->GetPosition()->getY() ;
+                                u.level = thisplayer->GetLevel() ;
+                                u.sequence = thisplayer->GetNextSequenceNumber() ;
+                                u.direction = thisplayer -> GetDirection ( ) ;
+                                net_sys->SendPositionUpdate ( u ) ;
+                            }
                             break;
                         }
                     }
@@ -250,7 +258,10 @@ int LbGameImp::RunGame()
                 if (keycount>0)
                     sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
             }
-            else sprintf(inp, "Input Error");
+            else
+            {
+                sprintf(inp, "Input Error");
+            }
         }
 
         // Get text entered.
@@ -506,6 +517,38 @@ int LbGameImp::RunGame()
 
         }
 
+        if ( net_sys->GetStatus ( ) != LB_NET_DISCONNECTED )
+        {
+            // Get the new UDP messages
+            net_sys->PollSocketsUDP ( ) ;
+            LbGamePositionUpdate u ;
+
+            while ( net_sys->GetNextPositionUpdate(u) )
+            {
+               // Update stuff.
+                  // Find the player matching the hash.
+                     // Add the segment.
+
+                // Resend the message if we are a server.
+                //if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
+                //    net_sys->SendPositionUpdate ( ) ;
+
+            }
+        }
+        else
+        {
+            /*int a = 162 ;
+            char p[8];
+            memcpy ( &p , &a , 4 ) ;
+            int z ;
+            memcpy ( &z , &p , 4 ) ;
+
+                char bud [ 200 ] ;
+                sprintf ( (char*)&bud , "value %d" , z ) ;
+                    MessageBox ( NULL , (char*)&bud ,"Numbber" ,
+                                 MB_ICONSTOP ) ;*/
+        }
+
         // Put a scoreboard together.  BTW I think we should be able to detect
         // 'kills' (when you cut in front of someone) fairly accurately,
         // experiments needed to distinguish between accidental deaths and
@@ -708,6 +751,7 @@ void LbGameImp::NewGame ( )
     }
 
     gameinprogress = true ;
+
 }
 
 /**
@@ -776,6 +820,8 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
+            net_sys -> ConnectServerUDP ( prm.c_str() , LB_SERVER_UDP_PORT ) ;
+
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
             e.message = ownhandle;
@@ -793,9 +839,12 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
+            net_sys -> InitiateServerUDP ( "" /*prm.c_str()*/ , LB_SERVER_UDP_PORT ) ;
+
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
             e.message = ownhandle;
+
         }
         else if ( cmd == "hand" )
         {

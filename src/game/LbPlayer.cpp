@@ -32,121 +32,136 @@
 // Get player name.
 int LbPlayerImp::GetHash ( )
 {
-	return hash ;
+    return hash ;
 }
 
 // Get player handle.
 string LbPlayerImp::GetHandle ( )
 {
-	return handle ;
+    return handle ;
 }
 
 // Get player kills.
 int LbPlayerImp::GetKills ( )
 {
-	return kills ;
+    return kills ;
 }
 
 // Get player deaths.
 int LbPlayerImp::GetDeaths ( )
 {
-	return deaths ;
+    return deaths ;
 }
 
 // Get player ping.
 int LbPlayerImp::GetPing ( )
 {
-	return ping ;
+    return ping ;
 }
 
 // Get player kills.
 bool LbPlayerImp::IsValid ( )
 {
-	return valid ;
+    return valid ;
 }
 
 // Set player hash.
 void LbPlayerImp::SetHash ( int h )
 {
-	hash = h ;
+    hash = h ;
 }
 
 // Set player handle.
 void LbPlayerImp::SetHandle ( string h)
 {
-	handle = h ;
+    handle = h ;
 }
 
 // Set player kills.
 void LbPlayerImp::SetKills ( int k )
 {
-	kills = k ;
+    kills = k ;
 }
 
 // Set player deaths.
 void LbPlayerImp::SetDeaths ( int d )
 {
-	deaths = d ;
+    deaths = d ;
 }
 
 // Set player ping.
 void LbPlayerImp::SetPing ( int p )
 {
-	ping = p ;
+    ping = p ;
 }
 
 // Set player valid.
 void LbPlayerImp::SetValid ( bool v )
 {
-	valid = v ;
+    valid = v ;
 }
 
 // Get the graphics bike.
 LbGraphicsBike * LbPlayerImp::GetBike ( )
 {
-	return bike ;
+    return bike ;
 }
 
 // Get the position.
 LbVector * LbPlayerImp::GetPosition ( )
 {
-	return bikepos ;
+    return bikepos ;
 }
 
 // Get the graphics bike.
 void LbPlayerImp::SetBike ( LbGraphicsBike * g )
 {
-	bike = g ;
+    bike = g ;
 }
 
 // Get the position.
 void LbPlayerImp::SetPosition ( LbVector * v )
 {
-	bikepos = v ;
+    bikepos = v ;
 }
 
 // Set player valid.
 void LbPlayerImp::SetPlaying ( bool v )
 {
-	playing = v ;
+    playing = v ;
 }
 
 // Get player kills.
 bool LbPlayerImp::IsPlaying ( )
 {
-	return playing ;
+    return playing ;
 }
 
 // Set player the direction.
 void LbPlayerImp::SetDirection ( int d )
 {
-	direction = d ;
+    direction = d ;
 }
 
 // Get player direction.
 int LbPlayerImp::GetDirection ( )
 {
-	return direction ;
+    return direction ;
+}
+
+int LbPlayerImp::GetLevel ( )
+{
+    return level ;
+}
+
+void LbPlayerImp::SetLevel ( int l )
+{
+    level = l ;
+}
+
+int LbPlayerImp::GetNextSequenceNumber ( )
+{
+    return sequence ++ ;
 }
 
 /*
@@ -154,6 +169,7 @@ int LbPlayerImp::GetDirection ( )
 */
 LbPlayerImp::LbPlayerImp()
 {
+    sequence = 10 ;
 }
 
 LbPlayerImp::~LbPlayerImp()

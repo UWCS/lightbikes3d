@@ -54,15 +54,21 @@ struct LbGamePositionUpdate
 {
     //LbGamePositionUpdateID id ;
     int playerHash ;
-    int x1 , y1 , x2 , y2 ;
-    int level ;
     int sequence ;
-    int direction ;
+    float x1 , y1 , x2 , y2 ;
+    byte level ;
+    byte direction ;
 } ;
 
 class LbNetSys
 {
     public:
+        virtual void InitiateServerUDP  ( const char * address , int port ) = 0 ;
+        virtual void ConnectServerUDP  ( const char * address , int port ) = 0 ;
+        virtual bool GetNextPositionUpdate ( LbGamePositionUpdate & u ) = 0 ;
+        virtual void PollSocketsUDP ( ) = 0 ;
+        virtual void SendPositionUpdate( LbGamePositionUpdate & u ) = 0 ;
+
         virtual int GetStatus ( ) = 0 ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void SendGameEvent ( LbGameEvent &e , bool includeourself ) = 0 ;

@@ -275,6 +275,10 @@ class LbPlayerImp : public LbPlayer
         // Get player direction.
         virtual int GetDirection ( ) ;
 
+        virtual int GetLevel ( ) ;
+        virtual void SetLevel ( int l )  ;
+        virtual int GetNextSequenceNumber ( ) ;
+
         // END
 
         /*
@@ -294,6 +298,8 @@ class LbPlayerImp : public LbPlayer
         LbVector * bikepos ;
         bool playing ;
         int direction ;
+        int level ;
+        int sequence ;
 };
 
 
