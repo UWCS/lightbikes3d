@@ -124,28 +124,17 @@ bool LbOSLayerInputImp::InitDInput(HINSTANCE hInst,HWND hWnd)
                                     CLSCTX_INPROC_SERVER,
                                     IID_IDirectInput7,
                                     (void**)&lpDInput );
-    if (!SUCCEEDED(hr)) return false;
+    if (FAILED(hr)) return false;
     lpDInput->AddRef();
-    lpDInput->Initialize( hInst, DIRECTINPUT_VERSION );
+    if (FAILED(lpDInput->Initialize( hInst, DIRECTINPUT_VERSION ))) return false;
   
 
-/*  if ( DirectInputCreateEx(   hInstance,
-                                DIRECTINPUT_VERSION,
-                                IID_IDirectInput7,
-                                (void**)&g_DI,
-                                NULL ) ) return false;
-    //DirectInputCreateEx is what we SHOULD use, not CoCreateInstance...
-    //...but not if we're using crappy Borland DirectX libraries...
-    //...well, compatibility is high with this method...
-*/
-
-
-    if ( lpDInput->CreateDeviceEx(  GUID_SysKeyboard,
+    if ( FAILED(lpDInput->CreateDeviceEx(  GUID_SysKeyboard,
                                 IID_IDirectInputDevice7,
                                 (void**)&lpDIDevKeyb,
-                                NULL ) ) return false;
-    if ( lpDIDevKeyb->SetDataFormat(&c_dfDIKeyboard) ) return false;
-    if ( lpDIDevKeyb->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) ) return false;
+                                NULL ) )) return false;
+    if ( FAILED(lpDIDevKeyb->SetDataFormat(&c_dfDIKeyboard) )) return false;
+    if ( FAILED(lpDIDevKeyb->SetCooperativeLevel( hWnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) )) return false;
 
     if ( !lpDIDevKeyb)
         return false;
@@ -158,17 +147,12 @@ bool LbOSLayerInputImp::InitDInput(HINSTANCE hInst,HWND hWnd)
     dipdw.diph.dwHow = DIPH_DEVICE;
     dipdw.dwData = DINPUT_BUFFERSIZE; //keyboard buffer size
 
-//    MessageBox(NULL, "Please wait...", "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
-    //DirectInput doesn't work unless I put the above messagebox in.
-    //Can SOMEBODY who understands DirectInput please figure out what
-    //the hell is going on?
     hr = lpDIDevKeyb->SetProperty( DIPROP_BUFFERSIZE, &dipdw.diph );
 
     lpDIDevKeyb->Acquire();
 
-    if (!SUCCEEDED(hr)) return false;
+    if (FAILED(hr)) return false;
 
-//    MessageBox(NULL, "OK!", "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
     return true;
 }
 
