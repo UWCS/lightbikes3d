@@ -165,7 +165,7 @@ void LbNetImp::ProcessMessages ( )
     {
         // Assign the buffer to a proper string object, parse for command
         // and playerhash.
-        string completemessage = messagebuf ;
+        string completemessage = string ( messagebuf ) ;
         int n = completemessage.find_first_of ( " " , 0 ) ;
         int m = completemessage.find_first_of ( " " , n + 1 ) ;
         int q = completemessage.find_last_not_of ( "\r\n" ) ;
@@ -201,15 +201,17 @@ void LbNetImp::ProcessMessages ( )
         t.playerHash = playerhash ;
 
         // If we are server check for players sending wrong player numbers.
-        if ( mode == LB_NET_SERVER &&
-             playerhash != SocketToPlayerhash ( s ) &&
-             t.id != LB_GAME_PLAYERJOIN )
-            MessageBox ( NULL , "Client sent invalid data." ,
-                "Error" , MB_ICONSTOP ) ;
+        //if ( mode == LB_NET_SERVER &&
+        //     playerhash != SocketToPlayerhash ( s ) )
+        //    MessageBox ( NULL , "Client sent invalid data." ,
+        //        "Error" , MB_ICONSTOP ) ;
+        if ( playerhash == -1 )
+            t.playerHash = SocketToPlayerhash ( s ) ;
 
         // Add the game message to the queue.
         gameMessageQueue.push ( t ) ;
-    }
+
+        }
 }
 
 /**
@@ -280,8 +282,8 @@ void LbNetImp::PollSockets ( )
     // Check for sockets ready to write.
     for (i = 0 ; i < errscks.fd_count ; i ++ )
     {
-         //MessageBox ( NULL, "err scks" ,
-         //           "Error" , MB_ICONSTOP ) ;
+         MessageBox ( NULL, "err scks" ,
+                    "Error" , MB_ICONSTOP ) ;
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
             if ( errscks.fd_array [ i ] == lbsockets [ j ].socket )
                 ;//;
@@ -353,8 +355,10 @@ void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
     iServCon = n ;
     lbsockets [ n ] .socket = hSock ;
     lbsockets [ n ] .remoteAddress = sockName ;
-    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .readBufferTail = 0 ;
+    lbsockets [ n ] .readBufferHead = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
+    lbsockets [ n ].writeBuffer[ 0 ] = '\0' ;
     lbsockets [ n ] .error = false ;
 
     mode = LB_NET_CONNECTEDTOSERVER ;
@@ -420,7 +424,9 @@ void LbNetImp::InitiateServer ( const char * address , int port )
     iListCon = n ;
     lbsockets [ n ] .socket = hSock ;
     lbsockets [ n ] .remoteAddress = sockName ;
-    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .readBufferTail = 0 ;
+    lbsockets [ n ] .readBufferHead = 0 ;
+    lbsockets [ n ].writeBuffer[ 0 ] = '\0' ;
     lbsockets [ n ] .writeBufferSize = 0 ;
     lbsockets [ n ] .error = false ;
 
@@ -449,7 +455,9 @@ void LbNetImp::AcceptConnection (  )
     // Create a new entry in the client connections list.
     lbsockets [ n ] .socket = hNewSock ;
     lbsockets [ n ] .remoteAddress = remoteName ;
-    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .readBufferTail = 0 ;
+    lbsockets [ n ] .readBufferHead = 0 ;
+    lbsockets [ n ]. writeBuffer[ 0 ] = '\0' ;
     lbsockets [ n ] .writeBufferSize = 0 ;
     lbsockets [ n ] .error = false ;
 
@@ -471,7 +479,7 @@ void LbNetImp::ReadData  ( int c )
     // Read the data from the client.
     int nRet  = recv ( lbsockets [ c ].socket ,
                   ( LPSTR )&lbsockets [ c ].readBuffer +
-                  lbsockets [ c ] .readBufferSize , MAX_READ_SIZE , 0 ) ;
+                  lbsockets [ c ] .readBufferTail , MAX_READ_SIZE , 0 ) ;
     if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET )
     // && WSAGetLastError ( ) != WSAEWOULDBLOCK )
     {
@@ -479,12 +487,12 @@ void LbNetImp::ReadData  ( int c )
         // generated, and the socket closed.
         CloseSocket ( lbsockets [ c ] ) ;
     }
-    else lbsockets [ c ].readBufferSize += nRet ;
+    else lbsockets [ c ].readBufferTail += nRet ;
 
     // See if we have an end of line character indicating the message
     // is complete. If we do stick this on the tail of the queue.
     if ( lbsockets [ c ] . readBuffer [
-         lbsockets [ c ] . readBufferSize - 1 ] == 10 )
+         lbsockets [ c ] . readBufferTail - 1 ] == 10 )
         readSocketQueue.push ( &lbsockets [ c ] ) ;
 }
 
@@ -514,7 +522,7 @@ void LbNetImp::SendData ( int c )
     if ( lbsockets [ c ] . writeBufferSize > 0 )
     {
         int nRet = send ( lbsockets [ c ] . socket ,
-                         (LPSTR)&lbsockets [ c ] . writeBuffer ,
+                         ( LPSTR ) & lbsockets [ c ] . writeBuffer ,
                          lbsockets [ c ] . writeBufferSize , 0 ) ;
         if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET )
         {
@@ -522,7 +530,11 @@ void LbNetImp::SendData ( int c )
             // generated, and the socket closed.
             CloseSocket ( lbsockets [ c ] ) ;
         }
-        else lbsockets[ c ].writeBufferSize = 0 ;
+        else
+        {
+            lbsockets[ c ].writeBuffer[ 0 ] = '\0' ;
+            lbsockets[ c ].writeBufferSize = 0 ;
+        }
     }
 }
 
@@ -535,11 +547,23 @@ bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
     if ( ! readSocketQueue.empty ( ) )
     {
         LbSocket * c = readSocketQueue.front ( ) ;
-        readSocketQueue.pop ( ) ;
-        memcpy ( message , ( * c ) . readBuffer , ( * c ) . readBufferSize ) ;
-        message [ ( * c ) . readBufferSize ] = '\0';
-        ( * c ) . readBufferSize = 0 ;
+        int i = 0;
+        while ( true )
+        {
+            message [ i ] = ( * c ) . readBuffer [ i + ( * c ) . readBufferHead ] ;
+            if ( message [ i ] == '\n' )
+                break ;
+            i++ ;
+        }
+
+        message [ i + 1 ] = '\0' ;
+        ( * c ) . readBufferHead += i + 1;
         * s = c ;
+
+        // Only remove from queue when all messages are read.
+        if ( ( * c ) . readBufferHead >= ( * c ) . readBufferTail )
+            readSocketQueue.pop ( ) ;
+
         return true ;
     }
     return false ;
@@ -551,7 +575,7 @@ bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
 void LbNetImp::PutTCPMessage ( LbSocket * s , const char * message )
 {
     // Stick it in the write buffer.
-    strcpy ( ( char * ) & ( ( * s ) . writeBuffer ) + ( * s ) . writeBufferSize , message ) ;
+    strcat ( ( * s ) . writeBuffer , message ) ;
     ( * s ) . writeBufferSize += strlen ( message ) ;
 }
 

@@ -203,94 +203,100 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
-        if ( net_sys->GetStatus ( ) != LB_NET_DISCONNECTED )
+        // Process Network messages (Networking) ie. convert them from
+        // strings and packets to game messages, and add them to the
+        // network module's queue of game messages.
+        net_sys->ProcessMessages ( ) ;
+
+        // Probably won't do this ultimately.
+        net_sys->PollSockets ( ) ;
+
+        // Deal with network messages.
+        while ( net_sys->GetNextGameEvent ( game_event ) )
         {
-
-            // Process Network messages (Networking) ie. convert them from strings
-            // and packets to game messages, and add them to the network module's
-            // queue of game messages.
-            net_sys->ProcessMessages ( ) ;
-
-            // Probably won't do this ultimately.
-            net_sys->PollSockets ( ) ;
-
-            // Read in Network messages (Networking)...
-            /* Game Events - Messages from network:
-           **  Start game
-           **  Player position updates
-           **  End game
-           **  Send level data
-           */
-
-            // Deal with network messages.
-            while ( net_sys->GetNextGameEvent ( game_event ) )
+            switch ( game_event.id )
             {
-                switch ( game_event.id )
-                {
-                    // Deal with players joining.
-                    case LB_GAME_PLAYERJOIN :
-                        AddPlayer ( game_event.playerHash , game_event.message ) ;
-                        ShowStatusMessage (
-                            GetPlayerHandle ( game_event.playerHash ) +
-                            string ( " has joined the game." ) ) ;
-                        break;
+                // Deal with players joining.
+                case LB_GAME_PLAYERJOIN :
 
-                    // Deal with players going.
-                    case LB_GAME_PLAYERLEAVE :
-                        ShowStatusMessage (
-                            GetPlayerHandle ( game_event.playerHash ) +
-                            string ( " has left the game." ) +
-                            game_event.message ) ;
-                        RemovePlayer ( game_event.playerHash ) ;
-                        break;
+                    AddPlayer ( game_event.playerHash , game_event.message ) ;
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " has joined the game." ) ) ;
 
-                    // Deal with players changing name.
-                    case LB_GAME_HANDCHANGE :
-                        ShowStatusMessage (
-                            GetPlayerHandle ( game_event.playerHash ) +
-                            string ( " is now known as " ) +
-                            game_event.message + string ( "." ) ) ;
-                        SetPlayerHandle ( game_event.playerHash ,
-                                          game_event.message ) ;
-                        break;
+                                        // If we are the server send information on the other players.
+                                        if ( net_sys->GetStatus () == LB_NET_SERVER )
+                                        {
+                                            LbGameEvent e ;
+                                            for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+                                            {
+                                                if ( players[i].valid == true )
+                                                {
+                                                    e.id = LB_GAME_PLAYERJOIN ;
+                                                    e.playerHash = players[i].hash ;
+                                                    e.message = GetPlayerHandle ( players[i].hash ) ;
+                                                    net_sys->SendGameEvent ( e , false ) ;
+                                                }
+                                            }
+                    }
 
-                    // Deal with incoming chat messages.
-                    case LB_GAME_CHAT:
-                        ShowStatusMessage (
-                            string ("<" ) +
-                            GetPlayerHandle ( game_event.playerHash ) +
-                            string ( "> " ) + game_event.message ) ;
-                       break;
 
-                    // New game message.  Abandon any current games.
-                    case LB_GAME_NEWGAME:
-                        NewGame ( ) ;
-                        break ;
+                    break;
 
-                    // If the server decides the game is over, return to chat.
-                    case LB_GAME_ENDGAME:
-                        EndGame ( ) ;
-                        break ;
+                // Deal with players going.
+                case LB_GAME_PLAYERLEAVE :
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " has left the game." ) +
+                        game_event.message ) ;
+                    RemovePlayer ( game_event.playerHash ) ;
+                    break;
 
-                    // If a round is being played kill it off.  Return players
-                    // to start positions.
-                    case LB_GAME_NEWROUND:
-                        NewRound ( ) ;
-                        break ;
+                // Deal with players changing name.
+                case LB_GAME_HANDCHANGE :
+                    ShowStatusMessage (
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( " is now known as " ) +
+                        game_event.message + string ( "." ) ) ;
+                    SetPlayerHandle ( game_event.playerHash ,
+                                      game_event.message ) ;
+                    break;
 
-                    // If a new map is being sent.
-                    case LB_GAME_NEWMAP:
+                // Deal with incoming chat messages.
+                case LB_GAME_CHAT:
+                    ShowStatusMessage (
+                        string ("<" ) +
+                        GetPlayerHandle ( game_event.playerHash ) +
+                        string ( "> " ) + game_event.message ) ;
+                    break;
+
+                // New game message.  Abandon any current games.
+                case LB_GAME_NEWGAME:
+                    NewGame ( ) ;
                     break ;
 
-                }
+                // If the server decides the game is over, return to chat.
+                case LB_GAME_ENDGAME:
+                    EndGame ( ) ;
+                    break ;
 
-                // Rebroadcast iff we are server and it didn't come from us,
-                // because otherwise we would have already broadcast it.
-                if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
-                     game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
-                        net_sys->SendGameEvent ( game_event , false ) ;
+                // If a round is being played kill it off.  Return players
+                // to start positions.
+                case LB_GAME_NEWROUND:
+                    NewRound ( ) ;
+                    break ;
+
+                // If a new map is being sent.
+                case LB_GAME_NEWMAP:
+                    break ;
+
             }
 
+            // Rebroadcast iff we are server and it didn't come from us,
+            // because otherwise we would have already broadcast it.
+            if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
+                game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
+                    net_sys->SendGameEvent ( game_event , false ) ;
         }
 
         // Update game state (Game Logic)...
@@ -386,18 +392,23 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
         if ( players [ i ].valid == true && playerhash == players [ i ].hash )
             if ( players [ i ] .handle != "" )
                 return players [ i ] .handle ;
-    return ownhandle ;
+    return "Noname" ;
 }
 
 /**
  ** Set the handle (name) of a player.
  **/
-void LbGameImp::SetPlayerHandle ( int hash , const string & handle )
+bool LbGameImp::SetPlayerHandle ( int hash , const string & handle )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid == true && hash == players [ i ].hash )
-            players [ i ] .handle = handle ;
+        if ( players [ i ].valid == true &&
+             hash == players [ i ].hash )
+        {
+             players [ i ] .handle = handle ;
+             return true ;
+        }
+    return false ;
 }
 
 /**
@@ -405,6 +416,9 @@ void LbGameImp::SetPlayerHandle ( int hash , const string & handle )
  **/
 void LbGameImp::AddPlayer ( int hash , const string & handle )
 {
+    // Check for existing player.
+    if ( SetPlayerHandle ( hash , handle ) ) return ;
+
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         if ( players [ i ].valid == false )
@@ -483,9 +497,12 @@ void LbGameImp::ProcessCommand ( string t )
             {
                 e.message = prm ;
 
-                if ( cmd == "newgame" ) e.id = LB_GAME_NEWGAME ;
-                else if  ( cmd == "newround" ) e.id = LB_GAME_NEWROUND ;
-                else if  ( cmd == "endgame" ) e.id = LB_GAME_ENDGAME ;
+                if ( cmd == "newgame" )
+                    e.id = LB_GAME_NEWGAME ;
+                else if  ( cmd == "newround" )
+                    e.id = LB_GAME_NEWROUND ;
+                else if  ( cmd == "endgame" )
+                    e.id = LB_GAME_ENDGAME ;
                 else if ( cmd == "newmap" )
                     e.id = LB_GAME_NEWMAP ;
             }
@@ -508,7 +525,10 @@ void LbGameImp::ProcessCommand ( string t )
             if ( net_sys->GetStatus ( ) == LB_NET_CONNECTEDTOSERVER )
                 ShowStatusMessage ( "Status: Connected to server." ) ;
             else
+            {
                 ShowStatusMessage ( "Error: Could not connect." ) ;
+                return ;
+            }
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
@@ -520,16 +540,20 @@ void LbGameImp::ProcessCommand ( string t )
             if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
                 ShowStatusMessage ( "Status: Server running." ) ;
             else
+            {
                 ShowStatusMessage ( "Error: Could not start server." ) ;
-            return ;
-        }
+                return ;
+            }
 
-        // General.
+            // Send the join message.
+            e.id = LB_GAME_PLAYERJOIN ;
+            e.message = ownhandle;
+        }
         else if ( cmd == "hand" )
         {
+            ownhandle = prm ;
             e.message = prm ;
             e.id = LB_GAME_HANDCHANGE ;
-            ownhandle = prm ;
         }
         else if ( cmd == "leave" )
         {
@@ -613,6 +637,9 @@ void LbGameImp::DeInitSubsystems()
     }
 };
 
+/**
+ ** Create stuff.
+ **/
 LbGameSys *CreateGameSys()
 {
     LbGameSys *rval=new LbGameImp;

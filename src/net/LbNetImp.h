@@ -33,7 +33,8 @@ struct LbSocket
     SOCKET socket ;
     SOCKADDR_IN remoteAddress ;
     char readBuffer [ SOCKET_BUFFER_SIZE ] ;
-    int readBufferSize ;
+    int readBufferTail ;
+    int readBufferHead ;
     char writeBuffer [ SOCKET_BUFFER_SIZE ] ;
     int writeBufferSize ;
     bool error ;

@@ -53,7 +53,7 @@ class LbGameImp : public LbGameSys
         virtual void DeInitSubsystems();
         virtual void ProcessCommand ( string t ) ;        virtual void ShowStatusMessage ( const string & txt ) ;
         virtual string GetPlayerHandle ( int hash ) ;
-        virtual void SetPlayerHandle ( int hash , const string & handle ) ;
+        virtual bool SetPlayerHandle ( int hash , const string & handle ) ;
         virtual void RemovePlayer ( int hash ) ;
         virtual void AddPlayer ( int hash , const string & handle ) ;
         virtual void NewGame ( ) ;

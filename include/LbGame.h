@@ -30,9 +30,7 @@
 // The number of bytes to read/write from/to the socket in a single attempt.#define MAX_READ_SIZE 10#define MAX_WRITE_SIZE 10
 // Size of buffer allocated for message.#define MAX_MESSAGE_LENGTH 256
 // The max number of connections, clients only use 1, so really it's the
-// max players per server.
-#define MAX_CONNECTIONS 100
-
+// max players per server.#define MAX_CONNECTIONS 100
 class LbBaseBlock
 {
     virtual void GetGeometrySize(int &num_points,int &num_normals)=0;
