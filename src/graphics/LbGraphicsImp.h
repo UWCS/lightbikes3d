@@ -51,6 +51,8 @@ void Init();
 
 
 private:
+
+int frameCount;
 };
 
 

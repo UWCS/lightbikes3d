@@ -24,7 +24,7 @@
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbGraphicsImp.h"
-
+#include <GL/glu.h>
 
 /*
 ** LbGraphicsSys methods
@@ -47,15 +47,99 @@ void LbGraphicsImp::DrawText(float x,float y,const char *str)
 
 void LbGraphicsImp::StartFrame()
 {
+	// Initalise the 'scene'...
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	
+	// ***********************************************************************
+	// Code is here for initial testing ONLY! REMOVE THIS CODE BEFORE RELEASE!
+	// ***********************************************************************
+	
+	glLoadIdentity();
+	glRotatef(((GLfloat)frameCount / 5), 0.0f, 0.0f, -1.0f);
+	glTranslatef(-1.5f, 0.0f, -8.0f);
+	glBegin(GL_TRIANGLES);
+		glColor3f(0.0f, 0.4f, 0.8f);
+		glVertex3f( 0.0f, 1.0f, 0.0f);
+		glVertex3f( 1.0f,-1.0f, 0.0f);
+		glVertex3f(-1.0f,-1.0f, 0.0f);
+	glEnd();
+	
+	glLoadIdentity();
+	glTranslatef(1.5f, 0.0f, -8.0f);
+	glRotatef(((GLfloat)frameCount / 5), 1.0f, 0.0f, 0.0f);
+	glRotatef(((GLfloat)frameCount / 7), 0.0f, 1.0f, 0.0f);
+	glRotatef(((GLfloat)frameCount / 11), 0.0f, 0.0f, 1.0f);
+	glBegin(GL_QUADS);
+		// TOP
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f( 1.0f, 1.0f,-1.0f);
+		glVertex3f(-1.0f, 1.0f,-1.0f);
+		glVertex3f(-1.0f, 1.0f, 1.0f);
+		glVertex3f( 1.0f, 1.0f, 1.0f);
+		// BOTTOM
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f( 1.0f,-1.0f, 1.0f);
+		glVertex3f(-1.0f,-1.0f, 1.0f);
+		glVertex3f(-1.0f,-1.0f,-1.0f);
+		glVertex3f( 1.0f,-1.0f,-1.0f);
+		// FRONT
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f( 1.0f, 1.0f, 1.0f);
+		glVertex3f(-1.0f, 1.0f, 1.0f);
+		glVertex3f(-1.0f,-1.0f, 1.0f);
+		glVertex3f( 1.0f,-1.0f, 1.0f);
+		// BACK
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f( 1.0f,-1.0f,-1.0f);
+		glVertex3f(-1.0f,-1.0f,-1.0f);
+		glVertex3f(-1.0f, 1.0f,-1.0f);
+		glVertex3f( 1.0f, 1.0f,-1.0f);
+		// LEFT
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(-1.0f, 1.0f, 1.0f);
+		glVertex3f(-1.0f, 1.0f,-1.0f);
+		glVertex3f(-1.0f,-1.0f,-1.0f);
+		glVertex3f(-1.0f,-1.0f, 1.0f);
+		// RIGHT
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f( 1.0f, 1.0f,-1.0f);
+		glVertex3f( 1.0f, 1.0f, 1.0f);
+		glVertex3f( 1.0f,-1.0f, 1.0f);
+		glVertex3f( 1.0f,-1.0f,-1.0f);
+	glEnd();
+	
+	// ***********************************************************************
+	
+	if (glGetError()) {
+		MessageBox(NULL, "Error redering.", "LbGraphics::StartFrame()", MB_ICONSTOP);
+	}
 }
 
 void LbGraphicsImp::EndFrame()
 {
+	frameCount++;
 }
 
 
 void LbGraphicsImp::Init()
 {
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);		// Clear to black.
+	glClearDepth(1.0);				// Enables clearing of depth buffer.
+	glDepthFunc(GL_LESS);				// Depth test to use.
+	glEnable(GL_DEPTH_TEST);			// Actually enables depth testing.
+	glShadeModel(GL_SMOOTH);			// Enables smooth colouring.
+	
+	// Set up Projection...
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
+	//gluLookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+	
+	if (glGetError()) {
+		MessageBox(NULL, "Error initalising OpenGL.", "LbGraphics::Init()", MB_ICONSTOP);
+	}
+	frameCount = 0;
 }
 
 LbGraphicsImp::LbGraphicsImp()

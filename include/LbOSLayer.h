@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       James Ross
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +42,7 @@ class LbOSLayerSys
 public:
 
 virtual bool PollEvent(LbOSLayerEvent &os_event)=0;
+virtual void SwapDoubleBuffers()=0;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       James Ross
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +60,11 @@ if(quit_flag)
 	}
 
 return false;
+}
+
+void LbOSWin32Imp::SwapDoubleBuffers()
+{
+	SwapBuffers(hDC);
 }
 
 
