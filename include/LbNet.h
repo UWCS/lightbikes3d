@@ -25,13 +25,44 @@
 #ifndef __LBNET__
 #define __LBNET__
 
+enum LbGameEventId
+{
+    LB_GAME_PLAYERJOIN = 0 ,
+    LB_GAME_PLAYERLEAVE = 1 ,
+    LB_GAME_HANDCHANGE = 2 ,
+    LB_GAME_CHATMESSAGE = 3 ,
+    LB_GAME_NEWGAME = 4 ,
+    LB_GAME_STARTSERVER = 20 ,
+    LB_GAME_STOPSERVER = 21 ,
+    LB_GAME_RESETSERVER = 22
+};
+
+struct LbGameEvent
+{
+    LbGameEventId id ;
+    int playerId;
+    char message[20] ;
+};
+
 class LbNetSys
 {
     public:
-        virtual void GetNextGameMessage ( ) = 0 ;
+        virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
-
         virtual void Init(LbOSLayerSys *os_sys) = 0 ;
+				virtual void PollSockets ( ) = 0 ;
+				virtual void ConnectToServer ( char *) = 0 ;
+				virtual void InitiateServer ( int ) = 0 ;
+				virtual void InitiateNetwork ( ) = 0 ;
+				virtual void CloseNetwork ( ) = 0 ;
+
+				virtual void AcceptConnection (  ) = 0;
+				virtual void MakeConnection (  ) = 0;
+				virtual void ReadData ( int c  ) = 0;
+				virtual void SendData ( int c  ) = 0;
+
+				virtual bool GetTCPMessage ( char * address , char * message ) = 0 ;
+				virtual void PutTCPMessage ( char * address , char * message ) = 0 ;
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}

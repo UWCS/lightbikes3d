@@ -47,6 +47,7 @@ int LbGameImp::RunGame()
 {
     bool quit_flag;
     LbOSLayerEvent os_event;
+    LbGameEvent game_event;
     LbVector target(0,0,0), up(0,1,0);
     LbVector *eye;
     float scroll,change;
@@ -124,7 +125,7 @@ int LbGameImp::RunGame()
             **  Return: Send player quip
             */
             // handle the event.
-            switch(os_event.id)
+            switch ( os_event.id )
             {
                 case LB_OSEVENT_QUIT:
                     quit_flag=true;// bye bye...
@@ -133,20 +134,45 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
-        // Process Network messages (Networking)...
-        // Convert network messages i.e. strings and packets to game messages.
+        // Process Network messages (Networking) ie. convert them from strings
+        // and packets to game messages, and add them to the network module's
+        // queue of game messages.
         net_sys->ProcessMessages();
 
         // Read in Network messages (Networking)...
-        //while ( netsys->GetNextGameMessage() )
-        //{
-            /* Messages from network:
-            **  Start game
-            **  Player position updates
-            **  End game
-            **  Send level data
-            */
-        //}
+            /* Game Events - Messages from network:
+           **  Start game
+           **  Player position updates
+           **  End game
+           **  Send level data
+           */
+
+				net_sys->PollSockets();
+
+        while ( net_sys->GetNextGameEvent ( game_event ) )
+        {
+            switch ( game_event.id )
+            {
+                case LB_GAME_PLAYERJOIN:
+                case LB_GAME_PLAYERLEAVE:
+                case LB_GAME_HANDCHANGE:
+                case LB_GAME_NEWGAME:
+                    //MessageBox ( NULL , "game message" , "", MB_ICONSTOP ) ;
+                break;
+
+                // Deal with incoming chat messages.  JUST DISPLAYS THEM.
+                case LB_GAME_CHATMESSAGE:
+                    MessageBox ( NULL , (char*)&game_event.message , "Chat Message", MB_ICONSTOP ) ;
+                break;
+
+                case LB_GAME_STARTSERVER :
+                case LB_GAME_STOPSERVER :
+                case LB_GAME_RESETSERVER :
+                    MessageBox ( NULL , "message from server" , "", MB_ICONSTOP ) ;
+                break;
+            }
+            break;
+        }
 
         // Update game state (Game Logic)...
             /* Updateing actions:

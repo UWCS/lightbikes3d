@@ -25,19 +25,57 @@
 #ifndef __LBNETIMP__
 #define __LBNETIMP__
 
+#define SOCKADDR_LEN sizeof(struct sockaddr)
+
 class LbNetImp : public LbNetSys
 {
     public:
         LbNetImp();
         ~LbNetImp();
 
-        virtual void GetNextGameMessage ( ) ;
+        virtual bool GetNextGameEvent (  LbGameEvent &e ) ;
         virtual void ProcessMessages ( ) ;
 
         virtual void Init(LbOSLayerSys *os_sys);
+				virtual void PollSockets ( );
+        virtual void ConnectToServer( char * ) ;
+				virtual void InitiateServer( int ) ;
+				virtual void InitiateNetwork() ;
+
+				virtual void AcceptConnection (  ) ;
+				virtual void MakeConnection (  ) ;
+				virtual void ReadData ( int c  ) ;
+				virtual void SendData ( int c  ) ;
+
+				virtual void CloseNetwork() ;
+				virtual bool GetTCPMessage ( char * address , char * message ) ;
+				virtual void PutTCPMessage ( char * address , char * message ) ;
 
     private:
         LbOSLayerSys *os;
+
+    LbGameEvent tempEvent;
+    // Used by the server code
+		struct LbConnection
+		{
+		    SOCKET socket;
+		    SOCKADDR_IN remoteAddress;
+		    char readBuffer [ 100 ] ;
+		    int readBufferSize ;
+		    char writeBuffer [ 100 ] ;
+		    int writeBufferSize ;
+		    int prevInReadQ ;
+		    int prevInWriteQ ;
+		};
+		LbConnection connections [ MAX_CONNECTIONS ] ;
+		int nCon ;
+		int nHeadOfReadQ ;
+		int nTailOfReadQ ;
+		int nHeadOfWriteQ ;
+		int nTailOfWriteQ ;
+		int iListCon ;
 };
+
+
 
 #endif

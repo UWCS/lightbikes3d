@@ -8,6 +8,7 @@
        David Black
        James Ross
        David Capps
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,15 +25,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
 #include <dinput.h>
-#include <winsock.h>
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbOSWin32Imp.h"
 
 #define DINPUT_BUFFERSIZE 32; //size of buffer for DirectInput
-
 #define WM_USER_TCP_EVENT WM_USER+1
-#define SOCKADDR_LEN sizeof(struct sockaddr)
 
 const int KeyMapping[] = { DIK_LEFT, DIK_RIGHT };
 const int NumKeys = 2;
@@ -246,11 +244,6 @@ switch(uMsg)
         DestroyOGLContext();
         PostQuitMessage(0);
         hwnd_main=NULL;
-    break;
-    case WM_USER_TCP_EVENT:
-        ProcessSocketEvent ( (SOCKET) wParam ,
-                             WSAGETSELECTEVENT ( lParam ) ,
-                             WSAGETSELECTERROR ( lParam ) );
     break;
     }
 
@@ -610,231 +603,7 @@ void LbOSWin32Imp::DestroyOGLContext()
 
 }
 
-// ---------- Network functions. ----------
 
-/*
-** Set up the networking API.  In this case it's Berkeley sockets for
-** Windows which is called WINSOCK.
-*/
-void LbOSWin32Imp::InitiateNetwork()
-{
-    // This structure can be used to get information about the version of
-    // winsock in use.
-    WSAData stWSAData;
-
-    // Startup version 1.1 of Winsock, report errors.
-    if ( WSAStartup ( MAKEWORD ( 2 , 0 ) , &stWSAData ) != 0 )
-        MessageBox( NULL , "An error occured while initialising WinSock." ,
-                    "Error" , MB_ICONSTOP ) ;
-
-        nCon = 0;
-        nHeadOfReadQ = -1;
-        nTailOfReadQ = -1;
-}
-
-/*
-** Used by a client to connect to a server.
-*/
-void LbOSWin32Imp::ConnectToServer( char * dottedServerAddress )
-{
-    // Used for return values.
-    int nRet;
-
-    // Get the server address as a long number rather than a string.
-    unsigned long serverAddress = inet_addr ( dottedServerAddress ) ;
-
-    // Set up a socket to connect to the server.
-    SOCKET hClientSock = socket ( AF_INET , SOCK_STREAM , 0 ) ;
-    if ( hClientSock == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening the socket." ,
-                     "Error" , MB_ICONSTOP ) ;
-
-    // Request Asynchronous notification for most events.
-    nRet = WSAAsyncSelect ( hClientSock , hwnd_main ,WM_USER_TCP_EVENT ,
-                            ( FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE ) ) ;
-    if ( nRet == SOCKET_ERROR )
-        MessageBox ( NULL , "There was an error setting the socket to " \
-                     "asynchrous mode." , "Error" , MB_ICONSTOP ) ;
-
-    MessageBox ( NULL, "connecting to server...", "fish", MB_ICONSTOP);
-
-    // Open
-}
-
-/*
-** Used by a server to set up the listening on a port which picks up clients
-** attempting to connect.
-*/
-void LbOSWin32Imp::InitiateServer ( int port )
-{
-    // Used for return values.
-    int nRet;
-
-    // Open the socket, reporting any errors.
-    //   AF_INET means use IP ADDRESSING
-    //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
-    //   0 means use TCP/IP protocol suite.
-    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , 0 );
-    if ( hSock == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening socket." ,
-                     "Error" , MB_ICONSTOP ) ;
-
-    // Set the socket to Asynchronous, we want to be notified of incoming data
-    // or connections by a windows message.
-    nRet = WSAAsyncSelect ( hSock , hwnd_main , WM_USER_TCP_EVENT ,
-                            ( FD_ACCEPT | FD_READ | FD_WRITE | FD_CLOSE ) ) ;
-    if ( nRet == SOCKET_ERROR)
-        MessageBox ( NULL , "There was an error setting up the socket" ,
-                     "Error" , MB_ICONSTOP ) ;
-
-    // Set the port and address, and report the error.
-    SOCKADDR_IN sockName;
-    PSOCKADDR_IN pSockName;
-    pSockName = &sockName;
-    pSockName->sin_family = PF_INET;
-    pSockName->sin_addr.S_un.S_addr = (u_long) inet_addr ( "127.0.0.1" ) ;
-    pSockName->sin_port = htons ( port ) ;
-    nRet = bind ( hSock , (LPSOCKADDR) pSockName, SOCKADDR_LEN ) ;
-    if ( nRet == SOCKET_ERROR )
-    {
-       MessageBox ( NULL, "Error binding to the server port.  Another " \
-                          "application may be using this port." , "Error" ,
-                          MB_ICONSTOP ) ;
-    }
-
-    // Start listening for connections on the port.
-    nRet = listen ( hSock , 20 ); // 20 = Max players.
-    if ( nRet == SOCKET_ERROR )
-    {
-       MessageBox ( NULL, "There was an error starting to listen" \
-                    "on the port" , "Error" , MB_ICONSTOP ) ;
-    }
-}
-
-/*
-** Deal with server issues, like a client connecting, disconnecting or sending
-** their chat.  When a client connects we need to buffer message.
-*/
-void LbOSWin32Imp::ProcessSocketEvent ( SOCKET hSock ,
-                                        WORD WSAEvent ,
-                                        WORD WSAError )
-{
-    int nLen = SOCKADDR_LEN , nRet , i;
-    SOCKET hNewSock;
-    SOCKADDR_IN remoteName ;
-
-    switch ( WSAEvent )
-    {
-        case FD_CONNECT:
-            MessageBox(NULL, "client connected to server", "fish", MB_ICONSTOP);
-            // Create a new entry in the client connections list.
-        break;
-        case FD_ACCEPT:
-            // Check connection limit not exceeded.
-            if ( nCon >= MAX_CONNECTIONS - 1 )
-            {
-                MessageBox ( NULL, "Too many clients trying to connect " ,
-                             "Error.", MB_ICONSTOP ) ;
-            }
-
-            // Accept the connection.
-            hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , (LPINT) &nLen ) ;
-            if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-                MessageBox ( NULL, "An error occured accepting an incoming "\
-                                   "connection.", "Error.", MB_ICONSTOP ) ;
-
-            // Create a new entry in the client connections list.
-            connections[nCon].socket = hNewSock ;
-            connections[nCon].remoteAddress = remoteName ;
-            connections[nCon].readBufferSize = 0 ;
-            sprintf ( connections[nCon].writeBuffer , "Welcome to Lightbikes 2001" );
-            connections[nCon].writeBufferSize = 26 ;
-            connections[nCon].prevInReadQ = -1 ;
-            nCon++;
-        break;
-        case FD_READ:
-            // Find the appropriate connection.
-            for ( i = 0 ; i < nCon ; i++ )
-                if ( hSock == connections[ i ].socket )
-                    break;
-
-            // Read the data from the client.
-            nRet = recv ( connections[ i ].socket ,
-                          (LPSTR)&connections[ i ].readBuffer +
-                          connections[i].readBufferSize , 1 , 0 );
-            if ( nRet == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-                MessageBox ( NULL, "An error occured reading data from the "\
-                                   "connection.", "Error.", MB_ICONSTOP ) ;
-            else connections[i].readBufferSize += nRet ;
-
-            // See if we have an end of line character indicating the message
-            // is complete.
-            if ( connections[ i ].readBuffer[
-                   connections[i].readBufferSize - 1 ] == 10 )
-            {
-                // If we do stick this on the tail of the queue.
-                if (nHeadOfReadQ == -1 ) nHeadOfReadQ = i ;
-                if ( nTailOfReadQ != i && nTailOfReadQ != -1 )
-                    connections[nTailOfReadQ].prevInReadQ = i;
-                nTailOfReadQ = i;
-            }
-        break;
-        case FD_WRITE:
-            // Find the appropriate connection.
-            for ( i = 0 ; i < nCon ; i++ )
-                if ( hSock == connections[ i ].socket )
-                    break;
-            // Send the contents of the writebuffer, no MTU checking.
-            if ( connections[ i ].writeBufferSize > 0 )
-            {
-                nRet = send ( connections[ i ].socket ,
-                              (LPSTR)&connections[ i ].writeBuffer ,
-                               connections[ i ].writeBufferSize , 0 );
-                if ( nRet == SOCKET_ERROR &&
-                     WSAGetLastError() != WSAEWOULDBLOCK )
-                    MessageBox ( NULL, "An error occured writing data to the "\
-                                       "socket.", "Error.", MB_ICONSTOP ) ;
-                else connections[ i ].writeBufferSize = 0 ;
-            }
-        break;
-        case FD_CLOSE:
-            // Read anything remaining.  Remove the client from the
-            // connections list.
-        break;
-    }
-}
-
-/*
-** Get the next message in the queue.
-*/
-bool LbOSWin32Imp::GetTCPMessage ( char * address , char * message )
-{
-    if ( nHeadOfReadQ == -1 ) return false;
-
-    sprintf( address , inet_ntoa ( connections[ nHeadOfReadQ ].remoteAddress.sin_addr ) );
-    sprintf( message , connections[ nHeadOfReadQ ].readBuffer );
-    connections[ nHeadOfReadQ ].readBufferSize = 0 ;
-
-    nHeadOfReadQ = connections[ nHeadOfReadQ ].prevInReadQ;
-    return true;
-}
-
-/*
-** Add this message to the queue.
-*/
-void LbOSWin32Imp::PutTCPMessage ( char * address , char * message )
-{
-}
-
-/*
-** Shuts down the network cleanly.
-*/
-void LbOSWin32Imp::CloseNetwork()
-{
-    //closesocket(hSock) ;
-}
-
-// ---------- End of network functions. ----------
 
 LbOSLayerSys *CreateOSLayerSys()
 {

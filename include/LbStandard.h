@@ -33,6 +33,7 @@
 
 #ifdef WIN32
 #   include <windows.h>
+#   include <winsock.h>
 #endif
 
 #include <GL/gl.h>

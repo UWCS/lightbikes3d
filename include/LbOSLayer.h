@@ -68,14 +68,6 @@ virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
 
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
 
-virtual void ConnectToServer ( char *) = 0 ;
-virtual void InitiateServer ( int ) = 0 ;
-virtual void InitiateNetwork ( ) = 0 ;
-virtual void CloseNetwork ( ) = 0 ;
-virtual void ProcessSocketEvent ( SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
-virtual bool GetTCPMessage ( char * address , char * message ) = 0 ;
-virtual void PutTCPMessage ( char * address , char * message ) = 0 ;
-
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}
 };
