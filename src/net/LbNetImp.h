@@ -54,7 +54,7 @@ class LbNetImp : public LbNetSys
         virtual void Init(LbOSLayerSys *os_sys);
         virtual void PollSockets ( );
         virtual void ConnectToServer( const char * address , int port ) ;
-        virtual void InitiateServer( int port ) ;
+        virtual void InitiateServer( const char * address , int port ) ;
 
     private:
         // LbNet's reference to the OS Layer.

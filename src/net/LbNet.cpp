@@ -44,10 +44,7 @@
 // Similarly received messages are decoded and retreived by the game logic
 // modules.
 //
-
 // TO DO:
-//        Implement client/server.
-//        Implement text IO in Lb Game.
 //        Threading to make polling better.
 //        Use UDP, define UDP packets.
 
@@ -71,23 +68,16 @@ int LbNetImp::GetStatus ( )
  **/
 void LbNetImp::Init ( LbOSLayerSys *os_sys )
 {
-
-            //MessageBox ( NULL , "Init." ,
-           //          "Error" , MB_ICONSTOP ) ;
-
-    // Store the reference to the OS layer.
+   // Store the reference to the OS layer.
     os = os_sys;
 
-    // Start the OS level aspects of the network.
-    os->InitiateNetwork();
-
+    //TEST
     mode = LB_NET_DISCONNECTED ;
 
     iListCon = -1 ;
     iServCon = -1 ;
-
-    InitiateServer ( 32001 ) ;
-
+    // Start the OS level aspects of the network.
+    os->InitiateNetwork();
 }
 
 /**
@@ -264,6 +254,10 @@ void LbNetImp::PollSockets ( )
  **/
 void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
 {
+    // TODO: if we are running a server kill it off first.
+
+    // TODO: if we are connected to another server, kill the connection.
+
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
 
@@ -304,10 +298,17 @@ void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
  ** Used by a server to set up the listening on a port which picks up clients
  ** attempting to connect.
  **/
-void LbNetImp::InitiateServer ( int port )
+void LbNetImp::InitiateServer ( const char * address , int port )
 {
+    // TODO: If we already running a server kill it off.
+
+    // TODO: If we are connected, then leave the game first.
+
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
+
+    // Get the server address as a long number rather than a string.
+    unsigned long serverAddress = inet_addr ( address ) ;
 
     // Open the socket, reporting any errors.
     //   AF_INET means use IP ADDRESSING
@@ -323,6 +324,7 @@ void LbNetImp::InitiateServer ( int port )
     PSOCKADDR_IN pSockName ;
     pSockName = &sockName ;
     pSockName->sin_family = PF_INET ;
+    pSockName->sin_addr.S_un.S_addr = serverAddress ;
     pSockName->sin_port = htons ( port ) ;
     int nRet = bind ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )

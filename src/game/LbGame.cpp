@@ -59,7 +59,6 @@ int LbGameImp::RunGame()
     InitSubsystems();
 
     quit_flag=false;
-
     eye = new LbVector(0,0,0);
     change = 0.1f;
     startms = lastms = os_sys->GetMS();
@@ -69,9 +68,8 @@ int LbGameImp::RunGame()
     string chatmessages [ 3 ] = { "" , "" ,"" } ;
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
-
+    //net_sys->Test();
     //sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
-
     while(!quit_flag)
     {
         scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
@@ -105,10 +103,22 @@ int LbGameImp::RunGame()
         // Get text entered.
         while ( ( k = os_sys->getNextTextKey ( ) ) != 0 )
         {
+            //Get ASCII codes.
+            //char temp[20] ;
+            //itoa ( (int)k , temp , 10 ) ;
+            //MessageBox ( NULL , temp, "Werd Up Bitch", MB_ICONSTOP ) ;
             if ( k == '\r' )
             {
+
                 ProcessCommand ( textbuf ) ;
                 textbuf.erase() ;
+            }
+            else if ( k == 27 ) //esc
+                textbuf.erase ( ) ;
+            else if ( k == 8 ) //backspace
+            {
+                if ( textbuf.size ( ) > 0 )
+                    textbuf.erase ( textbuf.size ( ) - 1 ) ;
             }
             else
                 textbuf += k ;
@@ -191,17 +201,15 @@ int LbGameImp::RunGame()
                      MessageBox ( NULL , "message from server/client" , "Werd Up", MB_ICONSTOP ) ;
                 break;
 
-                // Deal with incoming chat messages.  JUST DISPLAYS THEM.
+                // Deal with incoming chat messages.
                 case LB_GAME_CHAT:
                 {
-                    char temp[20] ;
-                    itoa ( game_event.playerHash , temp , 10 ) ;
                     chatmessages [ 2 ] = chatmessages [ 1 ] ;
                     chatmessages [ 1 ] = chatmessages [ 0 ] ;
-                    chatmessages [ 0 ] = "<" ;
-                    chatmessages [ 0 ] += temp ;
-                    chatmessages [ 0 ] += "> " ;
-                    chatmessages [ 0 ] += game_event.message ;
+                    chatmessages [ 0 ] = string ("<" ) +
+                                         string ( GetPlayerHandle ( game_event.playerHash ) ) +
+                                         string ( "> " ) +
+                                         string ( game_event.message ) ;
                 }
                 break;
             }
@@ -233,6 +241,17 @@ int LbGameImp::RunGame()
 }
 
 /**
+ ** Should return player's actual handle (name) as a string,
+ ** currently just gives number.
+ **/
+char * LbGameImp::GetPlayerHandle ( int playerhash )
+{
+    char temp[20] ;
+    itoa ( playerhash , temp , 10 ) ;
+    return temp;
+}
+
+/**
  ** Takes a command entered, and deals with it appropriately.
  **/
 void LbGameImp::ProcessCommand ( string t )
@@ -247,10 +266,10 @@ void LbGameImp::ProcessCommand ( string t )
 
         if ( cmd == "quit" )
             { quit_flag = true ; return ; }
-        //else if ( cmd == "connect" )
-         //   { net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
+        else if ( cmd == "connect" )
+            { net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
         else if ( cmd == "startserver" )
-            { net_sys->InitiateServer ( LB_SERVER_TCP_PORT ) ; return ; }
+            { net_sys->InitiateServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
         else if ( cmd == "join" )
             e.id = LB_GAME_PLAYERJOIN ;
         else if ( cmd == "hand" )
@@ -258,16 +277,16 @@ void LbGameImp::ProcessCommand ( string t )
         else if ( cmd == "leave" )
             e.id = LB_GAME_PLAYERLEAVE ;
 
-        //strcpy ( e.message , prm.c_str ( ) ) ;
-        //e.playerHash = 0 ;
-        //net_sys->SendGameEvent ( e ) ;
+        strcpy ( e.message , prm.c_str ( ) ) ;
+        e.playerHash = 0 ;
+        net_sys->SendGameEvent ( e ) ;
     }
     else
     {
-        //e.id = LB_GAME_CHAT ;
-        //strcpy ( e.message , t.c_str ( ) ) ;
-        //e.playerHash = 0 ;
-        //net_sys->SendGameEvent ( e ) ;
+        e.id = LB_GAME_CHAT ;
+        strcpy ( e.message , t.c_str ( ) ) ;
+        e.playerHash = 0 ;
+        net_sys->SendGameEvent ( e ) ;
     }
 }
 

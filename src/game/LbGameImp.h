@@ -39,7 +39,7 @@ private:
     void InitSubsystems();
     void DeInitSubsystems();
     void ProcessCommand ( string t ) ;
-
+    char * GetPlayerHandle ( int playerhash ) ;
     LbOSLayerSys *os_sys;
     LbGraphicsSys *graph_sys;
     LbInputSys *input_sys;
@@ -76,7 +76,6 @@ public:
 
 virtual void GetGeometrySize(int &num_points,int &num_normals);
 virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
-
 /*
 ** LbFullBlock methods
 */

@@ -57,8 +57,7 @@ class LbNetSys
         virtual void Init ( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
         virtual void ConnectToServer ( const char * address , int port ) = 0 ;
-        virtual void InitiateServer ( int port ) = 0 ;
-
+        virtual void InitiateServer ( const char * address ,  int port ) = 0 ;
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}
 };
