@@ -105,7 +105,7 @@ int LbGraphicsImp::LoadBMPTexture(char *fname, int transcolour)
     }
 
     fin.read((char*) &palette, sizeof(palette) );
-    fin.seekg(fhead.bfOffBits,SEEK_SET);
+    fin.seekg(fhead.bfOffBits,ios::beg);
 
     int numpixel = finfo.biWidth * finfo.biHeight, tmp;
 

@@ -101,15 +101,15 @@ int LbGameImp::RunGame()
         graph_sys->StartFrame();
         // draw here
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
-        graph_sys->DrawText(0,0.5,"LightBikes3d");
+        graph_sys->DrawText(0.0f,0.5f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0,1,0,1));
-        graph_sys->DrawText(0.8,0.5,"ABHDE");
+        graph_sys->DrawText(0.8f,0.5f,"ABHDE");
         graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
-        graph_sys->DrawText(0.5,0.9,msg);
+        graph_sys->DrawText(0.5f,0.9f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1,1,0,1));
-        graph_sys->DrawText(0,0.25,inp);
+        graph_sys->DrawText(0.0f,0.25f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0,1,1,1));
-        graph_sys->DrawText(0,0.1,keymsg);
+        graph_sys->DrawText(0.0f,0.1f,keymsg);
 
 
         graph_sys->EndFrame();

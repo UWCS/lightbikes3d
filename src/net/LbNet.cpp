@@ -163,11 +163,12 @@ void LbNetImp::PollSockets ( )
     timeval timeout;
     timeout.tv_sec = 0 ;
     timeout.tv_usec = 0 ;
+	 int i;
 
     // Construct read sockets.
     fd_set readscks , writescks , errscks;
     errscks.fd_count = writescks.fd_count = readscks.fd_count = nCon ;
-    for ( int i = 0 ; i < nCon ; i++ )
+    for (i = 0 ; i < nCon ; i++ )
     {
         errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = connections[i].socket ;
     }
@@ -176,7 +177,7 @@ void LbNetImp::PollSockets ( )
     select ( 0 , (fd_set * )&readscks , (fd_set * )&writescks , (fd_set * )&errscks , &timeout );
 
     // Check for data to read or incoming connections.
-    for ( int i = 0 ; i < readscks.fd_count ; i ++ )
+    for (i = 0 ; i < readscks.fd_count ; i ++ )
     {
         for ( int j = 0 ; j < nCon ; j ++ )
                 if ( readscks.fd_array [ i ] == connections [ j ].socket )
@@ -185,7 +186,7 @@ void LbNetImp::PollSockets ( )
     }
 
     // Check for sockets ready to write.
-    for ( int i = 0 ; i < writescks.fd_count ; i ++ )
+    for (i = 0 ; i < writescks.fd_count ; i ++ )
     {
         for ( int j ; j < nCon ; j ++ )
             if ( writescks.fd_array [ i ] == connections [ j ].socket )

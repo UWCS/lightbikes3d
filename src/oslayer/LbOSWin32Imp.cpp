@@ -24,10 +24,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
-#include <dinput.h>
+
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbOSWin32Imp.h"
+
+
+
 
 #define DINPUT_BUFFERSIZE 32; //size of buffer for DirectInput
 #define WM_USER_TCP_EVENT WM_USER+1
@@ -530,21 +533,21 @@ void WA_VSA_SetInfo1(int nch, int srate) { }
 //End of crappy useless Winamp functions
 
 bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp) {
-
-    Winamp_Input_Module* __stdcall (* GetInModule ) (void);
-    Winamp_Output_Module* __stdcall (* GetOutModule) (void);
-
+    
+    Winamp_GetInModule GetInModule;
+    Winamp_GetOutModule GetOutModule;
+    	
     WinampIn = LoadLibrary("MUSICIN.DLL");
     if (!WinampIn) return false;
 
-    GetInModule = ( Winamp_Input_Module* __stdcall (*)(void) )GetProcAddress(WinampIn, "winampGetInModule2");
+    GetInModule = (Winamp_GetInModule)GetProcAddress(WinampIn, "winampGetInModule2");
     if (!GetInModule) return false;
     *inp = GetInModule();
 
     WinampOut = LoadLibrary("MUSICOUT.DLL");
     if (!WinampOut) return false ;
 
-    GetOutModule = (Winamp_Output_Module* __stdcall (*)(void) )GetProcAddress(WinampOut, "winampGetOutModule");
+    GetOutModule = (Winamp_GetOutModule)GetProcAddress(WinampOut, "winampGetOutModule");
     if (!GetOutModule) return false;
     *outp = GetOutModule();
 

@@ -27,6 +27,9 @@
 #ifndef __LBOSWIN32IMP__
 #define __LBOSWIN32IMP__
 
+#define DIRECTINPUT_VERSION 0x0700
+#include <dinput.h>
+
 class LbOSWin32Imp : public LbOSLayerSys
 {
 public:
