@@ -22,6 +22,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
 
+#ifndef __LBMATH__
+#define __LBMATH__
 
 /* Options */
 #define HAVE_VECTOR_TOSTRING
@@ -226,3 +228,5 @@ class LbMatrix4 {
 
 
 };
+
+#endif

@@ -37,10 +37,79 @@ private:
 void InitSubsystems();
 void DeInitSubsystems();
 
+LbOSLayerSys *os_sys;
+
 LbGraphicsSys *graph_sys;
 LbInputSys *input_sys;
 LbSoundSys *sound_sys;
 LbNetSys *net_sys;
+};
+
+/*
+** Block implimentations...
+*/
+
+// impliment common functionality
+class LbBaseBlockImp : public LbBaseBlock
+{
+public:
+
+/*
+** LbBaseBlock methods
+*/
+virtual void GetColor(LbRGBAColor &col);
+virtual void SetColor(const LbRGBAColor &col);
+
+/*
+** LbBaseBlockImp methods
+*/
+
+LbBaseBlockImp();
+~LbBaseBlockImp();
+
+private:
+};
+
+
+class LbFullBlock : public LbBaseBlockImp
+{
+public:
+/*
+** LbBaseBlock methods
+*/
+
+virtual void GetGeometrySize(int &num_points,int &num_normals);
+virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
+
+/*
+** LbFullBlock methods
+*/
+
+LbFullBlock();
+~LbFullBlock();
+private:
+};
+
+class LbRampBlock : public LbBaseBlockImp
+{
+public:
+/*
+** LbBaseBlock methods
+*/
+
+virtual void GetGeometrySize(int &num_points,int &num_normals);
+virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
+
+/*
+** LbFullBlock methods
+*/
+
+LbRampBlock(LbBlockDirection dir);
+~LbRampBlock();
+
+private:
+
+LbBlockDirection block_dir;
 };
 
 #endif

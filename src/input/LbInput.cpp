@@ -34,7 +34,7 @@ LbInputImp::~LbInputImp()
 {
 }
 
-LbInputSys *CreateInputSys()
+LbInputSys *CreateInputSys(LbOSLayerSys *os_sys)
 {
 LbInputSys *rval=new LbInputImp;
 assert(rval!=NULL);

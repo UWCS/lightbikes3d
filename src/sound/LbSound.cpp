@@ -34,7 +34,7 @@ LbSoundImp::~LbSoundImp()
 {
 }
 
-LbSoundSys *CreateSoundSys()
+LbSoundSys *CreateSoundSys(LbOSLayerSys *os_sys)
 {
 LbSoundSys *rval=new LbSoundImp;
 assert(rval!=NULL);

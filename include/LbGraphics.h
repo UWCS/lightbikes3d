@@ -24,14 +24,58 @@
 #ifndef __LBGRAPHICS__
 #define __LBGRAPHICS__
 
+class LbGraphicsBike
+{
+public:
+
+/// Change color of lightbikes trail segments.
+virtual void SetColor(const LbRGBAColor &new_col)=0;
+/// Change texture of lightbikes trail segments.
+virtual void SetTexture(const char *tex_name)=0;
+
+
+/// Add a static trail segment, will be optimized for drawing.
+virtual void AddSegment(const LbVector &pt)=0;
+
+/// Draw a dynamic(could change due to network updates) trail segment.
+virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt)=0;
+/// Draws the static segments which belong to the bike.
+virtual void DrawTrail()=0;
+
+/// empty virtual destructor to ensure proper cleanup
+virtual ~LbGraphicsBike(){}
+};
+
+class LbGraphicsLevel
+{
+public:
+
+virtual void SetBlock(LbBaseBlock *btype,int x,int y)=0;
+virtual void DrawLevel(LbVector &offset)=0;
+
+/// empty virtual destructor to ensure proper cleanup
+virtual ~LbGraphicsLevel(){}
+};
+
 class LbGraphicsSys
 {
 public:
 
+virtual void CreateGraphicsBike()=0;
+virtual void CreateGraphicsLevel(int x,int y)=0;
+
+virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)=0;
+
+virtual void DrawText(float x,float y,const char *str)=0;
+
+virtual void StartFrame()=0;
+virtual void EndFrame()=0;
+ 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbGraphicsSys(){}
 };
 
-LbGraphicsSys *CreateGraphicsSys();
+/// Create an implimentation of the graphics subsystem.
+LbGraphicsSys *CreateGraphicsSys(LbOSLayerSys *os_sys);
 
 #endif

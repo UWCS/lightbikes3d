@@ -24,10 +24,15 @@
 #ifndef __LBPUBLIC__
 #define __LBPUBLIC__
 
+#include "LbMiscTypes.h"
+#include "LbMath.h"
+
+#include "LbOSLayer.h"
+#include "LbGame.h"
 #include "LbGraphics.h"
 #include "LbInput.h"
 #include "LbSound.h"
 #include "LbNet.h"
-#include "LbGame.h"
+
 
 #endif

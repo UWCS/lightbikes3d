@@ -28,8 +28,74 @@ class LbGraphicsImp : public LbGraphicsSys
 {
 public:
 
+/*
+** LbGraphicsSys methods
+*/
+virtual void CreateGraphicsBike();
+virtual void CreateGraphicsLevel(int x,int y);
+
+virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
+
+virtual void DrawText(float x,float y,const char *str);
+
+virtual void StartFrame();
+virtual void EndFrame();
+
+/*
+** LbGraphicsImp methods
+*/
 LbGraphicsImp();
 ~LbGraphicsImp();
+
+void Init();
+
+
+private:
+};
+
+
+
+class LbGraphicsBikeImp : public LbGraphicsBike
+{
+public:
+
+/*
+** LbGraphicsBike methods
+*/
+
+virtual void SetColor(const LbRGBAColor &new_col);
+virtual void SetTexture(const char *tex_name);
+
+virtual void AddSegment(const LbVector &pt);
+
+virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt);
+virtual void DrawTrail();
+
+/*
+** LbGraphicsBikeImp methods
+*/
+LbGraphicsBikeImp();
+~LbGraphicsBikeImp();
+
+private:
+};
+
+class LbGraphicsLevelImp : public LbGraphicsLevel
+{
+public:
+
+/*
+** LbGraphicsLevel methods
+*/
+
+virtual void SetBlock(LbBaseBlock *btype,int x,int y);
+virtual void DrawLevel(LbVector &offset);
+
+/*
+** LbGraphicsLevelImp methods
+*/
+LbGraphicsLevelImp();
+~LbGraphicsLevelImp();
 
 private:
 };

@@ -24,18 +24,18 @@
 #include "LbStandard.h"
 #include "LbPublic.h"
 
-int main(int argc, char *argv[])
+int WINAPI WinMain(HINSTANCE hInstance,  // handle to current instance
+						 HINSTANCE hPrevInstance,  // handle to previous instance
+						 LPSTR lpCmdLine,      // pointer to command line
+						 int nCmdShow          // show state of window
+						 )
 {
 LbGameSys *main_game=CreateGameSys();
 
-/*
-** TODO: process any command line options...
-*/
-
- int ret_val=main_game->RunGame();
+int ret_val=main_game->RunGame();
  
- delete main_game;
- main_game=NULL;
+delete main_game;
+main_game=NULL;
  
- return ret_val;
+return ret_val;
 }

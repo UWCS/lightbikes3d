@@ -26,6 +26,38 @@
 #include "LbGraphicsImp.h"
 
 
+/*
+** LbGraphicsSys methods
+*/
+void LbGraphicsImp::CreateGraphicsBike()
+{
+}
+
+void LbGraphicsImp::CreateGraphicsLevel(int x,int y)
+{
+}
+
+void LbGraphicsImp::SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)
+{
+}
+
+void LbGraphicsImp::DrawText(float x,float y,const char *str)
+{
+}
+
+void LbGraphicsImp::StartFrame()
+{
+}
+
+void LbGraphicsImp::EndFrame()
+{
+}
+
+
+void LbGraphicsImp::Init()
+{
+}
+
 LbGraphicsImp::LbGraphicsImp()
 {
 }
@@ -34,10 +66,12 @@ LbGraphicsImp::~LbGraphicsImp()
 {
 }
 
-LbGraphicsSys *CreateGraphicsSys()
+LbGraphicsSys *CreateGraphicsSys(LbOSLayerSys *os_sys)
 {
-LbGraphicsSys *rval=new LbGraphicsImp;
+LbGraphicsImp *rval=new LbGraphicsImp;
 assert(rval!=NULL);
+
+rval->Init();
 
 return rval;
 }

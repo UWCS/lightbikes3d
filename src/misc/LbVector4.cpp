@@ -55,7 +55,7 @@ LbVector4::~LbVector4() {
 /**************** Access methods **********************/
 /* Return Vector4's Modulus */
 float LbVector4::mod() {
-  return sqrt( (m_x*m_x) +
+  return (float)sqrt( (m_x*m_x) +
 	       (m_y*m_y) +
 	       (m_z*m_z) +
 	       (m_w*m_w) );

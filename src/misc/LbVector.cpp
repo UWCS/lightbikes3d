@@ -56,7 +56,7 @@ LbVector::~LbVector() {
 
 /* Return the modulus of the Vector */
 float LbVector::mod() {
-  return sqrt( (m_x*m_x) +
+  return (float)sqrt( (m_x*m_x) +
 	       (m_y*m_y) +
 	       (m_z*m_z) );
 }

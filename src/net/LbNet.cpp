@@ -34,7 +34,7 @@ LbNetImp::~LbNetImp()
 {
 }
 
-LbNetSys *CreateNetSys()
+LbNetSys *CreateNetSys(LbOSLayerSys *os_sys)
 {
 LbNetSys *rval=new LbNetImp;
 assert(rval!=NULL);

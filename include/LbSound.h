@@ -32,6 +32,6 @@ public:
 virtual ~LbSoundSys(){}
 };
 
-LbSoundSys *CreateSoundSys();
+LbSoundSys *CreateSoundSys(LbOSLayerSys *os_sys);
 
 #endif

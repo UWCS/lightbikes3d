@@ -32,6 +32,6 @@ public:
 virtual ~LbInputSys(){}
 };
 
-LbInputSys *CreateInputSys();
+LbInputSys *CreateInputSys(LbOSLayerSys *os_sys);
 
 #endif

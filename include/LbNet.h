@@ -32,6 +32,6 @@ public:
 virtual ~LbNetSys(){}
 };
 
-LbNetSys *CreateNetSys();
+LbNetSys *CreateNetSys(LbOSLayerSys *os_sys);
 
 #endif
