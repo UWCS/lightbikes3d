@@ -40,6 +40,7 @@
 // The max number of connections, clients only use 1, so really it's the
 // max players per server.
 #define MAX_CONNECTIONS 100
+
 class LbBaseBlock
 {
     virtual void GetGeometrySize(int &num_points,int &num_normals)=0;

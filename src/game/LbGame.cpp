@@ -29,6 +29,8 @@
 #include "LbPublic.h"
 #include "LbGameImp.h"
 
+#include "graphics/LbGraphicsImp.h"
+
 LbGameImp::LbGameImp()
 {
     os_sys=NULL;
@@ -51,7 +53,7 @@ int LbGameImp::RunGame()
 
     LbOSLayerEvent os_event;
     LbGameEvent game_event;
-    LbVector up(0, 0, 1);
+    LbVector up ;
     LbVector eye, target;
     float scroll,change=5.0f;
     int count=0,lastms=0,fps=0, startms=0, keycount;
@@ -75,7 +77,6 @@ int LbGameImp::RunGame()
 
     char k ;
     int i , p ;
-    bool showscores;
 
     // Initialise players.
     for ( i = 0 ; i < MAX_PLAYERS ; i++ )
@@ -84,9 +85,6 @@ int LbGameImp::RunGame()
         players [ i ]->SetValid ( false ) ;
         players [ i ]->SetPlaying ( false ) ;
     }
-
-    // Default to not showing scores.
-    showscores = false ;
 
     // Clear the buffer that stores the typed text.
     string textbuf = "" ;
@@ -146,11 +144,10 @@ int LbGameImp::RunGame()
 
     //DEBUGGING: REMOVE END
 
-
     // HARD CODED START POSITIONS.
     //   THIS WILL BE IN THE LEVEL FILE ULTIMATELY
 
-    start [ 0 ] = LbVector ( 0  , 100 , 0 ) ;
+    start [ 0 ] = LbVector ( 0  , 20 , 0 ) ;
     start [ 1 ] = LbVector ( 0 , -100 , 0 ) ;
     start [ 2 ] = LbVector ( 10 , 0 , 0 ) ;
     start [ 3 ] = LbVector ( -10 , 0 , 0 ) ;
@@ -167,14 +164,24 @@ int LbGameImp::RunGame()
 
     // END OF HARD CODED STUFF
 
+    LbGraphicsLevelImp * level = new LbGraphicsLevelImp ( ) ;
+
     gameinprogress = false ;
+
+    int cameramode ;
+    cameramode = LB_CAMERA_FOLLOW3 ;
+
+    float ctemp ;
+    ctemp = 0.0f ;
+
+    int cface = 180 ;
 
     while( ! quit_flag )
     {
         if ( gameinprogress )
         {
 
-            step = ( change * (float)( os_sys->GetMS() - startms ) / 1000.0f );
+            step = ( change * (float)( os_sys->GetMS() - startms ) / 500.0f );
             scroll += step;
             startms = os_sys->GetMS();
             //if (scroll > 10) change=-0.02f;
@@ -187,17 +194,126 @@ int LbGameImp::RunGame()
                 sprintf(msg,"FPS:%d  Step:%.2f",fps, step);
             }
 
-            // Set eye to point to bike
+            // Swing camera to follow players' turns.
+            switch ( thisplayer -> GetDirection ( ) )
+            {
+                case 0 :
+                    if ( cface == 0 ) ;
+                    else if ( cface > 180 ) cface += 10 ;
+                    else cface += 350 ;
+                break ;
+                case 1 :
+                    if ( cface == 90 ) ;
+                    else if ( cface < 90 || cface > 270 ) cface += 10 ;
+                    else cface += 350 ;
+                break ;
+                case 2 :
+                    if ( cface == 180 ) ;
+                    else if ( cface < 180 ) cface += 10 ;
+                    else cface += 350 ;
+                break ;
+                case 3 :
+                    if ( cface == 270 ) ;
+                    else if ( cface > 90 && cface < 270 ) cface += 10 ;
+                    else cface += 350 ;
+                break ;
+            }
+            cface = cface % 360 ;
 
-            //eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
-            dist = sqrt( pow(thisplayer->GetPosition()->getX() - eye.getX(), 2) +
-                         pow(thisplayer->GetPosition()->getY() - eye.getY(), 2) +
-                         pow(thisplayer->GetPosition()->getZ() - eye.getZ(), 2) );
-            eye = LbVector( thisplayer->GetPosition()->getX() + (eye.getX() - thisplayer->GetPosition()->getX()) * (20 / dist),
-                            thisplayer->GetPosition()->getY() + (eye.getY() - thisplayer->GetPosition()->getY()) * (20 / dist),
-                            thisplayer->GetPosition()->getZ() + 10 );
+            // Set eye to point to bike
+            switch ( cameramode )
+            {
+                case LB_CAMERA_FOLLOW1:
+                {
+                    // Set appropriate eye position.
+                    eye = LbVector ( thisplayer->GetPosition()->getX() -
+                                     2.2f * sin ( cface * 0.0174533 ) + 0.001f ,
+                                     thisplayer->GetPosition()->getY() -
+                                     2.2f * cos ( cface * 0.0174533 ) + 0.001f ,
+                                     0.9f ) ;
+                    target = LbVector ( thisplayer->GetPosition()->getX() ,
+                                        thisplayer->GetPosition()->getY() , 0.0f ) ;
+                    up = LbVector ( 0.0f , 0.0f , 1.0f );
+                }
+                break ;
+                case LB_CAMERA_FOLLOW2:
+                {
+                    // Set appropriate eye position.
+                    eye = LbVector ( thisplayer->GetPosition()->getX() -
+                                     9.0f * sin ( cface * 0.0174533 ) + 0.04f ,
+                                     thisplayer->GetPosition()->getY() -
+                                     9.0f * cos ( cface * 0.0174533 ) + 0.04f ,
+                                     4.0f ) ;
+                    target = LbVector ( thisplayer->GetPosition()->getX() ,
+                                        thisplayer->GetPosition()->getY() , 0.0f ) ;
+                    up = LbVector ( 0.0f , 0.0f , 1.0f );
+                }
+                break ;
+                case LB_CAMERA_FOLLOW3:
+                {
+                    // Set appropriate eye position.
+                    eye = LbVector ( thisplayer->GetPosition()->getX() -
+                                     20.0f * sin ( cface * 0.0174533 ) + 0.14f ,
+                                     thisplayer->GetPosition()->getY() -
+                                     20.0f * cos ( cface * 0.0174533 ) + 0.14f ,
+                                     7.0f ) ;
+                    target = LbVector ( thisplayer->GetPosition()->getX() ,
+                                        thisplayer->GetPosition()->getY() , 0.0f ) ;
+                    up = LbVector ( 0.0f , 0.0f , 1.0f );
+                }
+                break ;
+                case LB_CAMERA_FOLLOW4:
+                {
+                    // Set appropriate eye position.
+                    eye = LbVector ( thisplayer->GetPosition()->getX() -
+                                     35.0f * sin ( cface * 0.0174533 ) + 0.20f ,
+                                     thisplayer->GetPosition()->getY() -
+                                     35.0f * cos ( cface * 0.0174533 ) + 0.20f ,
+                                     12.0f ) ;
+                    target = LbVector ( thisplayer->GetPosition()->getX() ,
+                                        thisplayer->GetPosition()->getY() , 0.0f ) ;
+                    up = LbVector ( 0.0f , 0.0f , 1.0f );
+                }
+                break ;
+                    //eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
+                /*    dist = sqrt( pow(thisplayer->GetPosition()->getX() - eye.getX(), 2) +
+                                 pow(thisplayer->GetPosition()->getY() - eye.getY(), 2) +
+                                 pow(thisplayer->GetPosition()->getZ() - eye.getZ(), 2) );
+                    eye = LbVector( thisplayer->GetPosition()->getX() + (eye.getX() - thisplayer->GetPosition()->getX()) * (20 / dist),
+                                    thisplayer->GetPosition()->getY() + (eye.getY() - thisplayer->GetPosition()->getY()) * (20 / dist),
+                                    thisplayer->GetPosition()->getZ() + 10 );
+                    up = LbVector (0, 0, 1);
+                    target = * thisplayer->GetPosition() ;*/
+                case LB_CAMERA_SIDE:
+                {
+                    float x = thisplayer->GetPosition()->getX() ;
+                    float y = thisplayer->GetPosition()->getY() ;
+                    eye = LbVector ( 2.0f + x + 10.0f ,
+                                     2.0f + y , 10.0f ) ;
+                    target = LbVector ( x , y , 0.0f ) ;
+                    up = LbVector ( 0.0f , 0.0f , 1.0f );
+                }
+                break ;
+                case LB_CAMERA_TOP:
+                {
+                    float x = thisplayer->GetPosition()->getX() ;
+                    float y = thisplayer->GetPosition()->getY() ;
+                    float r = 50.0f ;
+                    float h = 24.0f ;
+                    eye = LbVector ( r * sin ( ctemp ) + x ,
+                                     r * cos ( ctemp ) + y , h ) ;
+                    target = LbVector ( x , y , 0.0f ) ;
+                    up = LbVector ( h * sin ( ctemp ) ,
+                                    h * cos ( ctemp ) , r );
+                    ctemp += 0.005 ;
+                }
+                break ;
+            }
+            graph_sys->SetCamera(eye, target ,up);
+
             //target = LbVector(0, scroll, 0);
-            graph_sys->SetCamera(eye, * thisplayer->GetPosition(),up);
+            // Set the new camera position.
+
 
             keycount = 32;
             inp[0] = 0;
@@ -257,7 +373,7 @@ int LbGameImp::RunGame()
                     }
                 }
                 if (keycount>0)
-                    sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
+                    sprintf(keymsg, "Left: %d, Right: %d %d", lpress, rpress, thisplayer->GetDirection());
             }
             else
             {
@@ -270,6 +386,24 @@ int LbGameImp::RunGame()
         {
             switch ( k )
             {
+                case 1:
+                    cameramode = LB_CAMERA_FOLLOW1 ;
+                break ;
+                case 2:
+                    cameramode = LB_CAMERA_FOLLOW2 ;
+                break ;
+                case 3:
+                    cameramode = LB_CAMERA_FOLLOW3 ;
+                break ;
+                case 4:
+                    cameramode = LB_CAMERA_FOLLOW4 ;
+                break ;
+                case 6:
+                    cameramode = LB_CAMERA_SIDE ;
+                break ;
+                case 7:
+                    cameramode = LB_CAMERA_TOP ;
+                break ;
                 case '\r' :
                     ProcessCommand ( textbuf ) ;
                     textbuf.erase() ;
@@ -310,6 +444,9 @@ int LbGameImp::RunGame()
          */        // END
 
         graph_sys->StartFrame();
+
+        level->DrawLevel(LbVector());
+
         // Draw here.
 
         // Draw trails for all bikes.
@@ -325,9 +462,9 @@ int LbGameImp::RunGame()
         }
 
         graph_sys->SetTextColor(LbRGBAColor(1.0f,0.0f,0.0f,1.0f));
-        graph_sys->DrawText(0.5f,0.82f,1.0f,"LightBikes3d");
+        graph_sys->DrawText(0.71f,0.88f,0.60f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0.0f,0.0f,1.0f,1.0f));
-        graph_sys->DrawText(0.6f,0.9f,0.5f,msg);
+        graph_sys->DrawText(0.71f,0.92f,0.35f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1.0f,1.0f,0.0f,1.0f));
         graph_sys->DrawText(0.0f,0.25f,1.0f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0.0f,1.0f,1.0f,1.0f));
@@ -335,22 +472,23 @@ int LbGameImp::RunGame()
 
         // Display the typed text.
         graph_sys->SetTextColor ( LbRGBAColor ( 0.0f , 1.0f , 1.0f , 1.0f ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.02f , 0.75f , textbuf.c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.02f , 0.60f , textbuf.c_str ( ) ) ;
 
         // Display the chat or status messages.
         for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
         {
             graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-            graph_sys->DrawText ( 0.05f , 0.9f - 0.04 * i , 0.5f , txtmsgs[i].c_str ( ) ) ;
+            graph_sys->DrawText ( 0.01f , 0.92f - 0.025 * i , 0.35f , txtmsgs[i].c_str ( ) ) ;
         }
 
+        // Display scoreboard.
         if ( input_sys->IsTabDown ( ) )
         {
-            // Display the players' frag count, overlayed Counter Strike style.
+            // Display the players' frag count, overlayed CounterStrike style.
             for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
             {
                 graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-                graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.5f , scoremsgs[i].c_str ( ) ) ;
+                graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.35f , scoremsgs[i].c_str ( ) ) ;
             }
         }
 
@@ -649,7 +787,8 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players[i]->IsValid ( ) == true && playerhash == players[i]->GetHash ( ) )
+        if ( players[i]->IsValid ( ) == true &&
+             playerhash == players[i]->GetHash ( ) )
             if ( players[i]->GetHandle ( ) != "" )
                 return players[i]->GetHandle ( ) ;
     return "Noname" ;
@@ -861,7 +1000,7 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
-            ShowStatusMessage ( "Connected to server." ) ;
+            ShowStatusMessage ( "Status: Connected to server." ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
@@ -871,7 +1010,7 @@ void LbGameImp::ProcessCommand ( string t )
         {
             if ( net_sys->GetStatus() == LB_NET_SERVER )
             {
-                ShowStatusMessage ( "Server already running." ) ;
+                ShowStatusMessage ( "Error: Server already running." ) ;
                 return ;
             }
 
@@ -891,7 +1030,7 @@ void LbGameImp::ProcessCommand ( string t )
                 return ;
             }
 
-            ShowStatusMessage ( "Server started." ) ;
+            ShowStatusMessage ( "Status: Server started." ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;

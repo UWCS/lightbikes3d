@@ -30,41 +30,39 @@ LbLevelImp LbArenaImp::full_level;
 
 LbArenaImp::LbArenaImp(LbLevel ** levs, int numLevs)
 {
-	//Check that all levels have the same x and y sizes?
-	/*if (numLevs > 0)
-	{
-		int x = levs[0].GetXSize();
-		int y = levs[0].GetYSize();
+    //Check that all levels have the same x and y sizes?
+    /*if (numLevs > 0)
+    {
+        int x = levs[0].GetXSize();
+        int y = levs[0].GetYSize();
 
-		int i;
-		for (i=1; i < numLevs; i++)
-		{
-			if (levs[i].GetXSize() != x ||
-				levs[i].GetYSize() != y)
-			{
-				//Throw an exception?
-			}
-		}
-	}*/
+        int i;
+        for (i=1; i < numLevs; i++)
+        {
+            if (levs[i].GetXSize() != x ||
+                levs[i].GetYSize() != y)
+            {
+                //Throw an exception?
+            }
+        }
+    }*/
 
-	levels = levs;
-	numLevels = numLevs;
+    levels = levs;
+    numLevels = numLevs;
 }
 
 LbArenaImp::~LbArenaImp()
 {
-	delete[] levels;
+    delete[] levels;
 }
 
 LbLevel * LbArenaImp::GetLevel(int level)
 {
-	if (numLevels - 1 <= level)
-	{
-		return levels[level];
-	}
-        // cant use new, since caller does not know 
-        // if to delete it. (use static object...) 
-	else return &full_level;
+    if (numLevels - 1 <= level)
+    {
+        return levels[level];
+    }
+        // cant use new, since caller does not know
+        // if to delete it. (use static object...)
+    else return &full_level;
 }
-
-

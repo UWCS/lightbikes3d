@@ -65,7 +65,8 @@ void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
 
     if ( udpsocket == INVALID_SOCKET )
     {
-        error = "There was an error opening the socket to use for UDP." ;
+        error = "Error: There was an error opening the socket to use for "\
+                "server UDP." ;
         mode = LB_NET_ERROR ;
         return  ;
     }
@@ -86,7 +87,7 @@ void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
 
     if ( nRet == SOCKET_ERROR )
     {
-        error = "Error binding to the server UDP port.  Another application "\
+        error = "Error: Server couldn't bind to UDP port.  Another application "\
                 "may be using this port." ;
         mode = LB_NET_ERROR ;
         return ;
@@ -107,7 +108,8 @@ void LbNetImp::InitialiseClientUDP  ( int server_port , int client_port )
 
     if ( udpsocket == INVALID_SOCKET )
     {
-        error = "There was an error opening socket to use for UDP." ;
+        error = "Error: There was an error opening the socket to use for "\
+                "client UDP." ;
         mode = LB_NET_ERROR ;
         return ;
     }
@@ -124,7 +126,7 @@ void LbNetImp::InitialiseClientUDP  ( int server_port , int client_port )
 
     if ( nRet == SOCKET_ERROR )
     {
-        error = "Error binding to the client UDP port.  Another application "\
+        error = "Error: Client couldn't bind to UDP port.  Another application "\
                 "may be using this port." ;
         mode = LB_NET_ERROR ;
         return ;
@@ -539,7 +541,7 @@ void LbNetImp::SocketError ( int c )
     {
         if ( c == iListCon )
         {
-            error = "Socket error on server listen port." ;
+            error = "Error: Socket error on server listen port." ;
             mode = LB_NET_ERROR ;
             return ;
         }
@@ -553,7 +555,7 @@ void LbNetImp::SocketError ( int c )
     {
         if ( c == iServCon )
         {
-            error = "Lost connection to server." ;
+            error = "Error: Lost connection to server." ;
             mode = LB_NET_ERROR ;
             return ;
         }
@@ -603,7 +605,7 @@ void LbNetImp::InitialiseClientTCP ( const char * serveraddress , int port )
         if ( f == NULL )
         {
             mode = LB_NET_ERROR ;
-            error = "Couldn't resolve server hostname.  Check it is valid." ;
+            error = "Error: Couldn't resolve server hostname.  Check it is valid." ;
             return ;
         }
         memcpy ( & ipaddress , (*f).h_addr_list[0] , 4 ) ;
@@ -622,7 +624,7 @@ void LbNetImp::InitialiseClientTCP ( const char * serveraddress , int port )
     SOCKET hSock = socket ( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
     if ( hSock == INVALID_SOCKET )
     {
-        error = "Error opening the socket to connect to server." ;
+        error = "Error: Couldn't open socket to connect to server." ;
         mode = LB_NET_ERROR ;
         return ;
     }
@@ -637,7 +639,7 @@ void LbNetImp::InitialiseClientTCP ( const char * serveraddress , int port )
     int nRet = connect ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
-       error = "Error connecting to server.  Check address is correct." ;
+       error = "Error: Couldn't connect to server.  Check address is correct." ;
        mode = LB_NET_ERROR ;
        return ;
     }
@@ -680,7 +682,7 @@ void LbNetImp::InitialiseServerTCP ( int port )
     SOCKET hSock = socket ( AF_INET , SOCK_STREAM , IPPROTO_TCP );
     if ( hSock == INVALID_SOCKET )
     {
-        error = "There was an error opening socket for server." ;
+        error = "Error: Couldn't open socket for server TCP." ;
         mode = LB_NET_ERROR ;
         return ;
     }
@@ -695,7 +697,7 @@ void LbNetImp::InitialiseServerTCP ( int port )
     int nRet = bind ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
-       error = "Error binding to the server port.  Another " \
+       error = "Error: Couldn't bind to the server port.  Another " \
                "application may be using this port." ;
        mode = LB_NET_ERROR ;
        return ;
@@ -705,7 +707,7 @@ void LbNetImp::InitialiseServerTCP ( int port )
     nRet = listen ( hSock , 20 ); // 20 = Max players.
     if ( nRet == SOCKET_ERROR )
     {
-       error = "There was an error starting to listen on the port" ;
+       error = "Error: Server couldn't listen on the port." ;
        mode = LB_NET_ERROR ;
        return ;
     }
@@ -739,7 +741,7 @@ void LbNetImp::AcceptConnection (  )
     hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , ( LPINT ) & nLen ) ;
     if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
     {
-        error = "An error occured accepting an incoming connection." ;
+        error = "Error: Couldn't accept an incoming connection." ;
         mode = LB_NET_ERROR ;
         return ;
     }

@@ -30,6 +30,14 @@
 #define MAX_MESSAGE_LINES 4
 #define MAX_SCOREBOARD_LINES 10
 
+// Camera positions.
+#define LB_CAMERA_FOLLOW1 1
+#define LB_CAMERA_FOLLOW2 2
+#define LB_CAMERA_FOLLOW3 3
+#define LB_CAMERA_FOLLOW4 4
+#define LB_CAMERA_SIDE 5
+#define LB_CAMERA_TOP 6
+
 using namespace std;
 
 class LbGameImp : public LbGameSys

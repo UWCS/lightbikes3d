@@ -163,6 +163,12 @@ textkeybuffer.push_back(c);
 void LbOSLayerInputImp::OnWmKeyDown(int c)
 {
     if ( c == 9 ) tabdown = true ;
+    if ( c == VK_F1 ) textkeybuffer.push_back( 1 );
+    if ( c == VK_F2 ) textkeybuffer.push_back( 2 );
+    if ( c == VK_F3 ) textkeybuffer.push_back( 3 );
+    if ( c == VK_F4 ) textkeybuffer.push_back( 4 );
+    if ( c == VK_F6 ) textkeybuffer.push_back( 6 );
+    if ( c == VK_F7 ) textkeybuffer.push_back( 7 );
 }
 
 void LbOSLayerInputImp::OnWmKeyUp(int c)

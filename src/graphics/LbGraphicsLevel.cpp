@@ -1,6 +1,6 @@
-/*********************************************************************************
+/***    ******************************************************************************
     LbGraphicsLevel.cpp
-    Implimentation file for the level renderer.
+    Implementation file for the level renderer.
 
     Copyright (C) 2000  University of Warwick Computing Society
 
@@ -35,6 +35,39 @@ void LbGraphicsLevelImp::SetBlock(LbBaseBlock *btype,int x,int y)
 
 void LbGraphicsLevelImp::DrawLevel(LbVector &offset)
 {
+    glBegin(GL_QUADS);
+        // Floor.
+        glColor4f( 0.3f, 0.3f, 0.3f, 0.5f );
+        glVertex3f( -90.0f , 0.0f  , -90.0f );
+        glVertex3f(  90.0f , 0.0f  , -90.0f );
+        glVertex3f(  90.0f , 0.0f  , 90.0f );
+        glVertex3f(  -90.0f , 0.0f  , 90.0f );
+        // Walls.
+        glColor4f( 0.7f, 0.7f, 0.7f, 0.5f );
+        glVertex3f( -90.0f , 0.0f  , -90.0f );
+        glVertex3f(  90.0f , 0.0f  , -90.0f );
+        glVertex3f(  90.0f , 4.0f  , -90.0f );
+        glVertex3f(  -90.0f , 4.0f  , -90.0f );
+
+        glColor4f( 0.7f, 0.7f, 0.7f, 0.5f );
+        glVertex3f( 90.0f , 0.0f , -90.0f );
+        glVertex3f( 90.0f , 0.0f  , 90.0f );
+        glVertex3f( 90.0f , 4.0f  , 90.0f );
+        glVertex3f( 90.0f , 4.0f  , -90.0f );
+
+        glColor4f( 0.7f, 0.7f, 0.7f, 0.5f );
+        glVertex3f( 90.0f , 0.0f , 90.0f );
+        glVertex3f( -90.0f , 0.0f , 90.0f );
+        glVertex3f( -90.0f , 4.0f , 90.0f );
+        glVertex3f( 90.0f , 4.0f , 90.0f );
+
+        glColor4f( 0.7f, 0.7f, 0.7f, 0.5f );
+        glVertex3f( -90.0f , 0.0f  , 90.0f );
+        glVertex3f( -90.0f , 0.0f  , -90.0f );
+        glVertex3f( -90.0f , 4.0f  , -90.0f );
+        glVertex3f( -90.0f , 4.0f  , 90.0f );
+
+    glEnd();
 }
 
 /*
