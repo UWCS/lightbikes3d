@@ -7,5 +7,6 @@
 *.opt
 *.plg
 *.ilk
+*.rsp
 Debug
 Release
