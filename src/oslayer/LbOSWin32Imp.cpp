@@ -32,11 +32,7 @@
 
 
 
-#define DINPUT_BUFFERSIZE 32; //size of buffer for DirectInput
 #define WM_USER_TCP_EVENT WM_USER+1
-
-const int KeyMapping[] = { DIK_LEFT, DIK_RIGHT };
-const int NumKeys = 2;
 
 LbOSWin32Imp *LbOSWin32Imp::the_oslayer=NULL;
 
@@ -136,7 +132,7 @@ void LbOSWin32Imp::Init()
     os_input=new LbOSLayerInputImp;
     if(os_input==NULL)
         throw LbError("Cannot alloc mem for OS input class");
-    os_input->Init(hInstance,hwnd_main);
+    os_input->Init(hInstance,hwnd_main,TickStart);
 
 	WinampIn = WinampOut = NULL;
 

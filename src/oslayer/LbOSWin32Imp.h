@@ -40,7 +40,7 @@ virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
     //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
 virtual char getNextTextKey ( ) ;
 
-void Init(HINSTANCE hInst,HWND hWnd);
+void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
 void OnWmChar(char c);
 
 LbOSLayerInputImp();
@@ -50,6 +50,10 @@ private:
 
 LPDIRECTINPUT7  lpDInput;
 LPDIRECTINPUTDEVICE7 lpDIDevKeyb; 
+bool di_InitOK;
+int TickStart;
+
+bool InitDInput(HINSTANCE hInst,HWND hWnd);
 
 deque<char> textkeybuffer ;
 };
