@@ -46,7 +46,8 @@ SOUND_C_FILES=\
 OSLAYER_H_FILES=\
 	oslayer\LbOSWin32Imp.h
 OSLAYER_C_FILES=\
-	oslayer\LbOSWin32Imp.cpp
+	oslayer\LbOSWin32Imp.cpp \
+	oslayer\LbOSWin32InputImp.cpp
 
 ALL_C_FILES=\
 	$(MISC_C_FILES) \

@@ -89,7 +89,7 @@ int LbGameImp::RunGame()
 
         keycount = 32;
         inp[0] = 0;
-        if (os_sys->GetOSKey(&keys[0], &keycount)) {
+        if (input_sys->GetOSKey(&keys[0], &keycount)) {
             for (int i=0; i<keycount; i++) {
                 if (keys[i].down)
                     switch (keys[i].which) {
@@ -101,7 +101,7 @@ int LbGameImp::RunGame()
         } else sprintf(inp, "Input Error");
 
         // Get text entered.
-        while ( ( k = os_sys->getNextTextKey ( ) ) != 0 )
+        while ( ( k = input_sys->getNextTextKey ( ) ) != 0 )
         {
             //Get ASCII codes.
             //char temp[20] ;

@@ -48,4 +48,15 @@ void LbInputImp::Poll() {
 
 void LbInputImp::Init(LbOSLayerSys *os_sys) {
     os = os_sys;
+    os_input=os_sys->GetOSInput();
+}
+
+bool LbInputImp::GetOSKey(LbOSLayerKeypress *data, int *num)
+{
+return os_input->GetOSKey(data,num);
+}
+
+char LbInputImp::getNextTextKey()
+{
+return os_input->getNextTextKey();
 }

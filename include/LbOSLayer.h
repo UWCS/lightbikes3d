@@ -54,6 +54,8 @@ int time;               //when pressed
 int sequence;           //when pressed relative to other keypress messages
 };
 
+class LbOSLayerInput;
+
 class LbOSLayerSys
 {
 public:
@@ -63,14 +65,25 @@ virtual void SwapDoubleBuffers()=0;
 virtual int GLTextListBase()=0;
 virtual int GetMS()=0; //get accurate millisecond count
 virtual char* GetDesktop32()=0; //get an image of the desktop. Bwahaha!
-virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
-    //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
 virtual void InitiateNetwork ( ) = 0 ;
-virtual char getNextTextKey ( ) = 0 ;
+
+virtual LbOSLayerInput *GetOSInput()=0;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}
+};
+
+class LbOSLayerInput
+{
+public:
+virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
+    //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
+virtual char getNextTextKey ( ) = 0 ;
+
+
+// empty virtual destructor to ensure proper cleanup
+virtual ~LbOSLayerInput(){};
 };
 
 /// Create an implimentation of the graphics subsystem.

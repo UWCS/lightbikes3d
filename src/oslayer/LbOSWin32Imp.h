@@ -32,6 +32,28 @@
 
 using namespace std;
 
+class LbOSLayerInputImp : public LbOSLayerInput
+{
+public:
+
+virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
+    //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
+virtual char getNextTextKey ( ) ;
+
+void Init(HINSTANCE hInst,HWND hWnd);
+void OnWmChar(char c);
+
+LbOSLayerInputImp();
+~LbOSLayerInputImp();
+
+private:
+
+LPDIRECTINPUT7  lpDInput;
+LPDIRECTINPUTDEVICE7 lpDIDevKeyb; 
+
+deque<char> textkeybuffer ;
+};
+
 
 class LbOSWin32Imp : public LbOSLayerSys
 {
@@ -46,10 +68,13 @@ virtual void SwapDoubleBuffers();
 virtual int GLTextListBase();
 virtual int GetMS();
 virtual char* GetDesktop32();
-virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
 virtual void InitiateNetwork() ;
-virtual char getNextTextKey ( ) ;
+
+virtual LbOSLayerInput *GetOSInput()
+	{
+	return os_input;
+	}
 
 /*
 ** LbOSWin32Imp methods
@@ -69,8 +94,6 @@ void SetupPalette(HDC dc);
 void PerformResize();
 void DestroyOGLContext();
 void GetDesktopImage();
-bool Init_DInput();
-void Deinit_DInput();
 void Deinit_WinampPlugins();
 
 static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
@@ -89,13 +112,9 @@ LARGE_INTEGER freq;
 char *desktop;
 
 
-LPDIRECTINPUT7          g_DI;
-LPDIRECTINPUTDEVICE7    g_KDIDev;
-BYTE                    olddiks[256]; //no, it's not rude! Old DInput KeyS
-
 int TickStart,PerfStart;
 
-queue<char> textkeybuffer ;
+LbOSLayerInputImp *os_input;
 };
 
 #endif

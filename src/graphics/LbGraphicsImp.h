@@ -68,7 +68,7 @@ int frameCount;
 int fontID, sfxID;
 int gfxStart;
 int sfxnums[8];
-LbVector *campos, *camtgt, *camup;
+LbVector campos, camtgt, camup;
 LbOSLayerSys *os;
 LbGraphicsEffect cureffect;
 LbRGBAColor textcolor;

@@ -33,12 +33,15 @@ LbInputImp();
 
 virtual void Poll();
 virtual void Init(LbOSLayerSys *os_sys);
+virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
+virtual char getNextTextKey();
 
 private:
 
 LbOSLayerSys *os;
-BYTE keybuf[256];
+LbOSLayerInput *os_input;
 
+BYTE keybuf[256];
 };
 
 #endif

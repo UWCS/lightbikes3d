@@ -63,12 +63,9 @@ void LbGraphicsImp::CreateGraphicsLevel(int x,int y)
 
 void LbGraphicsImp::SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)
 {
-    delete campos;
-    delete camtgt;
-    delete camup;
-    campos = new LbVector(pos);
-    camtgt = new LbVector(target);
-    camup = new LbVector(up);
+    campos = pos;
+    camtgt = target;
+    camup = up;
 }
 
 void LbGraphicsImp::SetupOrtho()
@@ -427,9 +424,9 @@ void LbGraphicsImp::StartFrame()
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
-    gluLookAt( campos->getX(), campos->getY(), campos->getZ(),
-        camtgt->getX(), camtgt->getY(), camtgt->getZ(),
-        camup->getX(), camup->getY(), camup->getZ() );
+    gluLookAt( campos.getX(), campos.getY(), campos.getZ(),
+        camtgt.getX(), camtgt.getY(), camtgt.getZ(),
+        camup.getX(), camup.getY(), camup.getZ() );
         //if we use LoadIdentity after this point we lose the camera position
         //so ALWAYS push and pop the matrix instead for each block of drawing
         //so the original camera matrix is always available
@@ -558,18 +555,15 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
 
 LbGraphicsImp::LbGraphicsImp()
 {
-    campos = new LbVector(0.0f,0.0f,-1.0f);
-    camtgt = new LbVector();
-    camup = new LbVector(0.0f,1.0f,0.0f);
+    campos = LbVector(0.0f,0.0f,-1.0f);
+    camtgt = LbVector();
+    camup = LbVector(0.0f,1.0f,0.0f);
 }
 
 LbGraphicsImp::~LbGraphicsImp()
 {
     DeleteTexture(fontID);
     DeleteTexture(sfxID);
-    delete campos;
-    delete camtgt;
-    delete camup;
 }
 
 LbGraphicsSys *CreateGraphicsSys(LbOSLayerSys *os_sys)
