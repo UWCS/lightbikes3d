@@ -48,9 +48,8 @@ void LbGraphicsBikeImp::AddSegment(const LbVector &pt)
 void LbGraphicsBikeImp::DrawSegment(const LbVector &start_pt,const LbVector &end_pt)
 {
     // OpenGL code to render a single segment of trail...
-    glPushMatrix();
     glBegin(GL_QUADS);
-        glColor4f(0.0f, 0.6f, 0.8f, 0.5f);
+        glColor4f(0.2f, 0.2f, 0.9f, 0.2f);
         glVertex3f( start_pt.getX(), start_pt.getZ()    , -start_pt.getY() );
         glVertex3f( start_pt.getX(), start_pt.getZ() + 1, -start_pt.getY() );
         glVertex3f(   end_pt.getX(),   end_pt.getZ() + 1,   -end_pt.getY() );
@@ -60,7 +59,6 @@ void LbGraphicsBikeImp::DrawSegment(const LbVector &start_pt,const LbVector &end
         glVertex3f(   end_pt.getX(),   end_pt.getZ()    ,   -end_pt.getY() );
         glVertex3f(   end_pt.getX(),   end_pt.getZ() + 1,   -end_pt.getY() );
     glEnd();
-    glPopMatrix(); //restore the camera matrix for next block of drawing...
 }
 
 void LbGraphicsBikeImp::DrawTrail()

@@ -91,128 +91,6 @@ void LbGraphicsImp::FinishOrtho()
     glPopMatrix();
 }
 
-int LbGraphicsImp::LoadBMPTexture(char *fname, int transcolour)
-{
-    ifstream fin(fname, ios::binary);
-    BITMAPFILEHEADER fhead;
-    BITMAPINFOHEADER finfo;
-    RGBQUAD palette[256];
-    fin.read((char*) &fhead, sizeof(fhead) );
-    fin.read((char*) &finfo, sizeof(finfo) );
-
-    if (finfo.biBitCount != 8) {
-        fin.close();
-        return -1; //only deal with 256 colour BMP's so far
-    }
-
-    fin.read((char*) &palette, sizeof(palette) );
-    fin.seekg(fhead.bfOffBits,ios::beg);
-
-    int numpixel = finfo.biWidth * finfo.biHeight, tmp;
-
-    char *data = (char*)malloc( numpixel );
-    char *pic = (char*)malloc(numpixel * 4 );
-    fin.read( data, numpixel );
-    fin.close();
-
-    char *pixel;
-    RGBQUAD *bigpixel;
-    int *trans;
-
-    pixel = data;
-    bigpixel = (RGBQUAD*)pic;
-    for (int i=0; i < numpixel; i++) {
-        *bigpixel = palette[(byte)(*pixel)];
-        trans = (int*)bigpixel;
-
-        if ( *trans == transcolour ) (*bigpixel).rgbReserved = 0;
-            else (*bigpixel).rgbReserved = 0xff;
-
-        tmp = (*bigpixel).rgbRed;
-        (*bigpixel).rgbRed = (*bigpixel).rgbBlue;
-        (*bigpixel).rgbBlue = tmp;
-        switch (transcolour) {
-            case TRANS_REDMASK:     (*bigpixel).rgbReserved = (*bigpixel).rgbRed;
-                                    break;
-            case TRANS_GREENMASK:   (*bigpixel).rgbReserved = (*bigpixel).rgbGreen;
-                                    break;
-            case TRANS_BLUEMASK:    (*bigpixel).rgbReserved = (*bigpixel).rgbBlue;
-                                    break;
-            case TRANS_LUMMASK:     (*bigpixel).rgbReserved = ( (*bigpixel).rgbRed+(*bigpixel).rgbGreen+(*bigpixel).rgbBlue ) /3;
-                                    break;
-        }
-        bigpixel++;
-        pixel++;
-    }
-
-    int num;
-    glGenTextures(1, (UINT*)&num );
-    glBindTexture(GL_TEXTURE_2D, num);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, finfo.biWidth, finfo.biHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,  pic);
-    glBindTexture(GL_TEXTURE_2D, num);
-
-    free(pic);
-    free(data);
-    return num;
-}
-void Copy256Square(char *src, char *dst, int stride) {
-    for (int i=0; i<256; i++) {
-        memcpy(dst,src,256*4);
-        dst += 256;
-        src += stride;
-    }
-}
-
-int LbGraphicsImp::LoadMemTexture( char *pixels, int xsize, int ysize)
-{
-    int num;
-    glGenTextures(1, (UINT*)&num );
-    glBindTexture(GL_TEXTURE_2D, num);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    glBindTexture(GL_TEXTURE_2D, num);
-    return num;
-/*
-    glGenTextures(8, (UINT*)&sfxnums );
-    char newpix[256*256*4];
-    char *oldpix, *pixstart;
-    pixstart = pixels;
-    for ( int i = 0; i<8; i++ ) {
-        glBindTexture(GL_TEXTURE_2D,sfxnums[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        Copy256Square(pixstart, (char*)&newpix, 1024*4);
-        glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, (char*)&newpix);
-        glBindTexture(GL_TEXTURE_2D,sfxnums[i]);
-        pixstart += 256*4;
-        if (i==3) pixstart += (255*1024*4);
-    }
-    return 0;
-*/
-}
-
-void LbGraphicsImp::ActivateTexture(int texID)
-{       //ActivateTexture(0) activates the default texture
-    glBindTexture(GL_TEXTURE_2D, texID);
-}
-
-void LbGraphicsImp::DeleteTexture(int texID)
-{
-    glDeleteTextures(1, (UINT*)&texID);
-}
-
 void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
 {       //TODO: font?, size?
 /*  SetupOrtho();
@@ -269,15 +147,6 @@ void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
         xpos += increase;
     }
 
-/*  glTexCoord2f(0.0f,0.0f);        //This code draws the font on the screen
-    glVertex2f(0.0f,0.0f);          //Just to check it's loaded OK
-    glTexCoord2f(1.0f,0.0f);
-    glVertex2f(256.0f,0.0f);
-    glTexCoord2f(1.0f,1.0f);
-    glVertex2f(256.0f,256.0f);
-    glTexCoord2f(0.0f,1.0f);
-    glVertex2f(0.0f,256.0f);
-*/
     glEnd();
 
     FinishOrtho();
@@ -347,7 +216,7 @@ void LbGraphicsImp::DrawEffect()
 
             SetupOrtho();
             glEnable(GL_TEXTURE_2D);
-            ActivateTexture(sfxID);
+            fx_tex.ActivateTexture();
             glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
             glColor4f(fadecolour,fadecolour,fadecolour, 1.0f - progress );
 
@@ -362,26 +231,6 @@ void LbGraphicsImp::DrawEffect()
                 glVertex2f(640.0f, 480.0f);
             glEnd();
 
-            /*
-            for (int i=0; i<8; i++) {
-            glBegin(GL_QUADS);
-                int col = (i % 4);
-                int row = (i / 4);
-                float colf = (float)col, rowf = (float)row;
-                ActivateTexture(sfxnums[i]);
-
-                glTexCoord2f(0.0f,0.0f);
-                glVertex2f(colf*256.0f, 480.0f - rowf*256.0f);
-                glTexCoord2f(1.0f, 0.0f);
-                glVertex2f(256.0f*(colf+1), 480.0f - rowf*256.0f);
-                glTexCoord2f(1.0f, 1.0f);
-                glVertex2f(256.0f*(colf+1), 480.0f - (rowf+1)*256.0f);
-                glTexCoord2f(0.0f, 1.0f);
-                glVertex2f(colf*256.0f, 480.0f - (rowf+1)*256.0f);
-            glEnd();
-            }
-            */
-
             FinishOrtho();
             break;
 
@@ -390,7 +239,7 @@ void LbGraphicsImp::DrawEffect()
             SetupOrtho();
             glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
             glEnable(GL_TEXTURE_2D);
-            ActivateTexture(sfxID);
+            fx_tex.ActivateTexture();
             glBegin(GL_TRIANGLE_STRIP);
                 glColor4f(fadecolour,fadecolour,fadecolour, progress );
                 glTexCoord2f(0.0f,0.0f);
@@ -404,7 +253,6 @@ void LbGraphicsImp::DrawEffect()
             glEnd();
             FinishOrtho();
             break;
-
 
     }
 
@@ -428,6 +276,7 @@ void LbGraphicsImp::StartFrame()
     glLoadIdentity();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
     
     // Mapping X -> X, Y -> -Z, Z -> Y  (Our X,Y,Z -> OpenGL X,Y,Z)
     gluLookAt( campos.getX(), campos.getZ(), -campos.getY(),
@@ -440,7 +289,7 @@ void LbGraphicsImp::StartFrame()
     glPushMatrix();
     
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     
     int progress = os->GetMS() - frameCount;
     
@@ -500,25 +349,8 @@ void LbGraphicsImp::StartFrame()
         glVertex3f( 1.0f,-1.0f,-1.0f);
     glEnd();
 
-
     glPopMatrix();
 
-/*  SetupOrtho();
-    ActivateTexture(sfxID);
-    glEnable(GL_TEXTURE_2D);
-    glBegin(GL_QUADS);
-        glColor3f(1.0f,1.0f,1.0f);
-        glTexCoord2f(0.0f,0.0f);
-        glVertex2f(0.0f,0.0f);
-        glTexCoord2f(1.0f,0.0f);
-        glVertex2f(128.0f,0.0f);
-        glTexCoord2f(1.0f,1.0f);
-        glVertex2f(128.0f,128.0f);
-        glTexCoord2f(0.0f,1.0f);
-        glVertex2f(0.0f,128.0f);
-    glEnd();
-    FinishOrtho();
-*/
     // ***********************************************************************
 
     if (glGetError()) {
@@ -555,9 +387,11 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
     cureffect = LB_GFX_NONE;
     
     font_tex.LoadTextureBMP("font.bmp",LbRGBAColor(0,0,0,0));
+    font_tex.Upload();
 
     char *tex = os->GetDesktop32();
-    sfxID = LoadMemTexture(tex, 1024, 512);
+    fx_tex.LoadMemTexture(tex, 1024, 512, GL_RGBA);
+    fx_tex.Upload();
     free(tex);
 
 }
@@ -578,7 +412,6 @@ LbGraphicsImp::LbGraphicsImp()
 
 LbGraphicsImp::~LbGraphicsImp()
 {
-    DeleteTexture(sfxID);
 }
 
 LbGraphicsSys *CreateGraphicsSys(LbOSLayerSys *os_sys)

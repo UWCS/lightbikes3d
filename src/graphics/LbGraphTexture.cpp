@@ -38,6 +38,10 @@ LbGraphTexture::LbGraphTexture()
 {
     valid_texture=false;
     tex_id=0;
+    width=0;
+    height=0;
+    rgb_data=NULL;
+    uploaded=false;
 }
 
 LbGraphTexture::~LbGraphTexture()
@@ -63,12 +67,12 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
     LBRGBQUAD palette[256];
 
     unsigned char *idx_data=NULL;
-    LbRGBAColor *rgb_data=NULL;
 
     unsigned char *idx_ptr=NULL;
     LbRGBAColor *rgb_ptr=NULL;
+    LbRGBAColor *rgb_fdata=NULL;
 
-    int width,height,i,j,pad;
+    int i,j,pad;
 
     bool top_down;
 
@@ -133,7 +137,9 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
 
 
         idx_data=new unsigned char[(width+pad)*height];
-        rgb_data=new LbRGBAColor[width*height];
+        rgb_fdata=new LbRGBAColor[width*height];
+        rgb_data = (char*)rgb_fdata;
+        tex_format=GL_RGBA;
         
         if((idx_data==NULL)||(rgb_data==NULL))
             throw LbError("Cannot alloc mem for bitmap");
@@ -146,7 +152,7 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
         if(top_down)
             {
             idx_ptr=idx_data;
-            rgb_ptr=rgb_data;
+            rgb_ptr=rgb_fdata;
 
             for(i=0;i<height;i++)
                 {
@@ -155,15 +161,6 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
                     rgb_ptr->r=palette[*idx_ptr].rgbRed;
                     rgb_ptr->g=palette[*idx_ptr].rgbGreen;
                     rgb_ptr->b=palette[*idx_ptr].rgbBlue;
-/*                                        
-                   if((rgb_ptr->r==trans_col.r) &&
-                       (rgb_ptr->g==trans_col.g) &&
-                       (rgb_ptr->b==trans_col.b))
-                        rgb_ptr->a=0;
-                    else
-                        rgb_ptr->a=0xff;
-*/
-                    //rgb_ptr->a=(rgb_ptr->r+rgb_ptr->g+rgb_ptr->b)/3;
                     
                     rgb_ptr->a=(rgb_ptr->r+rgb_ptr->g+rgb_ptr->b)/3;
 
@@ -178,7 +175,7 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
             {
             // must flip bitmap...
             idx_ptr=idx_data+(width+pad)*(height-1);
-            rgb_ptr=rgb_data;
+            rgb_ptr=rgb_fdata;
 
             for(i=0;i<height;i++)
                 {
@@ -207,19 +204,6 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
 
             }
 
-        glGenTextures(1, &tex_id );
-        valid_texture=true;
-
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE,  rgb_data);
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        
-        assert(!glGetError());
         }
     catch(...)
         {
@@ -234,4 +218,41 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
         }
 
 return true;
+}
+
+bool LbGraphTexture::LoadMemTexture(char *pixels, int xsize, int ysize, GLuint format) {
+
+    width = xsize;
+    height = ysize;
+    tex_format = format;
+    int datasize;
+    switch(tex_format) {
+//Add additional formats as and when needed. 
+        case GL_RGBA:   datasize=4; break;
+        case GL_RGB:    datasize=3; break;
+        default:        return false;
+    }
+    rgb_data=new byte[width*height*datasize];
+    memcpy(rgb_data, pixels, width*height*datasize);
+    return true;
+}
+
+bool LbGraphTexture::Upload() {
+
+    if (uploaded) return true;
+
+    glGenTextures(1, &tex_id );
+    valid_texture=true;
+  
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, width, height, 0, tex_format, GL_UNSIGNED_BYTE,  rgb_data);
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    uploaded=true;
+    
+    return (!glGetError());
 }

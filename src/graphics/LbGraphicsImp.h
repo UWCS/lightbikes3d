@@ -70,6 +70,8 @@ LbGraphTexture();
 ~LbGraphTexture();
 
 bool LoadTextureBMP(const char *fname,const LbRGBAColor &trans_col);
+bool LoadMemTexture(char *pixels, int xsize, int ysize, GLuint format);
+bool Upload();
 void DeleteTexture();
 void ActivateTexture()
     {
@@ -80,8 +82,11 @@ void ActivateTexture()
 
 private:
 
-GLuint tex_id;
+GLuint tex_id, tex_format;
+GLuint width, height;
 bool valid_texture;
+byte *rgb_data;
+bool uploaded;
 };
 
 // Forward declarations.
@@ -121,15 +126,11 @@ public:
     
 private:
     
-    LbGraphTexture font_tex;
+    LbGraphTexture font_tex, fx_tex;
 
     void DrawEffect();
     void SetupOrtho();
     void FinishOrtho();
-    int LoadBMPTexture(char *fname, int transcolour);
-    int LoadMemTexture( char *pixels, int xsize, int ysize);
-    void ActivateTexture(int texID);
-    void DeleteTexture(int texID);
     
     vector<LbGraphicsBikeImp> lbbikes;
     vector<LbGraphicsLevelImp> lblevels;
