@@ -1,6 +1,5 @@
 <?xml encoding="ISO-8859-1"?>
-
-<!-- @version:  -->
+<?xml version="1.0"?>
 
 <!ELEMENT ARENA (LEVEL+,STARTS)>
 <!ATTLIST ARENA
