@@ -381,21 +381,24 @@ void WA_VSA_SetInfo1(int nch, int srate) { }
 //End of crappy useless Winamp functions
 
 bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp) {
-    /*
+      
     Winamp_GetInModule GetInModule;
     Winamp_GetOutModule GetOutModule;
+//    Winamp_Input_Module* __stdcall (* GetInModule ) (void);
+//    Winamp_Output_Module* __stdcall (* GetOutModule) (void);
+
 
     WinampIn = LoadLibrary("MUSICIN.DLL");
     if (!WinampIn) return false;
 
-    GetInModule = (Winamp_GetInModule)GetProcAddress(WinampIn, "winampGetInModule2");
+    GetInModule = ( Winamp_GetInModule )GetProcAddress(WinampIn, "winampGetInModule2");
     if (!GetInModule) return false;
     *inp = GetInModule();
 
     WinampOut = LoadLibrary("MUSICOUT.DLL");
     if (!WinampOut) return false ;
 
-    GetOutModule = (Winamp_GetOutModule)GetProcAddress(WinampOut, "winampGetOutModule");
+    GetOutModule = (Winamp_GetOutModule )GetProcAddress(WinampOut, "winampGetOutModule");
     if (!GetOutModule) return false;
     *outp = GetOutModule();
 
@@ -422,7 +425,7 @@ bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp
     (*outp)->SetVolume(255);    //max volume
     (*outp)->SetPan(0);         //centre pan
 
-    (*inp)->outMod = *outp;*/
+    (*inp)->outMod = *outp;
     return true;
 }
 

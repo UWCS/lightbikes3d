@@ -209,7 +209,7 @@ void LbGraphicsImp::DeleteTexture(int texID)
     glDeleteTextures(1, (UINT*)&texID);
 }
 
-void LbGraphicsImp::DrawText(float x,float y,const char *str)
+void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
 {       //TODO: font?, size?
 /*  SetupOrtho();
         glListBase(os->GLTextListBase());
@@ -239,6 +239,7 @@ void LbGraphicsImp::DrawText(float x,float y,const char *str)
     //can't use a TRIANGLE_STRIP because a vertex can have different
     //texture coords depending on which character you're drawing
     chr = str[0];
+    float increase = 24.0f * scale;
 
     while (chr != 0) {
 
@@ -250,18 +251,18 @@ void LbGraphicsImp::DrawText(float x,float y,const char *str)
         glTexCoord2f((GLfloat)texx*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
         glVertex2f(xpos, ypos);
         glTexCoord2f((GLfloat)(texx+1)*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
-        glVertex2f(xpos+24.0f, ypos);
+        glVertex2f(xpos+increase, ypos);
         glTexCoord2f((GLfloat)texx*24.0f/256.0f, 1.0f-(GLfloat)texy*24.0f/256.0f);
-        glVertex2f(xpos, ypos+24.0f);
+        glVertex2f(xpos, ypos+increase);
         glTexCoord2f((GLfloat)(texx+1)*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
-        glVertex2f(xpos+24.0f, ypos);
+        glVertex2f(xpos+increase, ypos);
         glTexCoord2f((GLfloat)texx*24.0f/256.0f, 1.0f-(GLfloat)texy*24.0f/256.0f);
-        glVertex2f(xpos, ypos+24.0f);
+        glVertex2f(xpos, ypos+increase);
         glTexCoord2f((GLfloat)(texx+1)*24.0f/256.0f, 1.0f-(GLfloat)texy*24.0f/256.0f);
-        glVertex2f(xpos+24.0f, ypos+24.0f);
+        glVertex2f(xpos+increase, ypos+increase);
 
         chr = str[++cpos];
-        xpos += 24.0f;
+        xpos += increase;
     }
 
 /*  glTexCoord2f(0.0f,0.0f);        //This code draws the font on the screen

@@ -69,7 +69,7 @@ int LbGameImp::RunGame()
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     //net_sys->Test();
-    //sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
+    sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
     while(!quit_flag)
     {
         scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
@@ -127,25 +127,25 @@ int LbGameImp::RunGame()
         graph_sys->StartFrame();
         // draw here
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
-        graph_sys->DrawText(0.5f,0.82f,"LightBikes3d");
+        graph_sys->DrawText(0.5f,0.82f,1.0f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
-        graph_sys->DrawText(0.6f,0.9f,msg);
+        graph_sys->DrawText(0.6f,0.9f,1.0f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1,1,0,1));
-        graph_sys->DrawText(0.0f,0.25f,inp);
+        graph_sys->DrawText(0.0f,0.25f,1.0f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0,1,1,1));
-        graph_sys->DrawText(0.0f,0.1f,keymsg);
+        graph_sys->DrawText(0.0f,0.1f,1.0f,keymsg);
 
         // Display the typed text.
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.02f , textbuf.c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.02f , 0.75f , textbuf.c_str ( ) ) ;
 
         // Display the chat or status messages.
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.9f , chatmessages[0].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.9f , 0.5f , chatmessages[0].c_str ( ) ) ;
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.82f , chatmessages[1].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.82f , 0.5f , chatmessages[1].c_str ( ) ) ;
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-        graph_sys->DrawText ( 0.0f , 0.74f , chatmessages[2].c_str ( ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.74f , 0.5f , chatmessages[2].c_str ( ) ) ;
 
         graph_sys->EndFrame();
 
@@ -304,7 +304,7 @@ void LbGameImp::InitSubsystems()
     os_sys=CreateOSLayerSys();
     graph_sys=CreateGraphicsSys(os_sys);
     input_sys=CreateInputSys(os_sys);
-    //sound_sys=CreateSoundSys(os_sys);
+    sound_sys=CreateSoundSys(os_sys);
     net_sys=CreateNetSys(os_sys);
 }
 

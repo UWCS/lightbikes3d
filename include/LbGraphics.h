@@ -76,7 +76,7 @@ virtual void CreateGraphicsLevel(int x,int y)=0;
 
 virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)=0;
 
-virtual void DrawText(float x,float y,const char *str)=0;
+virtual void DrawText(float x,float y,float scale,const char *str)=0;
 virtual void SetTextColor(LbRGBAColor color)=0;
 
 virtual void TriggerEffect(LbGraphicsEffect effect)=0;
