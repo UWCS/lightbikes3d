@@ -24,13 +24,21 @@
 
 #ifndef __LBGAME__
 #define __LBGAME__
-// The port on the server to be used for connections.#define LB_SERVER_TCP_PORT 32001#define LB_SERVER_UDP_PORT 32002
-// The number of bytes for storing text waiting to be sent or processed to/from// the network.
+
+// The port on the server to be used for connections.
+#define LB_SERVER_TCP_PORT 32001
+#define LB_SERVER_UDP_PORT 32002
+// The number of bytes for storing text waiting to be sent or processed to/from
+// the network.
 #define SOCKET_BUFFER_SIZE 256
-// The number of bytes to read/write from/to the socket in a single attempt.#define MAX_READ_SIZE 10#define MAX_WRITE_SIZE 10
-// Size of buffer allocated for message.#define MAX_MESSAGE_LENGTH 256
+// The number of bytes to read/write from/to the socket in a single attempt.
+#define MAX_READ_SIZE 10
+#define MAX_WRITE_SIZE 10
+// Size of buffer allocated for message.
+#define MAX_MESSAGE_LENGTH 256
 // The max number of connections, clients only use 1, so really it's the
-// max players per server.#define MAX_CONNECTIONS 100
+// max players per server.
+#define MAX_CONNECTIONS 100
 class LbBaseBlock
 {
     virtual void GetGeometrySize(int &num_points,int &num_normals)=0;

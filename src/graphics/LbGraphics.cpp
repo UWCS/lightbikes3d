@@ -231,7 +231,7 @@ void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
     glDisable(GL_DEPTH_TEST);
     SetupOrtho();
     glEnable(GL_TEXTURE_2D);
-    ActivateTexture(fontID);
+    font_tex.ActivateTexture();
 
     int cval, texx, texy, cpos = 0;
     float xpos = x * 640, ypos = y * 480;
@@ -553,8 +553,8 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
     }
     frameCount = os->GetMS();
     cureffect = LB_GFX_NONE;
-
-    fontID = LoadBMPTexture("font.bmp",TRANS_LUMMASK);
+    
+    font_tex.LoadTextureBMP("font.bmp",LbRGBAColor(0,0,0,0));
 
     char *tex = os->GetDesktop32();
     sfxID = LoadMemTexture(tex, 1024, 512);
@@ -578,7 +578,6 @@ LbGraphicsImp::LbGraphicsImp()
 
 LbGraphicsImp::~LbGraphicsImp()
 {
-    DeleteTexture(fontID);
     DeleteTexture(sfxID);
 }
 

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        Chris Salmon
+       David Black
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,12 +26,14 @@
 #include "LbPublic.h"
 #include "LbGameImp.h"
 
+LbFullBlock LbLevelImp::full_block;
 /*
 ** Constructs an empty level
 */
 LbLevelImp::LbLevelImp()
 {
 	xsize = ysize = 0;
+    blocks=NULL;
 }
 
 /*
@@ -51,14 +54,20 @@ LbLevelImp::LbLevelImp(int x, int y)
 
 LbLevelImp::~LbLevelImp()
 {
-	delete[] blocks;
+    if(blocks!=NULL)
+    {
+	    for(int i=0; i<(xsize*ysize); i++)
+            if(blocks[i]!=NULL) delete blocks[i];
+
+        delete[] blocks;
+    }
 }
 
 void LbLevelImp::SetBlockAt(int x, int y, LbBaseBlock &block)
 {
 	//If in level
-	if (x >= 0 && x < xsize &&
-		y >= 0 && y < ysize)
+	if ((x >= 0) && (x < xsize) &&
+		(y >= 0) && (y < ysize))
 	{
 		blocks[(xsize * y) + x] = &block;
 	}
@@ -68,14 +77,15 @@ void LbLevelImp::SetBlockAt(int x, int y, LbBaseBlock &block)
 
 LbBaseBlock * LbLevelImp::GetBlockAt(int x, int y)
 {
-	if (xsize - 1 <= x
-		&& ysize - 1 <= y)
+	if ( (blocks!=NULL) && 
+         (xsize - 1 <= x) &&
+         (ysize - 1 <= y))
 		return blocks[(xsize * y) + x];
 	else
 	{
-		LbBaseBlock * full = new LbFullBlock();
-		assert(full!=NULL);
-		return full;
+        // cant use new, since caller does not know 
+        // if to delete it. (use static object...) 
+		return &full_block;
 	}
 }
 

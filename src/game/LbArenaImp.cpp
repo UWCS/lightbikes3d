@@ -6,6 +6,7 @@
 
     Contributors to this file:
        Chris Salmon
+       David Black
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +25,8 @@
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbGameImp.h"
+
+LbLevelImp LbArenaImp::full_level;
 
 LbArenaImp::LbArenaImp(LbLevel ** levs, int numLevs)
 {
@@ -59,8 +62,9 @@ LbLevel * LbArenaImp::GetLevel(int level)
 	{
 		return levels[level];
 	}
-	//This should return a wholly full level
-	else return new LbLevelImp();
+        // cant use new, since caller does not know 
+        // if to delete it. (use static object...) 
+	else return &full_level;
 }
 
 

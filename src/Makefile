@@ -8,13 +8,15 @@ MISC_H_FILES=\
     ..\include\LbGame.h \
     ..\include\LbMath.h \
     ..\include\LbOSLayer.h \
-    ..\include\LbMiscTypes.h
+    ..\include\LbMiscTypes.h \
+    ..\include\LbXmlParse.h
 
 MISC_C_FILES=\
     misc\LbMatrix.cpp \
     misc\LbMatrix4.cpp \
     misc\LbVector.cpp \
     misc\LbVector4.cpp \
+    misc\LbXmlParse.cpp \
     LbMain.cpp
 
 GAME_H_FILES=\
@@ -31,7 +33,8 @@ GRAPHICS_H_FILES=\
 GRAPHICS_C_FILES=\
     graphics\LbGraphics.cpp \
     graphics\LbGraphicsBike.cpp \
-    graphics\LbGraphicsLevel.cpp
+    graphics\LbGraphicsLevel.cpp \
+    graphics\LbGraphTexture.cpp
 
 INPUT_H_FILES=\
     input\LbInputImp.h

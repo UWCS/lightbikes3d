@@ -27,6 +27,7 @@
 
 #include "LbMiscTypes.h"
 #include "LbMath.h"
+#include "LbXmlParse.h"
 
 #include "winamp_in.h" //until someone can be arsed to write better music code,
 #include "winamp_out.h"//we're going to use Winamp plugins dammit!

@@ -51,7 +51,8 @@ class LbGameImp : public LbGameSys
     private:
         virtual void InitSubsystems();
         virtual void DeInitSubsystems();
-        virtual void ProcessCommand ( string t ) ;        virtual void ShowStatusMessage ( const string & txt ) ;
+        virtual void ProcessCommand ( string t ) ;
+        virtual void ShowStatusMessage ( const string & txt ) ;
         virtual string GetPlayerHandle ( int hash ) ;
         virtual bool SetPlayerHandle ( int hash , const string & handle ) ;
         virtual void RemovePlayer ( int hash ) ;
@@ -103,7 +104,8 @@ LbBaseBlockImp();
 
 private:
 };
-class LbEmptyBlock : public LbBaseBlockImp{
+class LbEmptyBlock : public LbBaseBlockImp
+{
 	public:
 	/*
 
@@ -177,10 +179,13 @@ private:
 LbBlockDirection block_dir;
 };
 
+class LbLevelImp;
+
 class LbArenaImp : public LbArena
 {
 	LbLevel **levels;
 	int numLevels;
+    static LbLevelImp full_level;
 
 	public:
 	LbArenaImp(LbLevel **levs, int num);
@@ -194,6 +199,7 @@ class LbLevelImp : public LbLevel
 {
 	LbBaseBlock **blocks;
 	int xsize, ysize;
+    static LbFullBlock full_block;
 
 	public:
 	LbLevelImp();

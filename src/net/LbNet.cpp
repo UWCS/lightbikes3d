@@ -286,7 +286,8 @@ void LbNetImp::PollSockets ( )
                     "Error" , MB_ICONSTOP ) ;
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
             if ( errscks.fd_array [ i ] == lbsockets [ j ].socket )
-                ;//;
+            {
+            }
     }
 
 }

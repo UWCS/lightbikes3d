@@ -26,6 +26,64 @@
 #ifndef __LBGRAPHICSIMP__
 #define __LBGRAPHICSIMP__
 
+/*
+** TODO: fix the way we define these structures
+*/
+#include <pshpack1.h>
+struct LBBITMAPFILEHEADER
+    { 
+    unsigned short           bfType; 
+    unsigned int    bfSize;
+    unsigned short  bfReserved1; 
+    unsigned short  bfReserved2;
+    unsigned int    bfOffBits;
+    };
+
+struct LBBITMAPINFOHEADER
+    { 
+    unsigned int    biSize;
+    int             biWidth;
+    int             biHeight;
+    unsigned short  biPlanes;
+    unsigned short  biBitCount; 
+    unsigned int    biCompression;
+    unsigned int    biSizeImage;
+    int             biXPelsPerMeter;
+    int             biYPelsPerMeter;
+    unsigned int    biClrUsed;
+    unsigned int    biClrImportant; 
+    };
+struct LBRGBQUAD
+    {
+    unsigned char   rgbBlue; 
+    unsigned char   rgbGreen; 
+    unsigned char   rgbRed; 
+    unsigned char   rgbReserved; 
+    };
+#include <poppack.h>
+
+class LbGraphTexture
+{
+public:
+
+LbGraphTexture();
+~LbGraphTexture();
+
+bool LoadTextureBMP(const char *fname,const LbRGBAColor &trans_col);
+void DeleteTexture();
+void ActivateTexture()
+    {
+    if(valid_texture)
+        glBindTexture(GL_TEXTURE_2D,tex_id);
+    assert(!glGetError());
+    }
+
+private:
+
+GLuint tex_id;
+bool valid_texture;
+};
+
 // Forward declarations.
 class LbGraphicsBikeImp;
 class LbGraphicsLevelImp;
@@ -63,6 +121,8 @@ public:
     
 private:
     
+    LbGraphTexture font_tex;
+
     void DrawEffect();
     void SetupOrtho();
     void FinishOrtho();
@@ -74,7 +134,7 @@ private:
     vector<LbGraphicsBikeImp> lbbikes;
     vector<LbGraphicsLevelImp> lblevels;
     int frameCount;
-    int fontID, sfxID;
+    int sfxID;
     int gfxStart;
     int sfxnums[8];
     LbVector campos, camtgt, camup;

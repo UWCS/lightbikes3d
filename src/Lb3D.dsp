@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib glu32.lib dinput.lib ws2_32.lib dxguid.lib winmm.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib glu32.lib dinput.lib ws2_32.lib dxguid.lib winmm.lib /nologo /subsystem:windows /debug /machine:I386 /out:"..\bin\Lb3d.exe" /pdbtype:sept
 # SUBTRACT LINK32 /incremental:no
 
 !ENDIF 
@@ -96,11 +96,19 @@ LINK32=link.exe
 # PROP Default_Filter ""
 # Begin Source File
 
+SOURCE=.\game\LbArenaImp.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\game\LbGame.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\game\LbGameBlocks.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\game\LbLevelImp.cpp
 # End Source File
 # End Group
 # Begin Group "graphics"
@@ -117,6 +125,10 @@ SOURCE=.\graphics\LbGraphicsBike.cpp
 # Begin Source File
 
 SOURCE=.\graphics\LbGraphicsLevel.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\graphics\LbGraphTexture.cpp
 # End Source File
 # End Group
 # Begin Group "input"
@@ -169,6 +181,10 @@ SOURCE=.\misc\LbVector.cpp
 # Begin Source File
 
 SOURCE=.\misc\LbVector4.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\misc\LbXmlParse.cpp
 # End Source File
 # End Group
 # Begin Source File
@@ -286,6 +302,10 @@ SOURCE=..\include\LbSound.h
 # Begin Source File
 
 SOURCE=..\include\LbStandard.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\LbXmlParse.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
