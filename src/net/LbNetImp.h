@@ -51,7 +51,6 @@ class LbNetImp : public LbNetSys
         virtual void MakeConnection (  ) ;
         virtual void ReadData ( int c  ) ;
         virtual void SendData ( int c  ) ;
-        virtual void CloseNetwork() ;
         virtual bool GetTCPMessage ( int * playerHash , char * message ) ;
         virtual void PutTCPMessage ( int playerHash , char * message ) ;
         virtual void BroadcastTCPMessage ( char * message ) ;
@@ -60,7 +59,7 @@ class LbNetImp : public LbNetSys
         queue<LbGameEvent> gameMessageQueue ;
 
         // Stores open connections.  Uses a crude queue implementation.
-        struct LbConnection
+        struct LbSocket
         {
             SOCKET socket ;
             SOCKADDR_IN remoteAddress ;
@@ -71,11 +70,11 @@ class LbNetImp : public LbNetSys
         };
 
         // Array of all connections and the number of valid connections.
-        LbConnection connections [ MAX_CONNECTIONS ] ;
+        LbSocket connections [ MAX_CONNECTIONS ] ;
         int nCon ;
 
         // Socket connections with data available to be read from buffer.
-        queue<LbConnection*> readSocketQueue ;
+        queue<LbSocket*> readSocketQueue ;
 
         // The index of the socket on which, if this is a server, it is listening.
         int iListCon ;

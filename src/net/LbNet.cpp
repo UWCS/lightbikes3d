@@ -47,7 +47,10 @@
 
 // TO DO:
 //        Sort out the text buffering.
-//        Implement broadcasting.
+//        Proper player hashes, use collection rather than connection array.
+//        Implement broadcasting IN LBGAME.
+//        Implement client/server in Lb Game.
+//        Implement text IO in Lb Game.
 //        Threading to make polling better.
 //        Use UDP, define UDP packets.
 
@@ -93,37 +96,40 @@ void LbNetImp::ProcessMessages ( )
     {
         // Translate each of the messages to game messages and add to the game queue.
 
-        // If we are the server...
-        //   If it is a JOIN message...
-        //    - inform all players of the new player.
-        //   If it is a HAND message...
-        //    - inform all players of the change of handle.
-        //   If it is a SAY message...
-        //    - inform all players of the chat message.
-
         // As a client, create game messages.
-        // CHAT message.
-        if ( memcmp ( (char*)&mesStr , "CHAT " , 4 ) == 0 )
-        {
-            LbGameEvent t ;
-            t.id = LB_GAME_CHATMESSAGE ;
-            memcpy( (char*)&t.message , (char*)&mesStr , 19 ) ;
-            t.playerHash = playerHash ;
+        LbGameEvent t ;
 
-            gameMessageQueue.push ( t ) ;
-        }
         // JOIN message.
-        else if ( memcmp ( (char*)&mesStr , "JOIN " , 4 ) == 0 )
-        {
-        }
-        // SAY message.
-        else if ( memcmp ( (char*)&mesStr , "SAY " , 3 ) == 0 )
-        {
-        }
+        if ( memcmp ( (char*)&mesStr , "JOIN " , 4 ) == 0 )
+            t.id = LB_GAME_PLAYERJOIN ;
+
+        // LEAVE message.
+        else if ( memcmp ( (char*)&mesStr , "LEAVE " , 5 ) == 0 )
+            t.id = LB_GAME_PLAYERLEAVE ;
+
+        // HAND message.
+        else if ( memcmp ( (char*)&mesStr , "HAND " , 4 ) == 0 )
+            t.id = LB_GAME_HANDCHANGE ;
+
+        // CHAT message.
+        else if ( memcmp ( (char*)&mesStr , "CHAT " , 4 ) == 0 )
+            t.id = LB_GAME_CHAT ;
+
+        // NEWGAME message.
+        else if ( memcmp ( (char*)&mesStr , "NEWGAME " , 7 ) == 0 )
+            t.id = LB_GAME_NEWGAME ;
+
+        // CHANGE message.
+        else if ( memcmp ( (char*)&mesStr , "CHANGE " , 6 ) == 0 )
+            t.id = LB_GAME_CHANGESERVER ;
+
         // RESET message.
         else if ( memcmp ( (char*)&mesStr , "RESET " , 5 ) == 0 )
-        {
-        }
+            t.id = LB_GAME_RESETSERVER ;
+
+        memcpy( (char*)&t.message , (char*)&mesStr , 19 ) ;
+        t.playerHash = playerHash ;
+        gameMessageQueue.push ( t ) ;
     }
 
     // Check the UDP message queue.
@@ -350,7 +356,7 @@ bool LbNetImp::GetTCPMessage ( int * playerhash , char * message )
 {
     if ( !readSocketQueue.empty() )
     {
-        LbConnection * c = readSocketQueue.front ( ) ;
+        LbSocket * c = readSocketQueue.front ( ) ;
         readSocketQueue.pop ( ) ;
 
         // WRONG!
@@ -379,7 +385,7 @@ void LbNetImp::PutTCPMessage ( int playerhash , char * message )
 */
 void LbNetImp::BroadcastTCPMessage ( char * message )
 {
-    for ( int i = 0 ; i < nCon ; i++ )
+    for ( int i = 0 ; i < nCon ; i ++ )
         if ( i != iListCon )
             PutTCPMessage ( i , message ) ;
 }
@@ -387,22 +393,18 @@ void LbNetImp::BroadcastTCPMessage ( char * message )
 /*
 ** Shuts down the network cleanly, closing all sockets.
 */
-void LbNetImp::CloseNetwork ( )
+LbNetImp::~LbNetImp()
 {
-    for ( int i = 0 ; i < nCon ; i++ )
+    for ( int i = 0 ; i < nCon ; i ++ )
         closesocket ( connections [ i ] . socket ) ;
 }
 
-LbNetImp::~LbNetImp()
+LbNetSys *CreateNetSys( LbOSLayerSys *os_sys )
 {
-}
+    LbNetSys *rval = new LbNetImp;
+    assert ( rval != NULL ) ;
 
-LbNetSys *CreateNetSys(LbOSLayerSys *os_sys)
-{
-    LbNetSys *rval=new LbNetImp;
-    assert(rval!=NULL);
-
-    rval->Init(os_sys);
+    rval->Init ( os_sys ) ;
 
     return rval;
 }

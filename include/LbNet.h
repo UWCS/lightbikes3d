@@ -30,18 +30,17 @@ enum LbGameEventId
     LB_GAME_PLAYERJOIN = 0 ,
     LB_GAME_PLAYERLEAVE = 1 ,
     LB_GAME_HANDCHANGE = 2 ,
-    LB_GAME_CHATMESSAGE = 3 ,
+    LB_GAME_CHAT = 3 ,
     LB_GAME_NEWGAME = 4 ,
-    LB_GAME_STARTSERVER = 20 ,
-    LB_GAME_STOPSERVER = 21 ,
-    LB_GAME_RESETSERVER = 22
+    LB_GAME_CHANGESERVER = 20 ,
+    LB_GAME_RESETSERVER = 21
 };
 
 struct LbGameEvent
 {
     LbGameEventId id ;
     int playerHash ;
-    char message[20] ;
+    char message [ 20 ] ;
 };
 
 class LbNetSys
@@ -49,11 +48,10 @@ class LbNetSys
     public:
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
-        virtual void Init(LbOSLayerSys *os_sys) = 0 ;
+        virtual void Init( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
-        virtual void ConnectToServer ( char *) = 0 ;
+        virtual void ConnectToServer ( char * ) = 0 ;
         virtual void InitiateServer ( int ) = 0 ;
-        virtual void CloseNetwork ( ) = 0 ;
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}

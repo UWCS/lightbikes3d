@@ -147,7 +147,8 @@ int LbGameImp::RunGame()
            **  Send level data
            */
 
-                net_sys->PollSockets();
+        // Probably won't do this ultimately.
+        net_sys->PollSockets();
 
         while ( net_sys->GetNextGameEvent ( game_event ) )
         {
@@ -157,18 +158,14 @@ int LbGameImp::RunGame()
                 case LB_GAME_PLAYERLEAVE:
                 case LB_GAME_HANDCHANGE:
                 case LB_GAME_NEWGAME:
-                //    MessageBox ( NULL , "game message" , "", MB_ICONSTOP ) ;
+                case LB_GAME_CHANGESERVER :
+                case LB_GAME_RESETSERVER :
+                     MessageBox ( NULL , "message from server/client" , "Werd Up", MB_ICONSTOP ) ;
                 break;
 
                 // Deal with incoming chat messages.  JUST DISPLAYS THEM.
-                case LB_GAME_CHATMESSAGE:
+                case LB_GAME_CHAT:
                     MessageBox ( NULL , (char*)&game_event.message , "Chat Message", MB_ICONSTOP ) ;
-                break;
-
-                case LB_GAME_STARTSERVER :
-                case LB_GAME_STOPSERVER :
-                case LB_GAME_RESETSERVER :
-                    MessageBox ( NULL , "message from server" , "", MB_ICONSTOP ) ;
                 break;
             }
             break;
