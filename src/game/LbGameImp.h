@@ -92,6 +92,8 @@ class LbBaseBlockImp : public LbBaseBlock
 */
 virtual void GetColor(LbRGBAColor &col);
 virtual void SetColor(const LbRGBAColor &col);
+
+
 /*
 ** LbBaseBlockImp methods
 */
@@ -100,6 +102,34 @@ LbBaseBlockImp();
 ~LbBaseBlockImp();
 
 private:
+};
+class LbEmptyBlock : public LbBaseBlockImp{
+	public:
+	/*
+
+	** LbBaseBlock methods
+
+	*/
+
+
+
+	virtual void GetGeometrySize(int &num_points,int &num_normals);
+	virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
+
+	virtual LbCollideEvent Collide(LbBlockDirection &dir);
+    virtual float GetZInBlock(float &x, float &y);
+
+	/*
+	** LbFullBlock methods
+	*/
+
+
+
+	LbEmptyBlock();
+
+	~LbEmptyBlock();
+
+	private:
 };
 
 
@@ -112,6 +142,9 @@ public:
 
 virtual void GetGeometrySize(int &num_points,int &num_normals);
 virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
+virtual LbCollideEvent Collide(LbBlockDirection &dir);
+virtual float GetZInBlock(float &x, float &y);
+
 /*
 ** LbFullBlock methods
 */
@@ -130,7 +163,8 @@ public:
 
 virtual void GetGeometrySize(int &num_points,int &num_normals);
 virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
-
+virtual LbCollideEvent Collide(LbBlockDirection &dir);
+virtual float GetZInBlock(float &x, float &y);
 /*
 ** LbFullBlock methods
 */
@@ -142,5 +176,36 @@ private:
 
 LbBlockDirection block_dir;
 };
+
+class LbArenaImp : public LbArena
+{
+	LbLevel **levels;
+	int numLevels;
+
+	public:
+	LbArenaImp(LbLevel **levs, int num);
+	~LbArenaImp();
+
+	virtual LbLevel * GetLevel(int level);
+	inline int GetZSize() { return numLevels; };
+};
+
+class LbLevelImp : public LbLevel
+{
+	LbBaseBlock **blocks;
+	int xsize, ysize;
+
+	public:
+	LbLevelImp();
+	LbLevelImp(int x, int y);
+	~LbLevelImp();
+
+	virtual void SetBlockAt(int x, int y, LbBaseBlock &block);
+	virtual LbBaseBlock * GetBlockAt(int x, int y);
+
+	inline int GetXSize() { return xsize; };
+	inline int GetYSize() { return ysize; };
+};
+
 
 #endif

@@ -1,6 +1,6 @@
 /*********************************************************************************
     LbMiscTypes.h
-    Header file to define useful types for LightBikes2001 
+    Header file to define useful types for LightBikes2001
 
     Copyright (C) 2000  University of Warwick Computing Society
 
@@ -48,6 +48,12 @@ enum LbBlockDirection
 	LB_DIR_E,
 	LB_DIR_W,
 	};
+
+enum LbCollideEvent
+{
+	LB_PLAYER_OK = 0,
+	LB_PLAYER_DIE,
+};
 
 class LbError
 {

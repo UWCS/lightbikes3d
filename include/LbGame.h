@@ -37,7 +37,27 @@ class LbBaseBlock
     virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)=0;
     virtual void GetColor(LbRGBAColor &col)=0;
     virtual void SetColor(const LbRGBAColor &col)=0;
+
+    virtual LbCollideEvent Collide(LbBlockDirection &dir)=0;
+    virtual float GetZInBlock(float &x, float &y)=0;
 };
+class LbLevel
+{
+	public:
+	virtual void SetBlockAt(int x, int y, LbBaseBlock &block)=0;
+	virtual LbBaseBlock * GetBlockAt(int x, int y)=0;
+
+	virtual int GetXSize()=0;
+	virtual int GetYSize()=0;
+};
+
+class LbArena
+{
+	public:
+	virtual LbLevel * GetLevel(int level)=0;
+	virtual int GetZSize()=0;
+};
+
 class LbGameSys
 {
     public:

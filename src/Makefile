@@ -20,8 +20,11 @@ MISC_C_FILES=\
 GAME_H_FILES=\
     game\LbGameImp.h
 GAME_C_FILES=\
+    game\LbGameBlocks.cpp \
+    game\LbLevelImp.cpp \
+    game\LbArenaImp.cpp \
     game\LbGame.cpp
-
+    
 
 GRAPHICS_H_FILES=\
     graphics\LbGraphicsImp.h

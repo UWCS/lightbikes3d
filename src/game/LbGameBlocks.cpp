@@ -49,6 +49,40 @@ LbBaseBlockImp::~LbBaseBlockImp()
 {
 }
 
+/*
+** LbEmptyBlock: LbBaseBlock methods
+*/
+
+void LbEmptyBlock::GetGeometrySize(int &num_points,int &num_normals)
+{
+}
+
+void LbEmptyBlock::GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)
+{
+}
+
+LbCollideEvent LbEmptyBlock::Collide(LbBlockDirection &dir)
+{
+	return LB_PLAYER_OK;
+}
+
+float LbEmptyBlock::GetZInBlock(float &x, float &y)
+{
+	return 0.0;
+}
+
+/*
+** LbEmptyBlock methods
+*/
+
+LbEmptyBlock::LbEmptyBlock()
+{
+}
+
+LbEmptyBlock::~LbEmptyBlock()
+{
+}
+
 
 /*
 ** LbFullBlock: LbBaseBlock methods
@@ -60,6 +94,16 @@ void LbFullBlock::GetGeometrySize(int &num_points,int &num_normals)
 
 void LbFullBlock::GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)
 {
+}
+
+LbCollideEvent LbFullBlock::Collide(LbBlockDirection &dir)
+{
+	return LB_PLAYER_DIE;
+}
+
+float LbFullBlock::GetZInBlock(float &x, float &y)
+{
+	return 1.0;
 }
 
 /*
@@ -84,6 +128,38 @@ void LbRampBlock::GetGeometrySize(int &num_points,int &num_normals)
 
 void LbRampBlock::GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)
 {
+}
+
+LbCollideEvent LbRampBlock::Collide(LbBlockDirection &dir)
+{
+	if (block_dir==dir)
+		return LB_PLAYER_OK;
+	else
+		return LB_PLAYER_DIE;
+}
+
+float LbRampBlock::GetZInBlock(float &x, float &y)
+{
+	//I am assuming that +y = N, +x = E
+	if (block_dir==LB_DIR_N)
+	{
+		return y;
+	}
+	else if (block_dir==LB_DIR_S)
+	{
+		return 1-y;
+	}
+	else if (block_dir==LB_DIR_E)
+	{
+		return x;
+	}
+	else if (block_dir==LB_DIR_W)
+	{
+		return 1-x;
+	}
+
+	//erm...
+	return 0.0;
 }
 
 /*
