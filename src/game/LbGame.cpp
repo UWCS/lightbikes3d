@@ -435,6 +435,11 @@ int LbGameImp::RunGame()
 
         // Probably won't do this ultimately.
         net_sys->PollSockets ( ) ;
+        if ( net_sys->GetStatus ( ) == LB_NET_ERROR )
+        {
+            ShowStatusMessage ( net_sys->GetError ( ) ) ;
+            net_sys->ResetConnections ( ) ;
+        }
 
         // Deal with network messages.
         while ( net_sys->GetNextGameEvent ( game_event ) )
@@ -554,6 +559,9 @@ int LbGameImp::RunGame()
                     movedplayer -> SetLevel ( u.level ) ;
                     movedplayer -> GetBike ( ) -> AddSegment (
                         LbVector ( u.x2 , u.y2 , 0 ) ) ;
+
+                    string s = "handle is " + movedplayer->GetHandle() ;
+                    MessageBox ( NULL , s.c_str()  , "debug" , MB_ICONSTOP ) ;
                 }
 
                 // Resend the message if we are a server.
@@ -656,7 +664,6 @@ LbPlayer * LbGameImp::GetPlayer ( int playerhash )
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         if ( players[i]->IsValid ( ) == true &&
              playerhash == players[i]->GetHash ( ) )
-            if ( players[i]->GetHandle ( ) != "" )
                 return players[i] ;
     return NULL ;
 }
@@ -838,18 +845,23 @@ void LbGameImp::ProcessCommand ( string t )
         }
         else if ( cmd == "connect" )
         {
-            net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
-            if ( net_sys->GetStatus ( ) == LB_NET_CONNECTEDTOSERVER )
+            net_sys->InitialiseClientTCP ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
+            if ( net_sys->GetStatus ( ) != LB_NET_CLIENT )
             {
-                ShowStatusMessage ( "Status: Connected to server." ) ;
-            }
-            else
-            {
-                ShowStatusMessage ( "Error: Could not connect." ) ;
+                ShowStatusMessage ( net_sys->GetError ( ) ) ;
+                net_sys->ResetConnections ( ) ;
                 return ;
             }
 
             net_sys -> InitialiseClientUDP ( LB_SERVER_UDP_PORT , LB_CLIENT_UDP_PORT ) ;
+            if ( net_sys->GetStatus ( ) != LB_NET_CLIENT )
+            {
+                ShowStatusMessage ( net_sys->GetError ( ) ) ;
+                net_sys->ResetConnections ( ) ;
+                return ;
+            }
+
+            ShowStatusMessage ( "Connected to server." ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
@@ -857,18 +869,29 @@ void LbGameImp::ProcessCommand ( string t )
         }
         else if ( cmd == "startserver" )
         {
-            net_sys->InitiateServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
-            if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
+            if ( net_sys->GetStatus() == LB_NET_SERVER )
             {
-                ShowStatusMessage ( "Status: Server running." ) ;
+                ShowStatusMessage ( "Server already running." ) ;
+                return ;
             }
-            else
+
+            net_sys->InitialiseServerTCP ( LB_SERVER_TCP_PORT ) ;
+            if ( net_sys->GetStatus ( ) != LB_NET_SERVER )
             {
-                ShowStatusMessage ( "Error: Could not start server." ) ;
+                ShowStatusMessage ( net_sys->GetError ( ) ) ;
+                net_sys->ResetConnections ( ) ;
                 return ;
             }
 
             net_sys -> InitialiseServerUDP ( LB_SERVER_UDP_PORT , LB_CLIENT_UDP_PORT ) ;
+            if ( net_sys->GetStatus ( ) != LB_NET_SERVER )
+            {
+                ShowStatusMessage ( net_sys->GetError ( ) ) ;
+                net_sys->ResetConnections ( ) ;
+                return ;
+            }
+
+            ShowStatusMessage ( "Server started." ) ;
 
             // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;

@@ -34,19 +34,19 @@
 // buffers are maintained as part of the socket structure.
 //
 // There has to be a mapping between players and open connections (sockets) on
-// the server.  Players are assigned a unique playerHash which is constant
-// while they are connected, the game logic can convert this to player objects.
+// the server.  Players are assigned a unique playerHash by the server when
+// they connect which is constant while they are connected, the game logic can
+// convert this to player objects.
 //
-// TCP and UDP connections are maintained (currently just TCP).
-//
-// The non-urgent (player join / chat etc.) game messages are translated to TCP
-// text and added to the queue and sent whenever the network queue is serviced.
-// Similarly received messages are decoded and retreived by the game logic
-// modules.
+// TCP connections are maintained. The non-urgent (player join / chat etc.)
+// game messages are translated to text and added to the queue and sent
+// whenever the network queue is serviced.  UDP packets are used for the more
+// urgent (player turn) messages.
 //
 // TO DO:
-//        Threading to make polling better.
-//        Use UDP, define UDP packets.
+//      UDP Packet acknowlegements/resending.
+//      Threading to replace the need for polling from the game logic.
+//      Robustness.
 
 LbNetImp::LbNetImp ( )
 {
@@ -59,14 +59,16 @@ LbNetImp::LbNetImp ( )
  **/
 void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
 {
-    // Create the socket.
-    udpsocket = socket(AF_INET,          // Address family = Internet.
-                       SOCK_DGRAM,       // Socket type = datagram.
-                       IPPROTO_UDP);     // Protocol = User Datagram Protocol.
+    // Create the socket.  Parameters are address family = Internet, socket
+    // type = datagram , protocol = UDP.
+    udpsocket = socket(AF_INET, SOCK_DGRAM , IPPROTO_UDP ) ;
 
     if ( udpsocket == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening socket." ,
-                     "Error" , MB_ICONSTOP ) ;
+    {
+        error = "There was an error opening the socket to use for UDP." ;
+        mode = LB_NET_ERROR ;
+        return  ;
+    }
 
     SOCKADDR_IN sockName;
     sockName.sin_family = AF_INET;
@@ -84,9 +86,10 @@ void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
 
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the server UDP port.  Another " \
-                          "application may be using this port." , "Error" ,
-                          MB_ICONSTOP ) ;
+        error = "Error binding to the server UDP port.  Another application "\
+                "may be using this port." ;
+        mode = LB_NET_ERROR ;
+        return ;
     }
 
     server_udp_port = server_port ;
@@ -98,14 +101,16 @@ void LbNetImp::InitialiseServerUDP  ( int server_port , int client_port )
  **/
 void LbNetImp::InitialiseClientUDP  ( int server_port , int client_port )
 {
-    // Create the socket.
-    udpsocket = socket(AF_INET,           // Address family = Internet.
-                       SOCK_DGRAM,        // Socket type = datagram.
-                       IPPROTO_UDP ) ;     // Protocol = User Datagram Protocol.
+    // Create the socket.  Parameters are address family = Internet, socket
+    // type = datagram , protocol = UDP.
+    udpsocket = socket(AF_INET, SOCK_DGRAM , IPPROTO_UDP ) ;
 
     if ( udpsocket == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening socket." ,
-                     "Error" , MB_ICONSTOP ) ;
+    {
+        error = "There was an error opening socket to use for UDP." ;
+        mode = LB_NET_ERROR ;
+        return ;
+    }
 
     SOCKADDR_IN sockName;
     sockName.sin_family = AF_INET;
@@ -119,9 +124,10 @@ void LbNetImp::InitialiseClientUDP  ( int server_port , int client_port )
 
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the client UDP port.  Another " \
-                          "application may be using this port." , "Error" ,
-                          MB_ICONSTOP ) ;
+        error = "Error binding to the client UDP port.  Another application "\
+                "may be using this port." ;
+        mode = LB_NET_ERROR ;
+        return ;
     }
 
     server_udp_port = server_port ;
@@ -142,6 +148,7 @@ void LbNetImp::SendPositionUpdate ( LbGamePositionUpdate & u )
  **/
 bool LbNetImp::GetNextPositionUpdate ( LbGamePositionUpdate & u )
 {
+    // If the queue is non-empty.
     if ( ! gameUpdateReceiveQueue.empty ( ) )
     {
         LbGamePositionUpdate t = gameUpdateReceiveQueue.front();
@@ -161,64 +168,54 @@ void LbNetImp::PollSocketsUDP ( )
 {
     // Receive ------------------------
 
-    // Construct read sockets.
-    fd_set readscks , writescks , errscks;
-    errscks.fd_count = writescks.fd_count = readscks.fd_count = 1 ;
-    errscks.fd_array[0] =
-        writescks.fd_array[0] =
-            readscks.fd_array[0] = udpsocket ;
+    // Keep getting data while there are packets waiting to be read.
+    while ( true )
+    {
+        // Determine if the UDP socket needs reading.
+        fd_set readscks , writescks , errscks;
+        errscks.fd_count = writescks.fd_count = readscks.fd_count = 1 ;
+        errscks.fd_array[0] =
+            writescks.fd_array[0] =
+                readscks.fd_array[0] = udpsocket ;
 
-    timeval timeout;
-    timeout.tv_sec = 0 ;
-    timeout.tv_usec = 0 ;
+        timeval timeout;
+        timeout.tv_sec = 0 ;
+        timeout.tv_usec = 0 ;
 
-    // Keep getting data while their are ports waiting to be read.
-
-        // Call to check the sockets.
         select ( 0 , ( fd_set * ) & readscks ,
-                 ( fd_set * ) & writescks , (fd_set * ) & errscks , &timeout );
+                 ( fd_set * ) & writescks ,
+                 ( fd_set * ) & errscks , &timeout ) ;
 
-        char buf [ 31 ] ;
-        buf[31]='\0';
+        // If it doesn't need reading then quit.
+        if ( readscks.fd_count == 0 || readscks.fd_array[0] != udpsocket )
+            break ;
+
+        // Read data.
+        char buf [ 30 ] ;
 
         SOCKADDR_IN saClient;
 
-        int s = sizeof(SOCKADDR) ;
+        int s = sizeof ( SOCKADDR ) ;
 
-        if ( readscks.fd_count > 0 &&
-             readscks.fd_array [ 0 ] == udpsocket )
+        if ( int e = recvfrom ( udpsocket , (char*)& buf , 30 , 0 ,
+                   (LPSOCKADDR)&saClient , & s ) != SOCKET_ERROR && e != 0 )
         {
-            if ( recvfrom ( udpsocket , (char*)& buf , 30 , 0 ,
-                   (LPSOCKADDR)&saClient , & s ) )
-            {
-                /*if ( mode== LB_NET_SERVER )
-                {
-                    MessageBox ( NULL ,  (char*)&buf , "Server - UDP data received." ,
-                                 MB_ICONSTOP ) ;
-                }
-                else
-                {
-                    MessageBox ( NULL , (char*)&buf ,"Client UDP data received" ,
-                                 MB_ICONSTOP ) ;
-                }*/
+            LbGamePositionUpdate u ;
 
-                LbGamePositionUpdate u ;
+            // Parse the message.
+            memcpy ( & u.playerHash , & buf [ 4 ] , 4 ) ;
+            memcpy ( & u.sequence , & buf [ 8 ] , 4 ) ;
+            memcpy ( & u.x1 , & buf [ 12 ] , 4 ) ;
+            memcpy ( & u.y1 , & buf [ 16 ] , 4 ) ;
+            memcpy ( & u.x2 , & buf [ 20 ] , 4 ) ;
+            memcpy ( & u.y2 , & buf [ 24 ] , 4 ) ;
+            memcpy ( & u.level , & buf [ 28 ] ,  1 ) ;
+            memcpy ( & u.direction , & buf [ 29 ] ,  1 ) ;
 
-                // Parse the message.
-                memcpy ( & u.playerHash , & buf [ 4 ] , 4 ) ;
-                memcpy ( & u.sequence , & buf [ 8 ] , 4 ) ;
-                memcpy ( & u.x1 , & buf [ 12 ] , 4 ) ;
-                memcpy ( & u.y1 , & buf [ 16 ] , 4 ) ;
-                memcpy ( & u.x2 , & buf [ 20 ] , 4 ) ;
-                memcpy ( & u.y2 , & buf [ 24 ] , 4 ) ;
-                memcpy ( & u.level , & buf [ 28 ] ,  1 ) ;
-                memcpy ( & u.direction , & buf [ 29 ] ,  1 ) ;
-
-                // Add the update to the queue.
-                gameUpdateReceiveQueue.push ( u ) ;
-            }
-
+            // Add the update to the queue.
+            gameUpdateReceiveQueue.push ( u ) ;
         }
+    }
 
     // Transmit ---------------------
     while ( ! gameUpdateTransmitQueue.empty ( ) )
@@ -238,13 +235,14 @@ void LbNetImp::PollSocketsUDP ( )
         memcpy ( & buf [ 28 ] , & u.level , 1 ) ;
         memcpy ( & buf [ 29 ] , & u.direction , 1 ) ;
 
-        if ( mode == LB_NET_CONNECTEDTOSERVER )
+        if ( mode == LB_NET_CLIENT )
         {
             SOCKADDR_IN saServer;
             PSOCKADDR_IN pSaServer ;
             pSaServer = &saServer ;
             pSaServer->sin_family = PF_INET ;
-            pSaServer->sin_addr.S_un.S_addr = inet_addr ( "127.0.0.1" ) ;
+            pSaServer->sin_addr.S_un.S_addr =
+                lbsockets[iServCon].remoteAddress.sin_addr.S_un.S_addr ;
             pSaServer->sin_port = htons ( server_udp_port );
 
             int nRet = sendto(udpsocket,    // Socket
@@ -259,22 +257,27 @@ void LbNetImp::PollSocketsUDP ( )
             int i ;
 
             // Send message to all clients.
-            for ( i = 1 ; i < lbsockets.size() ; i++ )
+            for ( i = 0 ; i < lbsockets.size() ; i++ )
             {
-                SOCKADDR_IN saClient ;
-                PSOCKADDR_IN pSaServer ;
-                pSaServer = & saClient ;
-                pSaServer->sin_family = PF_INET ;
-                pSaServer->sin_addr.S_un.S_addr =
+                // Skip the socket that the server listens on since this
+                // won't have an address to use.
+                if ( i != iListCon )
+                {
+                    SOCKADDR_IN saClient ;
+                    PSOCKADDR_IN pSaServer ;
+                    pSaServer = & saClient ;
+                    pSaServer->sin_family = PF_INET ;
+                    pSaServer->sin_addr.S_un.S_addr =
                     lbsockets[i].remoteAddress.sin_addr.S_un.S_addr ;
-                pSaServer->sin_port = htons ( client_udp_port );
+                    pSaServer->sin_port = htons ( client_udp_port );
 
-                int nRet = sendto ( udpsocket , // Socket
-                  (char * ) & buf ,             // Data buffer
-                  30,                           // Length of data
-                  0 ,                           // Flags
-                  (LPSOCKADDR)pSaServer,        // Server address
-                  sizeof(struct sockaddr));     // Length of address
+                    int nRet = sendto ( udpsocket , // Socket
+                      (char * ) & buf ,             // Data buffer
+                      30,                           // Length of data
+                      0 ,                           // Flags
+                      (LPSOCKADDR)pSaServer,        // Server address
+                      sizeof(struct sockaddr));     // Length of address
+                }
              }
           }
     }
@@ -285,7 +288,7 @@ void LbNetImp::PollSocketsUDP ( )
 // ------ end of UDP stuff ---------
 
 /**
- ** Returns LB_NET_CONNECTEDTOSERVER , LB_NET_SERVER or LB_NET_DISCONNECTED.
+ ** Returns LB_NET_CLIENT , LB_NET_SERVER or LB_NET_DISCONNECTED.
  **/
 int LbNetImp::GetStatus ( )
 {
@@ -363,7 +366,7 @@ void LbNetImp::SendGameEvent ( LbGameEvent &e , bool includeourself )
     {
         BroadcastTCPMessage ( msgtext.c_str ( ) ) ;
     }
-    else if ( mode == LB_NET_CONNECTEDTOSERVER )
+    else if ( mode == LB_NET_CLIENT )
     {
         PutTCPMessage ( & lbsockets [ iServCon ] ,
                         msgtext.c_str ( ) ) ;
@@ -464,7 +467,9 @@ LbSocket * LbNetImp::PlayerhashToSocket ( int playerhash )
 {
     int i ;
     for ( i = 0 ; i < lbsockets.size ( ) ; i ++ )
-        if ( ( int ) ( lbsockets [ i ].remoteAddress.sin_addr.S_un.S_addr + i ) == playerhash )
+        if ( ( int ) (
+            lbsockets [ i ].remoteAddress.sin_addr.S_un.S_addr + i ) ==
+                playerhash )
             break ;
     return ( & lbsockets [ i ] ) ;
 }
@@ -487,11 +492,15 @@ void LbNetImp::PollSockets ( )
     errscks.fd_count = writescks.fd_count = readscks.fd_count = lbsockets.size ( ) ;
     for (i = 0 ; i < lbsockets.size ( ) ; i++ )
     {
-        errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = lbsockets[i].socket ;
+        errscks.fd_array[i] =
+            writescks.fd_array[i] =
+                readscks.fd_array[i] = lbsockets[i].socket ;
     }
 
     // Call to check the sockets.
-    select ( 0 , ( fd_set * ) & readscks , ( fd_set * ) & writescks , (fd_set * ) & errscks , &timeout );
+    select ( 0 , ( fd_set * ) & readscks ,
+                 ( fd_set * ) & writescks ,
+                 ( fd_set * ) & errscks , &timeout );
 
     // Check for data to read or incoming lbsockets.
     for (i = 0 ; i < readscks.fd_count ; i ++ )
@@ -510,17 +519,45 @@ void LbNetImp::PollSockets ( )
                 SendData ( j ) ;
     }
 
-    // Check for sockets ready to write.
+    // Check for sockets with errors.
     for (i = 0 ; i < errscks.fd_count ; i ++ )
     {
-         MessageBox ( NULL, "err scks" ,
-                    "Error" , MB_ICONSTOP ) ;
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
             if ( errscks.fd_array [ i ] == lbsockets [ j ].socket )
-            {
-            }
+                SocketError( j ) ;
     }
 
+}
+
+/**
+ ** Determine what to do about an error with a socket.  We may be able to drop
+ ** the player and continue.
+ **/
+void LbNetImp::SocketError ( int c )
+{
+    if ( mode == LB_NET_SERVER )
+    {
+        if ( c == iListCon )
+        {
+            error = "Socket error on server listen port." ;
+            mode = LB_NET_ERROR ;
+            return ;
+        }
+        else
+        {
+            CloseSocket ( lbsockets [ c ] ) ;
+        }
+    }
+
+    if ( mode == LB_NET_CLIENT )
+    {
+        if ( c == iServCon )
+        {
+            error = "Lost connection to server." ;
+            mode = LB_NET_ERROR ;
+            return ;
+        }
+    }
 }
 
 /**
@@ -552,36 +589,57 @@ void LbNetImp::ResetConnections ( )
 /**
  ** Used by a client to connect to a server.
  **/
-void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
+void LbNetImp::InitialiseClientTCP ( const char * serveraddress , int port )
 {
+    // Figure out the name.
+    unsigned long ipaddress ;
+
+    // Try and parse it.
+    ipaddress = inet_addr ( serveraddress ) ;
+    if ( ipaddress == INADDR_NONE )
+    {
+        // Try a lookup.
+        hostent * f = gethostbyname ( serveraddress ) ;
+        if ( f == NULL )
+        {
+            mode = LB_NET_ERROR ;
+            error = "Couldn't resolve server hostname.  Check it is valid." ;
+            return ;
+        }
+        memcpy ( & ipaddress , (*f).h_addr_list[0] , 4 ) ;
+    }
+
     // Kill off any network stuff that is already running.
     ResetConnections ( ) ;
 
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
 
-    // Get the server address as a long number rather than a string.
-    unsigned long serverAddress = inet_addr ( dottedServerAddress ) ;
-
-    // Set up a socket to connect to the server.
-    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , 0 ) ;
+    // Open the socket, reporting any errors.
+    //   AF_INET means use IP ADDRESSING
+    //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
+    //   IPPROTO_TCP means use TCP/IP protocol suite.
+    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , IPPROTO_TCP ) ;
     if ( hSock == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening the socket." ,
-                     "Error" , MB_ICONSTOP ) ;
+    {
+        error = "Error opening the socket to connect to server." ;
+        mode = LB_NET_ERROR ;
+        return ;
+    }
 
     SOCKADDR_IN sockName ;
     PSOCKADDR_IN pSockName ;
     pSockName = & sockName ;
     pSockName->sin_family = PF_INET ;
-    pSockName->sin_addr.S_un.S_addr = serverAddress ;
+    pSockName->sin_addr.S_un.S_addr = ipaddress ;
     pSockName->sin_port = htons ( port ) ;
 
     int nRet = connect ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the port to connect to server.  "\
-                    "Another application may be using this port." ,
-                    "Error" , MB_ICONSTOP ) ;
+       error = "Error connecting to server.  Check address is correct." ;
+       mode = LB_NET_ERROR ;
+       return ;
     }
 
     iServCon = n ;
@@ -593,14 +651,14 @@ void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
     lbsockets [ n ].writeBuffer[ 0 ] = '\0' ;
     lbsockets [ n ] .error = false ;
 
-    mode = LB_NET_CONNECTEDTOSERVER ;
+    mode = LB_NET_CLIENT ;
 }
 
 /**
  ** Used by a server to set up the listening on a port which picks up clients
  ** attempting to connect.
  **/
-void LbNetImp::InitiateServer ( const char * address , int port )
+void LbNetImp::InitialiseServerTCP ( int port )
 {
     // Kill off any network stuff that is already running.
     ResetConnections ( ) ;
@@ -615,42 +673,41 @@ void LbNetImp::InitiateServer ( const char * address , int port )
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
 
-    // Get the server address as a long number rather than a string.
-    unsigned long serverAddress = inet_addr ( address ) ;
-
     // Open the socket, reporting any errors.
     //   AF_INET means use IP ADDRESSING
     //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
-    //   0 means use TCP/IP protocol suite.
-    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , 0 );
+    //   IPPROTO_TCP means use TCP/IP protocol suite.
+    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , IPPROTO_TCP );
     if ( hSock == INVALID_SOCKET )
-        MessageBox ( NULL , "There was an error opening socket." ,
-                     "Error" , MB_ICONSTOP ) ;
+    {
+        error = "There was an error opening socket for server." ;
+        mode = LB_NET_ERROR ;
+        return ;
+    }
 
     // Set the port and address, and report the error.
     SOCKADDR_IN sockName ;
     PSOCKADDR_IN pSockName ;
     pSockName = &sockName ;
     pSockName->sin_family = PF_INET ;
-    pSockName->sin_addr.S_un.S_addr = serverAddress ;
+    pSockName->sin_addr.s_addr = INADDR_ANY;
     pSockName->sin_port = htons ( port ) ;
     int nRet = bind ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the server port.  Another " \
-                          "application may be using this port." , "Error" ,
-                          MB_ICONSTOP ) ;
-
-                                 int q = WSAGetLastError() ;
-                                 assert ( q == 0 );
+       error = "Error binding to the server port.  Another " \
+               "application may be using this port." ;
+       mode = LB_NET_ERROR ;
+       return ;
     }
 
     // Start listening for connections on the port.
     nRet = listen ( hSock , 20 ); // 20 = Max players.
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "There was an error starting to listen" \
-                    "on the port" , "Error" , MB_ICONSTOP ) ;
+       error = "There was an error starting to listen on the port" ;
+       mode = LB_NET_ERROR ;
+       return ;
     }
 
     iListCon = n ;
@@ -681,8 +738,11 @@ void LbNetImp::AcceptConnection (  )
     // Accept the connection.
     hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , ( LPINT ) & nLen ) ;
     if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-        MessageBox ( NULL , "An error occured accepting an incoming "\
-                            "connection." , "Error." , MB_ICONSTOP ) ;
+    {
+        error = "An error occured accepting an incoming connection." ;
+        mode = LB_NET_ERROR ;
+        return ;
+    }
 
     // Create a new entry in the client connections list.
     lbsockets [ n ] .socket = hNewSock ;
@@ -782,7 +842,8 @@ bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
         int i = 0;
         while ( true )
         {
-            message [ i ] = ( * c ) . readBuffer [ i + ( * c ) . readBufferHead ] ;
+            message [ i ] =
+                ( * c ) . readBuffer [ i + ( * c ) . readBufferHead ] ;
             if ( message [ i ] == '\n' )
                 break ;
             i++ ;
@@ -821,6 +882,14 @@ void LbNetImp::BroadcastTCPMessage ( const char * message )
     for ( int i = 0 ; i < lbsockets.size ( ) ; i ++ )
         if ( i != iListCon )
             PutTCPMessage ( & lbsockets [ i ] , message ) ;
+}
+
+/**
+ ** Return a string describing the last error that occured.
+ **/
+string LbNetImp::GetError()
+{
+    return error ;
 }
 
 /**

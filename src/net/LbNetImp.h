@@ -27,7 +27,8 @@
 #define __LBNETIMP__
 
 #define SOCKADDR_LEN sizeof(struct sockaddr)
-// Stores open connections.
+
+// Stores open connections.
 struct LbSocket
 {
     SOCKET socket ;
@@ -58,8 +59,8 @@ class LbNetImp : public LbNetSys
         virtual void ProcessMessages ( ) ;
         virtual void Init(LbOSLayerSys *os_sys);
         virtual void PollSockets ( );
-        virtual void ConnectToServer( const char * address , int port ) ;
-        virtual void InitiateServer( const char * address , int port ) ;
+        virtual void InitialiseClientTCP ( const char * address , int port ) ;
+        virtual void InitialiseServerTCP ( int port ) ;
         virtual int GetOwnPlayerHash ( ) ;
     private:
         // LbNet's reference to the OS Layer.
@@ -73,7 +74,9 @@ class LbNetImp : public LbNetSys
         virtual LbSocket * PlayerhashToSocket ( int playerHash ) ;
         virtual int SocketToPlayerhash ( LbSocket * s ) ;
         virtual void ResetConnections ( ) ;
-        virtual void LbNetImp::CloseSocket  ( LbSocket &s ) ;
+        virtual void CloseSocket  ( LbSocket &s ) ;
+        virtual string GetError ( ) ;
+        virtual void SocketError ( int c ) ;
 
         // Store the game messages ready to be collected by the game logic.
         queue<LbGameEvent> gameMessageQueue ;
@@ -81,22 +84,23 @@ class LbNetImp : public LbNetSys
         // Array of all connections and the number of valid connections.
         vector<LbSocket> lbsockets;
 
-        // Socket connections with data available waiting to be read from buffer.
+        // Socket connections with data available waiting to be read from
+        // buffer.
         queue<LbSocket*> readSocketQueue ;
 
-        // The index of the socket on which, if this is a server, it is listening.
+        // The index of the socket on which, if this is a server, it is
+        // listening.
         int iListCon ;
 
-        // The index of the socket on which, if this is a client, it is connected to the server.
+        // The index of the socket on which, if this is a client, it is
+        // connected to the server.
         int iServCon ;
 
         int ownplayerhash ;
 
-        // type of operation ( client, server, disconnected )
-        int mode ;
+        // Type of operation LB_CLIENT, LB_SERVER, LB_DISCONNECTED or LB_ERROR.
+        int mode ;
 
-        const char * serveraddress ;
-
         // Socket to be used for UDP whether as client or server.
         SOCKET udpsocket ;
 
@@ -107,6 +111,9 @@ class LbNetImp : public LbNetSys
         // Queues for incoming and outgoing position updates.
         queue<LbGamePositionUpdate> gameUpdateReceiveQueue ;
         queue<LbGamePositionUpdate> gameUpdateTransmitQueue ;
+
+        // Store last error.
+        string error ;
     };
 
 #endif

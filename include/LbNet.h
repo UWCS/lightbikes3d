@@ -26,8 +26,10 @@
 #define __LBNET__
 
 #define LB_NET_DISCONNECTED 1
-#define LB_NET_CONNECTEDTOSERVER 2
+#define LB_NET_CLIENT 2
 #define LB_NET_SERVER 3
+#define LB_NET_ERROR 4
+
 
 enum LbGameEventId
 {
@@ -67,18 +69,20 @@ class LbNetSys
         virtual bool GetNextPositionUpdate ( LbGamePositionUpdate & u ) = 0 ;
         virtual void PollSocketsUDP ( ) = 0 ;
         virtual void SendPositionUpdate( LbGamePositionUpdate & u ) = 0 ;
-
         virtual int GetStatus ( ) = 0 ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void SendGameEvent ( LbGameEvent &e , bool includeourself ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
         virtual void Init ( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
-        virtual void ConnectToServer ( const char * address , int port ) = 0 ;
-        virtual void InitiateServer ( const char * address ,  int port ) = 0 ;
+        virtual void InitialiseClientTCP ( const char * address , int port ) = 0 ;
+        virtual void InitialiseServerTCP ( int port ) = 0 ;
+        virtual int GetOwnPlayerHash ( ) = 0 ;
+        virtual string GetError ( ) = 0 ;
+        virtual void SocketError ( int c ) = 0 ;
+        virtual void ResetConnections ( ) = 0 ;
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}
-        virtual int GetOwnPlayerHash ( ) = 0 ;
 };
 
 LbNetSys *CreateNetSys ( LbOSLayerSys *os_sys ) ;
