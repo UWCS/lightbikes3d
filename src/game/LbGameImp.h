@@ -70,8 +70,11 @@ class LbGameImp : public LbGameSys
         // Used to store our handle between servers.
         string ownhandle ;
 
-        LbPlayer * allplayers [ MAX_PLAYERS ] ;
+        LbPlayer * players [ MAX_PLAYERS ] ;
         LbPlayer * thisplayer ;
+
+        bool gameinprogress ;
+
 };
 
 /*
@@ -101,9 +104,7 @@ class LbEmptyBlock : public LbBaseBlockImp
 {
 	public:
 	/*
-
 	** LbBaseBlock methods
-
 	*/
 
 	virtual void GetGeometrySize(int &num_points,int &num_normals);
@@ -115,8 +116,6 @@ class LbEmptyBlock : public LbBaseBlockImp
 	/*
 	** LbFullBlock methods
 	*/
-
-
 
 	LbEmptyBlock();
 
@@ -212,9 +211,6 @@ class LbPlayerImp : public LbPlayer
 		/*
 		** LbPlayer methods
 		*/
-
-		virtual void SetColor(const LbRGBAColor &new_col);
-		virtual void SetTexture(const char *tex_name);
 
 		// Get player name.
 		virtual int GetHash ( ) ;

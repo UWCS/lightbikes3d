@@ -59,6 +59,9 @@ virtual LbVector GetLastSegment()=0;
 
 /// empty virtual destructor to ensure proper cleanup
 virtual ~LbGraphicsBike(){}
+
+private:
+    LbRGBAColor colour ;
 };
 
 class LbGraphicsLevel

@@ -8,6 +8,7 @@
        David Black
        David Capps
        James Ross
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,34 +32,34 @@
 */
 #include <pshpack1.h>
 struct LBBITMAPFILEHEADER
-    { 
-    unsigned short           bfType; 
+    {
+    unsigned short           bfType;
     unsigned int    bfSize;
-    unsigned short  bfReserved1; 
+    unsigned short  bfReserved1;
     unsigned short  bfReserved2;
     unsigned int    bfOffBits;
     };
 
 struct LBBITMAPINFOHEADER
-    { 
+    {
     unsigned int    biSize;
     int             biWidth;
     int             biHeight;
     unsigned short  biPlanes;
-    unsigned short  biBitCount; 
+    unsigned short  biBitCount;
     unsigned int    biCompression;
     unsigned int    biSizeImage;
     int             biXPelsPerMeter;
     int             biYPelsPerMeter;
     unsigned int    biClrUsed;
-    unsigned int    biClrImportant; 
+    unsigned int    biClrImportant;
     };
 struct LBRGBQUAD
     {
-    unsigned char   rgbBlue; 
-    unsigned char   rgbGreen; 
-    unsigned char   rgbRed; 
-    unsigned char   rgbReserved; 
+    unsigned char   rgbBlue;
+    unsigned char   rgbGreen;
+    unsigned char   rgbRed;
+    unsigned char   rgbReserved;
     };
 #include <poppack.h>
 
@@ -96,42 +97,42 @@ class LbGraphicsLevelImp;
 class LbGraphicsImp : public LbGraphicsSys
 {
 public:
-    
+
     /*
     ** LbGraphicsSys methods
     */
     virtual void CreateGraphicsBike();
     virtual void CreateGraphicsLevel(int x,int y);
-    
+
     virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
-    
+
     virtual void DrawText(float x,float y,float scale, const char *str);
     virtual void SetTextColor(LbRGBAColor color);
-    
+
     virtual void TriggerEffect(LbGraphicsEffect effect);
-    
+
     virtual void StartFrame();
     virtual void EndFrame();
-    
+
     virtual LbGraphicsBike *GetBike(int index);
-    
+
     /*
     ** LbGraphicsImp methods
     */
     LbGraphicsImp();
     ~LbGraphicsImp();
-    
+
     void Init(LbOSLayerSys *os_sys);
-    
-    
+
+
 private:
-    
+
     LbGraphTexture font_tex, fx_tex;
 
     void DrawEffect();
     void SetupOrtho();
     void FinishOrtho();
-    
+
     vector<LbGraphicsBikeImp> lbbikes;
     vector<LbGraphicsLevelImp> lblevels;
     int frameCount;
@@ -147,51 +148,51 @@ private:
 class LbGraphicsBikeImp : public LbGraphicsBike
 {
 public:
-    
+
     /*
     ** LbGraphicsBike methods
     */
-    
+
     virtual void SetColor(const LbRGBAColor &new_col);
     virtual void SetTexture(const char *tex_name);
-    
+
     virtual void AddSegment(const LbVector &pt);
-    
+
     virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt);
     virtual void DrawTrail();
-    
+
     // DEBUG
     virtual LbVector GetLastSegment();
     // END
-    
+
     /*
     ** LbGraphicsBikeImp methods
     */
     LbGraphicsBikeImp();
     ~LbGraphicsBikeImp();
-    
+
 private:
-    
+    LbRGBAColor colour ;
     vector<LbVector> lbtrail;
 };
 
 class LbGraphicsLevelImp : public LbGraphicsLevel
 {
 public:
-    
+
     /*
     ** LbGraphicsLevel methods
     */
-    
+
     virtual void SetBlock(LbBaseBlock *btype,int x,int y);
     virtual void DrawLevel(LbVector &offset);
-    
+
     /*
     ** LbGraphicsLevelImp methods
     */
     LbGraphicsLevelImp();
     ~LbGraphicsLevelImp();
-    
+
 private:
 };
 

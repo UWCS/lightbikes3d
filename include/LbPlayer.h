@@ -27,13 +27,6 @@
 class LbPlayer
 {
     public:
-
-		// Change color of lightbikes trail segments.
-		virtual void SetColor(const LbRGBAColor &new_col)=0;
-
-		// Change texture of lightbikes trail segments.
-		virtual void SetTexture(const char *tex_name)=0;
-
 		// Get player hash.
 		virtual int GetHash ( ) = 0 ;
 

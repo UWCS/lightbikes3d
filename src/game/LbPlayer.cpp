@@ -29,14 +29,6 @@
 ** LbPlayer methods
 */
 
-void LbPlayerImp::SetColor(const LbRGBAColor &new_col)
-{
-}
-
-void LbPlayerImp::SetTexture(const char *tex_name)
-{
-}
-
 // Get player name.
 int LbPlayerImp::GetHash ( )
 {

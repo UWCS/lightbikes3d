@@ -129,7 +129,7 @@ void LbGraphicsImp::DrawText(float x,float y, float scale, const char *str)
         texx = (cval % 10);
         texy = (cval / 10);
 
-        glColor4f(textcolor.r, textcolor.g, textcolor.b, 1.0f);
+        glColor4f( textcolor.r , textcolor.g  , textcolor.b , 1.0f);
         glTexCoord2f((GLfloat)texx*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
         glVertex2f(xpos, ypos);
         glTexCoord2f((GLfloat)(texx+1)*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
@@ -269,7 +269,7 @@ void LbGraphicsImp::StartFrame()
     // Initalise the 'scene'...
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
-    
+
     // ***********************************************************************
     // Code is here for initial testing ONLY! REMOVE THIS CODE BEFORE RELEASE!
     // ***********************************************************************
@@ -277,7 +277,7 @@ void LbGraphicsImp::StartFrame()
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
-    
+
     // Mapping X -> X, Y -> -Z, Z -> Y  (Our X,Y,Z -> OpenGL X,Y,Z)
     gluLookAt( campos.getX(), campos.getZ(), -campos.getY(),
         camtgt.getX(), camtgt.getZ(), -camtgt.getY(),
@@ -285,14 +285,14 @@ void LbGraphicsImp::StartFrame()
         //if we use LoadIdentity after this point we lose the camera position
         //so ALWAYS push and pop the matrix instead for each block of drawing
         //so the original camera matrix is always available
-    
+
     glPushMatrix();
-    
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-    
+
     int progress = os->GetMS() - frameCount;
-    
+
     glRotatef(((GLfloat)progress / 50), 0.0f, 0.0f, -1.0f);
     glTranslatef(-1.5f, 0.0f, -8.0f);
     glBegin(GL_TRIANGLES);
@@ -301,15 +301,15 @@ void LbGraphicsImp::StartFrame()
         glVertex3f( 1.0f,-1.0f, 0.0f);
         glVertex3f(-1.0f,-1.0f, 0.0f);
     glEnd();
-    
+
     glPopMatrix(); //restore the camera matrix for next block of drawing...
     glPushMatrix();//and push it again to save a copy
-    
+
     glTranslatef(1.5f, 0.0f, -8.0f);
     glRotatef(((GLfloat)progress / 50), 1.0f, 0.0f, 0.0f);
     glRotatef(((GLfloat)progress / 70), 0.0f, 1.0f, 0.0f);
     glRotatef(((GLfloat)progress / 110), 0.0f, 0.0f, 1.0f);
-    
+
     glBegin(GL_QUADS);
         // TOP
         glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
@@ -385,7 +385,7 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
     }
     frameCount = os->GetMS();
     cureffect = LB_GFX_NONE;
-    
+
     font_tex.LoadTextureBMP("font.bmp",LbRGBAColor(0,0,0,0));
     font_tex.Upload();
 

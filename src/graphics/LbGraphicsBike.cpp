@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        James Ross
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +33,7 @@
 
 void LbGraphicsBikeImp::SetColor(const LbRGBAColor &new_col)
 {
+	colour = new_col ;
 }
 
 void LbGraphicsBikeImp::SetTexture(const char *tex_name)
@@ -49,7 +51,7 @@ void LbGraphicsBikeImp::DrawSegment(const LbVector &start_pt,const LbVector &end
 {
     // OpenGL code to render a single segment of trail...
     glBegin(GL_QUADS);
-        glColor4f(0.2f, 0.2f, 0.9f, 0.2f);
+        glColor4f(colour.r, colour.g, colour.b, 0.2f );
         glVertex3f( start_pt.getX(), start_pt.getZ()    , -start_pt.getY() );
         glVertex3f( start_pt.getX(), start_pt.getZ() + 1, -start_pt.getY() );
         glVertex3f(   end_pt.getX(),   end_pt.getZ() + 1,   -end_pt.getY() );
