@@ -74,6 +74,10 @@ int LbGameImp::RunGame()
 
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
 
+        // Clear stuuf.
+        NewGame ( ) ;
+
+
     while(!quit_flag)
     {
         scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
@@ -117,9 +121,9 @@ int LbGameImp::RunGame()
                 ProcessCommand ( textbuf ) ;
                 textbuf.erase() ;
             }
-            else if ( k == 27 ) //esc
+            else if ( k == 27 ) // Escape key.
                 textbuf.erase ( ) ;
-            else if ( k == 8 ) //backspace
+            else if ( k == 8 ) // Backspace key.
             {
                 if ( textbuf.size ( ) > 0 )
                     textbuf.erase ( textbuf.size ( ) - 1 ) ;
@@ -152,6 +156,7 @@ int LbGameImp::RunGame()
         graph_sys->DrawText ( 0.0f , 0.82f , 0.5f , txtmsgs[2].c_str ( ) ) ;
 
         graph_sys->EndFrame();
+
 
         // poll the event queue.
         while(os_sys->PollEvent(os_event))
@@ -201,27 +206,29 @@ int LbGameImp::RunGame()
             switch ( game_event.id )
             {
                 // Deal with players joining.
-                case LB_GAME_PLAYERJOIN:
+                case LB_GAME_PLAYERJOIN :
+                    AddPlayer ( game_event.playerHash , game_event.message ) ;
                     ShowStatusMessage (
                         GetPlayerHandle ( game_event.playerHash ) +
-                        string ( " has joined the game." ) +
-                        game_event.message ) ;
+                        string ( " has joined the game." ) ) ;
                     break;
 
                 // Deal with players going.
-                case LB_GAME_PLAYERLEAVE:
+                case LB_GAME_PLAYERLEAVE :
                     ShowStatusMessage (
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( " has left the game." ) +
                         game_event.message ) ;
+                    RemovePlayer ( game_event.playerHash ) ;
                     break;
 
                 // Deal with players changing name.
-                case LB_GAME_HANDCHANGE:
+                case LB_GAME_HANDCHANGE :
                     ShowStatusMessage (
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( " is now known as " ) +
                         game_event.message + string ( "." ) ) ;
+                    SetPlayerHandle ( game_event.playerHash , game_event.message ) ;
                     break;
 
                 // Deal with incoming chat messages.
@@ -234,7 +241,10 @@ int LbGameImp::RunGame()
 
                 // New game message.  Abandon any current games.
                 case LB_GAME_NEWGAME:
-                // A new server has been elected, switch to this server.
+                    NewGame ( ) ;
+                break ;
+
+                // A new server, switch to this server.
                 case LB_GAME_CHANGESERVER :
                 // Hmm, need to think about what we're doing with this.
                 case LB_GAME_RESETSERVER :
@@ -274,6 +284,9 @@ int LbGameImp::RunGame()
     return 0;
 }
 
+/**
+ ** Add the message to the messages at the top of the screen.
+ **/
 void LbGameImp::ShowStatusMessage ( const string & txt )
 {
     // Implements a nice shifting scrolling effect.
@@ -292,22 +305,67 @@ void LbGameImp::ShowStatusMessage ( const string & txt )
 }
 
 /**
- ** Should return player's actual handle (name) as a string,
- ** currently just gives number.
+ ** Return player's handle (name) as a string.
  **/
 string LbGameImp::GetPlayerHandle ( int playerhash )
 {
-    char temp [ 20 ] ;
-    itoa ( playerhash , temp , 10 ) ;
-    return string ( temp ) ;
+    int i ;
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( players [ i ].valid && playerhash == players [ i ].hash )
+            if ( players [ i ] .handle != "" )
+                return players [ i ] .handle ;
+            else return "Unnamed" ;
+    return "Unknown" ;
 }
 
 /**
- ** Set the name of a player.
+ ** Set the (handle) name of a player.
  **/
-void LbGameImp::SetPlayerHandle ( int playerhash , const string & playerhandle )
+void LbGameImp::SetPlayerHandle ( int hash , const string & handle )
 {
+    int i ;
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( players [ i ].valid && hash == players [ i ].hash )
+            players [ i ] .handle = handle ;
+}
 
+/**
+ ** Add player.
+ **/
+void LbGameImp::AddPlayer ( int hash , const string & handle )
+{
+    int i ;
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( ! players [ i ].valid )
+        {
+            players [ i ] .valid = true ;
+            players [ i ] .hash = hash ;
+            players [ i ] .handle = handle ;
+            return ;
+        }
+    // No spare slots.
+}
+
+/**
+ ** Remove player.
+ **/
+void LbGameImp::RemovePlayer ( int hash  )
+{
+    int i;
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        if ( players [ i ].valid && hash == players [ i ].hash )
+            players [ i ].valid = false ;
+}
+
+/**
+ ** New Game.
+ **/
+void LbGameImp::NewGame ( )
+{
+    int i ;
+    // Clear players.
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        players [ i ].valid = false ;
 }
 
 /**
@@ -336,6 +394,11 @@ void LbGameImp::ProcessCommand ( string t )
             e.id = LB_GAME_HANDCHANGE ;
         else if ( cmd == "leave" )
             e.id = LB_GAME_PLAYERLEAVE ;
+        else
+        {
+            // Command was invalid.
+            ShowStatusMessage ( "Unknown command" ) ;
+        }
 
         // For standard commands add the parameter's typed.
         e.message = prm ;
@@ -347,8 +410,8 @@ void LbGameImp::ProcessCommand ( string t )
 
         // Strip whitespace from the start and end of t.
         int i , j ;
-        i = t.find_first_not_of ( "\n\r \t_" , 0 ) ;
-        j = t.find_last_not_of ( "\n\r \t_" ) ;
+        i = t.find_first_not_of ( "\n\r \t" , 0 ) ;
+        j = t.find_last_not_of ( "\n\r \t" ) ;
 
         // If the user only entered whitespace then forget it.
         if ( j == - 1 ) return ;

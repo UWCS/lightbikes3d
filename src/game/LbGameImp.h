@@ -24,32 +24,46 @@
 #ifndef __LBGAMEIMP__
 #define __LBGAMEIMP__
 
+#define MAX_PLAYERS 10
+
+struct LbPlayer
+{
+    int hash ;
+    string handle ;
+    bool valid ;
+    int frags ;
+};
+
 using namespace std;
 
 class LbGameImp : public LbGameSys
 {
-public:
-    LbGameImp();
-    ~LbGameImp();
+    public:
+        LbGameImp();
+        ~LbGameImp();
 
-    virtual int RunGame();
+        virtual int RunGame();
 
-private:
+    private:
+        virtual void InitSubsystems();
+        virtual void DeInitSubsystems();
+        virtual void ProcessCommand ( string t ) ;        virtual void LbGameImp::ShowStatusMessage ( const string & txt ) ;
+        virtual string GetPlayerHandle ( int hash ) ;
+        virtual void SetPlayerHandle ( int hash , const string & handle ) ;
+        virtual void RemovePlayer ( int hash ) ;
+        virtual void AddPlayer ( int hash , const string & handle ) ;
+        virtual void NewGame ( ) ;
 
-    virtual void InitSubsystems();
-    virtual void DeInitSubsystems();
-    virtual void ProcessCommand ( string t ) ;
-    virtual string GetPlayerHandle ( int playerhash ) ;    virtual void LbGameImp::ShowStatusMessage ( const string & txt ) ;
-    virtual void LbGameImp::SetPlayerHandle ( int playerhash , const string & playerhandle ) ;
+        LbOSLayerSys *os_sys;
+        LbGraphicsSys *graph_sys;
+        LbInputSys *input_sys;
+        LbSoundSys *sound_sys;
+        LbNetSys *net_sys;
 
-    LbOSLayerSys *os_sys;
-    LbGraphicsSys *graph_sys;
-    LbInputSys *input_sys;
-    LbSoundSys *sound_sys;
-    LbNetSys *net_sys;
+        bool quit_flag;
+        string txtmsgs [ 3 ] ;
 
-    bool quit_flag;
-    string txtmsgs [ 3 ] ;
+        LbPlayer players [ MAX_PLAYERS ] ;
 };
 
 /*

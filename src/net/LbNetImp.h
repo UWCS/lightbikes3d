@@ -27,10 +27,7 @@
 #define __LBNETIMP__
 
 #define SOCKADDR_LEN sizeof(struct sockaddr)
-
-
-
-// Stores open connections.
+// Stores open connections.
 struct LbSocket
 {
     SOCKET socket ;
@@ -39,6 +36,7 @@ struct LbSocket
     int readBufferSize ;
     char writeBuffer [ SOCKET_BUFFER_SIZE ] ;
     int writeBufferSize ;
+    bool error ;
 };
 
 class LbNetImp : public LbNetSys

@@ -40,6 +40,9 @@
 #include <fstream>
 #include <vector>
 #include <utility>
+//#include <set>
+#include <list>
+//#include <algorithm>
 
 #include <string>
 

@@ -183,12 +183,12 @@ void LbNetImp::ProcessMessages ( )
 
         // Deal with the messages.
         if ( commandstring == "JOIN" ) t.id = LB_GAME_PLAYERJOIN ;
-        else if ( commandstring == "LEAVE " ) t.id = LB_GAME_PLAYERLEAVE ;
-        else if ( commandstring == "HAND " ) t.id = LB_GAME_HANDCHANGE ;
+        else if ( commandstring == "LEAVE" ) t.id = LB_GAME_PLAYERLEAVE ;
+        else if ( commandstring == "HAND" ) t.id = LB_GAME_HANDCHANGE ;
         else if ( commandstring == "CHAT" ) t.id = LB_GAME_CHAT ;
-        else if ( commandstring == "NEWGAME " ) t.id = LB_GAME_NEWGAME ;
-        else if ( commandstring ==  "CHANGE " ) t.id = LB_GAME_CHANGESERVER ;
-        else if ( commandstring ==  "RESET " ) t.id = LB_GAME_RESETSERVER ;
+        else if ( commandstring == "NEWGAME" ) t.id = LB_GAME_NEWGAME ;
+        else if ( commandstring ==  "CHANGE" ) t.id = LB_GAME_CHANGESERVER ;
+        else if ( commandstring ==  "RESET" ) t.id = LB_GAME_RESETSERVER ;
 
         // Copy the message text.
         t.message=msgtext;
@@ -349,6 +349,7 @@ void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
     lbsockets [ n ] .remoteAddress = sockName ;
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
+    lbsockets [ n ] .error = false ;
 
     mode = LB_NET_CONNECTEDTOSERVER ;
 }
@@ -415,6 +416,7 @@ void LbNetImp::InitiateServer ( const char * address , int port )
     lbsockets [ n ] .remoteAddress = sockName ;
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
+    lbsockets [ n ] .error = false ;
 
     mode = LB_NET_SERVER ;
     ownplayerhash = SocketToPlayerhash ( & lbsockets [ iListCon ] ) ;
@@ -443,6 +445,7 @@ void LbNetImp::AcceptConnection (  )
     lbsockets [ n ] .remoteAddress = remoteName ;
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
+    lbsockets [ n ] .error = false ;
 
     string m ;
     char buf [ 33 ] ;
@@ -457,13 +460,17 @@ void LbNetImp::AcceptConnection (  )
  **/
 void LbNetImp::ReadData  ( int c )
 {
+    if ( lbsockets [ c ] .error ) return ;
+
     // Read the data from the client.
     int nRet  = recv ( lbsockets [ c ].socket ,
                   ( LPSTR )&lbsockets [ c ].readBuffer +
                   lbsockets [ c ] .readBufferSize , MAX_READ_SIZE , 0 ) ;
-    if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET ) // && WSAGetLastError ( ) != WSAEWOULDBLOCK )
+    if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET )
+    // && WSAGetLastError ( ) != WSAEWOULDBLOCK )
     {
-        // We have lost the connection.  A leave game message must be generated, and the socket close
+        // We have lost the connection.  A leave game message must be
+        // generated, and the socket closed.
         CloseSocket ( lbsockets [ c ] ) ;
     }
     else lbsockets [ c ].readBufferSize += nRet ;
@@ -481,6 +488,8 @@ void LbNetImp::ReadData  ( int c )
  **/
 void LbNetImp::CloseSocket  ( LbSocket &s )
 {
+    s.error = true ;
+
     LbGameEvent e ;
     e.id = LB_GAME_PLAYERLEAVE ;
     e.message = "Connection closed." ;
@@ -493,16 +502,20 @@ void LbNetImp::CloseSocket  ( LbSocket &s )
  **/
 void LbNetImp::SendData ( int c )
 {
+    if ( lbsockets [ c ] .error ) return ;
+
     // Send the contents of the writebuffer.
     if ( lbsockets [ c ] . writeBufferSize > 0 )
     {
         int nRet = send ( lbsockets [ c ] . socket ,
                          (LPSTR)&lbsockets [ c ] . writeBuffer ,
                          lbsockets [ c ] . writeBufferSize , 0 ) ;
-        if ( nRet == SOCKET_ERROR &&
-             WSAGetLastError ( ) != WSAEWOULDBLOCK )
-            MessageBox ( NULL, "An error occured writing data to the "\
-                               "socket.", "Error." , MB_ICONSTOP ) ;
+        if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) == WSAECONNRESET )
+        {
+            // We have lost the connection.  A leave game message must be
+            // generated, and the socket closed.
+            CloseSocket ( lbsockets [ c ] ) ;
+        }
         else lbsockets[ c ].writeBufferSize = 0 ;
     }
 }
