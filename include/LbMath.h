@@ -1,5 +1,5 @@
 /*********************************************************************************
-    LBMath.h
+    LbMath.h
     Header file for the LightBikes2001 Matrix and Vector classes
 
     Copyright (C) 2000  University of Warwick Computing Society
@@ -29,29 +29,29 @@
 
 
 /* Prototype Classes */
-class LBVector;
-class LBMatrix;
-class LBVector4;
-class LBMatrix4;
+class LbVector;
+class LbMatrix;
+class LbVector4;
+class LbMatrix4;
 /*********************/
 
 
 /*********************************************************
  *                                                       * 
- * LBVector                                              * 
+ * LbVector                                              * 
  *                                                       *
  * Definition of the 3-dimensional Vector object         * 
  *                                                       *
  *********************************************************/
-class LBVector 
+class LbVector 
 {
 
 public:
 
   /* {Con,De}structor methods */
-  LBVector();
-  LBVector( float _, float __, float ___ );
-  ~LBVector();
+  LbVector();
+  LbVector( float _, float __, float ___ );
+  ~LbVector();
 
   /* Access methods */
   inline float getX() { return m_x; };
@@ -65,18 +65,18 @@ public:
 
 
   /* Scalar Arithmetic */
-  LBVector operator *(float f);
-  LBVector operator /(float f);
+  LbVector operator *(float f);
+  LbVector operator /(float f);
 
   /* Vector Arithmetic */
-  LBVector operator +(LBVector& v);
-  LBVector operator -(LBVector& v);
+  LbVector operator +(LbVector& v);
+  LbVector operator -(LbVector& v);
 
   /* Vector Multiplication */
-  float operator ^(LBVector& v) ; // . product 
+  float operator ^(LbVector& v) ; // . product 
 
   /* Matrix Multiplication */
-  LBVector operator *(LBMatrix& M);
+  LbVector operator *(LbMatrix& M);
 
   
 private:
@@ -91,19 +91,19 @@ private:
 
 /*********************************************************
  *                                                       * 
- * LBMatrix                                              * 
+ * LbMatrix                                              * 
  *                                                       *
  * Definition of the 3-dimensional Matrix object         * 
  *                                                       *
  *********************************************************/
-class LBMatrix 
+class LbMatrix 
 {
 
  public:
   /* Constructors */
-  LBMatrix();
-  LBMatrix( float Values[3][3] );
-  ~LBMatrix();
+  LbMatrix();
+  LbMatrix( float Values[3][3] );
+  ~LbMatrix();
 
   /* Access */
   inline float getXY( int x, int y ) { return m_Values[y][x]; }
@@ -114,15 +114,15 @@ class LBMatrix
 #endif
 
   /* Scalar Operations */
-  LBMatrix operator *( float f );
-  LBMatrix operator /( float f );
+  LbMatrix operator *( float f );
+  LbMatrix operator /( float f );
 
   /* Matrix Operations */
-  LBMatrix operator *( LBMatrix& M );
-  LBVector operator *( LBVector& V );
-  LBMatrix invert();
-  LBMatrix transpose();
-  LBMatrix applyChequerboard();
+  LbMatrix operator *( LbMatrix& M );
+  LbVector operator *( LbVector& V );
+  LbMatrix invert();
+  LbMatrix transpose();
+  LbMatrix applyChequerboard();
 
  private:
   float m_Values[3][3];
@@ -136,20 +136,20 @@ class LBMatrix
 
 /*********************************************************
  *                                                       * 
- * LBVector4                                             * 
+ * LbVector4                                             * 
  *                                                       *
  * Definition of the 4-dimensional Vector object         * 
  *                                                       *
  *********************************************************/
-class LBVector4
+class LbVector4
 {
 
 public:
 
   /* {Con,De}structor methods */
-  LBVector4();
-  LBVector4( float x, float y, float z, float w );
-  ~LBVector4();
+  LbVector4();
+  LbVector4( float x, float y, float z, float w );
+  ~LbVector4();
 
   /* Access methods */
   inline float getW() { return m_w; };
@@ -163,18 +163,18 @@ public:
 #endif
 
   /* Scalar Arithmetic */
-  LBVector4 operator *(float f);
-  LBVector4 operator /(float f);
+  LbVector4 operator *(float f);
+  LbVector4 operator /(float f);
 
   /* Vector Arithmetic */
-  LBVector4 operator +(LBVector4& v);
-  LBVector4 operator -(LBVector4& v);
+  LbVector4 operator +(LbVector4& v);
+  LbVector4 operator -(LbVector4& v);
 
   /* Vector Multiplication */
-  float operator ^(LBVector4& v) ; // . product 
+  float operator ^(LbVector4& v) ; // . product 
 
   /* Matrix Multiplication */
-  LBVector4 operator *(LBMatrix4& M);
+  LbVector4 operator *(LbMatrix4& M);
 
   
 private:
@@ -189,18 +189,18 @@ private:
 
 /*********************************************************
  *                                                       * 
- * LBVector4                                             * 
+ * LbVector4                                             * 
  *                                                       *
  * Definition of the 4-dimensional Vector object         * 
  *                                                       *
  *********************************************************/
-class LBMatrix4 {
+class LbMatrix4 {
 
  public:
   /* Constructors */
-  LBMatrix4();
-  LBMatrix4( float Values[4][4] );
-  ~LBMatrix4();
+  LbMatrix4();
+  LbMatrix4( float Values[4][4] );
+  ~LbMatrix4();
 
   /* Access */
   inline float getXY( int x, int y ) { return m_Values[y][x]; }
@@ -210,15 +210,15 @@ class LBMatrix4 {
 #endif
 
   /* Scalar Operations */
-  LBMatrix4 operator *( float f );
-  LBMatrix4 operator /( float f );
+  LbMatrix4 operator *( float f );
+  LbMatrix4 operator /( float f );
 
   /* Matrix Operations */
-  LBVector4 operator *( LBVector4& V );
-  LBMatrix4 operator *( LBMatrix4& M );
-  LBMatrix4 invert();
-  LBMatrix4 transpose();
-  LBMatrix4 applyChequerboard();
+  LbVector4 operator *( LbVector4& V );
+  LbMatrix4 operator *( LbMatrix4& M );
+  LbMatrix4 invert();
+  LbMatrix4 transpose();
+  LbMatrix4 applyChequerboard();
 
  private:
   float m_Values[4][4];
