@@ -28,16 +28,6 @@
 #define MAX_MESSAGE_LINES 4
 #define MAX_SCOREBOARD_LINES 10
 
-struct LbPlayer
-{
-    int hash ;
-    string handle ;
-    int kills ;
-    int deaths ;
-    int ping ;
-    bool valid ;
-};
-
 using namespace std;
 
 class LbGameImp : public LbGameSys
@@ -78,7 +68,8 @@ class LbGameImp : public LbGameSys
         // Used to store our handle between servers.
         string ownhandle ;
 
-        LbPlayer players [ MAX_PLAYERS ] ;
+        LbPlayer * allplayers [ MAX_PLAYERS ] ;
+        LbPlayer * thisplayer ;
 };
 
 /*
@@ -211,6 +202,71 @@ class LbLevelImp : public LbLevel
 
 	inline int GetXSize() { return xsize; };
 	inline int GetYSize() { return ysize; };
+};
+
+
+class LbPlayerImp : public LbPlayer
+{
+	public:
+
+		/*
+		** LbPlayer methods
+		*/
+
+		virtual void SetColor(const LbRGBAColor &new_col);
+		virtual void SetTexture(const char *tex_name);
+
+		// Get player name.
+		virtual int GetHash ( ) ;
+
+		// Get player handle.
+		virtual string GetHandle ( ) ;
+
+		// Get player kills.
+		virtual int GetKills ( ) ;
+
+		// Get player deaths.
+		virtual int GetDeaths ( ) ;
+
+		// Get player ping.
+		virtual int GetPing ( ) ;
+
+		// Get player valid.
+		virtual bool IsValid ( ) ;
+
+		// Set player hash.
+		virtual void SetHash ( int h ) ;
+
+		// Set player handle.
+		virtual void SetHandle ( string h) ;
+
+		// Set player kills.
+		virtual void SetKills ( int k ) ;
+
+		// Set player deaths.
+		virtual void SetDeaths ( int d ) ;
+
+		// Set player ping.
+		virtual void SetPing ( int p ) ;
+
+		// Set player valid.
+		virtual void SetValid ( bool v ) ;
+
+		// END
+
+		/*
+		** LbPlayer methods
+		*/
+		LbPlayerImp();
+		~LbPlayerImp();
+
+	private:
+		int hash ;
+		string handle ;
+		int kills ;
+		int deaths ;
+		int ping ;
+		bool valid ;
 };
 
 

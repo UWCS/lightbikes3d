@@ -41,7 +41,8 @@ GAME_C_FILES=\
     game\LbGameBlocks.cpp \
     game\LbLevelImp.cpp \
     game\LbArenaImp.cpp \
-    game\LbGame.cpp
+    game\LbPlayer.cpp \
+    game\LbGame.cpp 
 
 GRAPHICS_H_FILES=\
     graphics\LbGraphicsImp.h
@@ -120,6 +121,7 @@ GAME_OBJ_FILES=\
     ..\bin\temp\LbGameBlocks.obj \
     ..\bin\temp\LbLevelImp.obj \
     ..\bin\temp\LbArenaImp.obj \
+    ..\bin\temp\LbPlayer.obj \
     ..\bin\temp\LbGame.obj
 
 GRAPHICS_OBJ_FILES=\
@@ -155,7 +157,7 @@ COMP_DEFINES=-DWIN32 -DHAVE_OPENGL -5 -O2
 WARN_DISABLES=-w-ccc -w-aus -w-par -w-rch -w-csu
 
 OBJC=\
-    -tW $(COMP_DEFINES) -c\
+    -tW $(COMP_DEFINES) -v -c\
     $(WARN_DISABLES) \
     -I$(INCLUDE_DIRS) \
     -n"..\bin\temp" \

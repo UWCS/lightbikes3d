@@ -199,6 +199,10 @@ SOURCE=.\oslayer\LbOSWin32InputImp.cpp
 
 SOURCE=.\oslayer\LbOSWin32SoundImp.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\game\LbPlayer.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 

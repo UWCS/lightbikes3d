@@ -82,6 +82,9 @@ int LbGameImp::RunGame()
     int i , p ;
     bool showscores;
 
+	for ( i = 0 ; i < MAX_PLAYERS ; i++ )
+		allplayers[i] = new LbPlayerImp ( ) ;
+
     // Default to not showing scores.
     showscores = false ;
 
@@ -93,7 +96,7 @@ int LbGameImp::RunGame()
 
     // Clear players.
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        players [ i ].valid = false ;
+        allplayers [ i ]->SetValid ( false ) ;
 
     // Clear the typed messages.
     for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
@@ -145,7 +148,9 @@ int LbGameImp::RunGame()
 
 	//DEBUGGING: REMOVE END
 
-
+	allplayers [ 0 ]->SetHandle("CHris") ;
+	MessageBox ( NULL , allplayers[0]->GetHandle().c_str() ,
+                "Error" , MB_ICONSTOP ) ;
 
     while(!quit_flag)
     {
@@ -340,11 +345,11 @@ int LbGameImp::RunGame()
                                             LbGameEvent e ;
                                             for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
                                             {
-                                                if ( players[i].valid == true )
+                                                if ( allplayers[i]->IsValid ( ) == true )
                                                 {
                                                     e.id = LB_GAME_PLAYERJOIN ;
-                                                    e.playerHash = players[i].hash ;
-                                                    e.message = GetPlayerHandle ( players[i].hash ) ;
+                                                    e.playerHash = allplayers[i]->GetHash ( ) ;
+                                                    e.message = GetPlayerHandle ( allplayers[i]->GetHash ( ) ) ;
                                                     net_sys->SendGameEvent ( e , false ) ;
                                                 }
                                             }
@@ -428,15 +433,15 @@ int LbGameImp::RunGame()
         scoremsgs[1] = "                                            " ;
         for ( i = 2 ; i < MAX_SCOREBOARD_LINES ; i++ )
         {
-            while ( players [ p ].valid == false ) p++ ;
+            while ( p < MAX_PLAYERS && allplayers[p]->IsValid ( ) == false ) p++ ;
             if ( p >= MAX_PLAYERS - 1 )
                 scoremsgs [ i ] = "" ;
             else
                 scoremsgs [ i ] =
-                        " " + Pad ( players [ p ] . handle , 18 ) +
-                        Pad ( ItoS ( players [ p ] . kills ) , 11 ) +
-                        Pad ( ItoS ( players [ p ] . deaths ) , 11 ) +
-                        ItoS ( players [ p ] . ping ) ;
+                        " " + Pad ( allplayers[p]->GetHandle ( ) , 18 ) +
+                        Pad ( ItoS ( allplayers[p]->GetKills ( ) ) , 11 ) +
+                        Pad ( ItoS ( allplayers[p]->GetDeaths ( ) ) , 11 ) +
+                        ItoS ( allplayers[p]->GetPing ( ) ) ;
             p ++ ;
         }
     }
@@ -496,9 +501,9 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid == true && playerhash == players [ i ].hash )
-            if ( players [ i ] .handle != "" )
-                return players [ i ] .handle ;
+        if ( allplayers[i]->IsValid ( ) == true && playerhash == allplayers[i]->GetHash ( ) )
+            if ( allplayers[i]->GetHandle ( ) != "" )
+                return allplayers[i]->GetHandle ( ) ;
     return "Noname" ;
 }
 
@@ -509,10 +514,10 @@ bool LbGameImp::SetPlayerHandle ( int hash , const string & handle )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid == true &&
-             hash == players [ i ].hash )
+        if ( allplayers[i]->IsValid ( ) == true &&
+             hash == allplayers[i]->GetHash ( ) )
         {
-             players [ i ] .handle = handle ;
+             allplayers[i]->SetHandle ( handle ) ;
              return true ;
         }
     return false ;
@@ -528,13 +533,13 @@ void LbGameImp::AddPlayer ( int hash , const string & handle )
 
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid == false )
+        if ( allplayers[i]->IsValid ( ) == false )
         {
-            players [ i ] .valid = true ;
-            players [ i ] .hash = hash ;
+            allplayers[i]->SetValid ( true ) ;
+            allplayers[i]->SetHash ( hash ) ;
             if ( handle == "" )
-                players [ i ] .handle = "New Player" ;
-            else players [ i ] .handle = handle ;
+                allplayers[i]->SetHandle ( "New Player" ) ;
+            else allplayers[i]->SetHandle ( handle ) ;
             return ;
         }
     // No spare slots.
@@ -547,8 +552,8 @@ void LbGameImp::RemovePlayer ( int hash  )
 {
     int i;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players [ i ].valid == true && hash == players [ i ].hash )
-            players [ i ].valid = false ;
+        if ( allplayers[i]->IsValid ( ) == true && hash == allplayers[i]->GetHash ( ) )
+            allplayers[i]->SetValid ( false ) ;
 }
 
 /**
@@ -568,8 +573,8 @@ void LbGameImp::NewGame ( )
     // Reset scores.
     for ( i = 0 ; i < MAX_PLAYERS ; i++ )
     {
-        players [ i ] .kills = 0  ;
-        players [ i ] .deaths = 0 ;
+        allplayers[i]->SetKills ( 0 ) ;
+        allplayers[i]->SetDeaths ( 0 ) ;
     }
 }
 

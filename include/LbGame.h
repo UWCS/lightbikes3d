@@ -52,18 +52,18 @@ class LbBaseBlock
 class LbLevel
 {
 	public:
-	virtual void SetBlockAt(int x, int y, LbBaseBlock &block)=0;
-	virtual LbBaseBlock * GetBlockAt(int x, int y)=0;
+		virtual void SetBlockAt(int x, int y, LbBaseBlock &block)=0;
+		virtual LbBaseBlock * GetBlockAt(int x, int y)=0;
 
-	virtual int GetXSize()=0;
-	virtual int GetYSize()=0;
+		virtual int GetXSize()=0;
+		virtual int GetYSize()=0;
 };
 
 class LbArena
 {
 	public:
-	virtual LbLevel * GetLevel(int level)=0;
-	virtual int GetZSize()=0;
+		virtual LbLevel * GetLevel(int level)=0;
+		virtual int GetZSize()=0;
 };
 
 class LbGameSys
@@ -73,6 +73,64 @@ class LbGameSys
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbGameSys(){}
+};
+
+class LbPlayer
+{
+    public:
+
+		// Change color of lightbikes trail segments.
+		virtual void SetColor(const LbRGBAColor &new_col)=0;
+
+		// Change texture of lightbikes trail segments.
+		virtual void SetTexture(const char *tex_name)=0;
+
+		// Get player hash.
+		virtual int GetHash ( ) = 0 ;
+
+		// Get player handle.
+		virtual string GetHandle ( ) = 0 ;
+
+		// Get player kills.
+		virtual int GetKills ( ) = 0 ;
+
+		// Get player deaths.
+		virtual int GetDeaths ( ) = 0 ;
+
+		// Get player ping.
+		virtual int GetPing ( ) = 0 ;
+
+		// Get player kills.
+		virtual bool IsValid ( ) = 0 ;
+
+		// Set player has.
+		virtual void SetHash ( int h ) = 0 ;
+
+		// Set player handle.
+		virtual void SetHandle ( string h) = 0 ;
+
+		// Set player kills.
+		virtual void SetKills ( int k ) = 0 ;
+
+		// Set player deaths.
+		virtual void SetDeaths ( int d ) = 0 ;
+
+		// Set player ping.
+		virtual void SetPing ( int p ) = 0 ;
+
+		// Set player valid.
+		virtual void SetValid ( bool v ) = 0 ;
+
+		// Empty virtual destructor to ensure proper cleanup.
+		virtual ~LbPlayer ( ) { }
+
+	private:
+		int hash ;
+		string handle ;
+		int kills ;
+		int death ;
+		int ping ;
+		bool valid ;
 };
 
 LbGameSys *CreateGameSys();
