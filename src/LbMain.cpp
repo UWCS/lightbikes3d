@@ -1,6 +1,6 @@
 /*********************************************************************************
     LbMain.cpp
-    Header file for the LightBikes2001 Matrix and Vector classes
+    Class file for the LightBikes2001 Main system
 
     Copyright (C) 2000  University of Warwick Computing Society
 

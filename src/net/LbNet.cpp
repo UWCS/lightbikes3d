@@ -1,6 +1,6 @@
 /*********************************************************************************
     LbNet.cpp
-    Header file for the LightBikes2001 Matrix and Vector classes
+    Class file for the LightBikes2001 Network subsystem
 
     Copyright (C) 2000  University of Warwick Computing Society
 
