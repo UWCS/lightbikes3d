@@ -1,3 +1,3 @@
 #!/bin/sh
 
-make -f makefile
+make -f Makefile.gcc
