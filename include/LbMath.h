@@ -58,9 +58,9 @@ public:
   ~LbVector();
 
   /* Access methods */
-  inline const float getX() { return m_x; };    //DC: Made get()'s const
-  inline const float getY() { return m_y; };
-  inline const float getZ() { return m_z; };
+  inline const float getX() const { return m_x; };    //DC: Made get()'s const
+  inline const float getY() const { return m_y; };    //JR: Added const for *function* (as opposed to the return value)
+  inline const float getZ() const { return m_z; };
   float mod();
 
   LbVector getCopy();
@@ -134,7 +134,7 @@ class LbMatrix
   float m_Values[3][3];
   inline float cofactor( int xa, int xb, int ya, int yb ) {
     return ( m_Values[ya][xa]*m_Values[yb][xb] -
-	     m_Values[yb][xa]*m_Values[ya][xb] );
+         m_Values[yb][xa]*m_Values[ya][xb] );
   }
 
 };

@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        David Capps
+       James Ross
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,13 +27,13 @@
 #define __LBGRAPHICS__
 
 enum LbGraphicsEffect
-	{
+    {
     LB_GFX_NONE             = 0,
     LB_GFX_FADEIN           = 1,
     LB_GFX_FADEOUT          = 2,
     LB_GFX_FADEINTEXTURE    = 3,
     LB_GFX_FADEOUTTEXTURE   = 4,
-	};
+    };
 
 class LbGraphicsBike
 {
@@ -51,6 +52,10 @@ virtual void AddSegment(const LbVector &pt)=0;
 virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt)=0;
 /// Draws the static segments which belong to the bike.
 virtual void DrawTrail()=0;
+
+// DEBUG CODE
+virtual LbVector GetLastSegment()=0;
+// END
 
 /// empty virtual destructor to ensure proper cleanup
 virtual ~LbGraphicsBike(){}
@@ -83,6 +88,8 @@ virtual void TriggerEffect(LbGraphicsEffect effect)=0;
 
 virtual void StartFrame()=0;
 virtual void EndFrame()=0;
+
+virtual LbGraphicsBike *GetBike(int index)=0;
  
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbGraphicsSys(){}

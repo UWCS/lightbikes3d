@@ -55,10 +55,14 @@
 */
 void LbGraphicsImp::CreateGraphicsBike()
 {
+    int n = lbbikes.size();
+    lbbikes.resize(n + 1);
 }
 
 void LbGraphicsImp::CreateGraphicsLevel(int x,int y)
 {
+    int n = lblevels.size();
+    lblevels.resize(n + 1);
 }
 
 void LbGraphicsImp::SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)
@@ -417,75 +421,79 @@ void LbGraphicsImp::StartFrame()
     // Initalise the 'scene'...
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
-
+    
     // ***********************************************************************
     // Code is here for initial testing ONLY! REMOVE THIS CODE BEFORE RELEASE!
     // ***********************************************************************
     glLoadIdentity();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
-
-    gluLookAt( campos.getX(), campos.getY(), campos.getZ(),
-        camtgt.getX(), camtgt.getY(), camtgt.getZ(),
-        camup.getX(), camup.getY(), camup.getZ() );
+    
+    // Mapping X -> X, Y -> -Z, Z -> Y  (Our X,Y,Z -> OpenGL X,Y,Z)
+    gluLookAt( campos.getX(), campos.getZ(), -campos.getY(),
+        camtgt.getX(), camtgt.getZ(), -camtgt.getY(),
+        camup.getX(), camup.getZ(), -camup.getY() );
         //if we use LoadIdentity after this point we lose the camera position
         //so ALWAYS push and pop the matrix instead for each block of drawing
         //so the original camera matrix is always available
-
+    
     glPushMatrix();
-
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    
     int progress = os->GetMS() - frameCount;
-
+    
     glRotatef(((GLfloat)progress / 50), 0.0f, 0.0f, -1.0f);
     glTranslatef(-1.5f, 0.0f, -8.0f);
     glBegin(GL_TRIANGLES);
-        glColor3f(0.0f, 0.4f, 0.8f);
+        glColor4f(0.0f, 0.4f, 0.8f, 0.3f);
         glVertex3f( 0.0f, 1.0f, 0.0f);
         glVertex3f( 1.0f,-1.0f, 0.0f);
         glVertex3f(-1.0f,-1.0f, 0.0f);
     glEnd();
-
+    
     glPopMatrix(); //restore the camera matrix for next block of drawing...
     glPushMatrix();//and push it again to save a copy
-
+    
     glTranslatef(1.5f, 0.0f, -8.0f);
     glRotatef(((GLfloat)progress / 50), 1.0f, 0.0f, 0.0f);
     glRotatef(((GLfloat)progress / 70), 0.0f, 1.0f, 0.0f);
     glRotatef(((GLfloat)progress / 110), 0.0f, 0.0f, 1.0f);
-
+    
     glBegin(GL_QUADS);
         // TOP
-        glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+        glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
         // BOTTOM
-        glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+        glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f( 1.0f,-1.0f,-1.0f);
         // FRONT
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
         // BACK
-        glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+        glColor4f(0.0f, 1.0f, 0.0f, 0.3f);
         glVertex3f( 1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
         // LEFT
-        glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+        glColor4f(0.0f, 0.0f, 1.0f, 0.3f);
         glVertex3f(-1.0f, 1.0f, 1.0f);
         glVertex3f(-1.0f, 1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f,-1.0f);
         glVertex3f(-1.0f,-1.0f, 1.0f);
         // RIGHT
-        glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+        glColor4f(0.0f, 0.0f, 1.0f, 0.3f);
         glVertex3f( 1.0f, 1.0f,-1.0f);
         glVertex3f( 1.0f, 1.0f, 1.0f);
         glVertex3f( 1.0f,-1.0f, 1.0f);
@@ -552,6 +560,13 @@ void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
     sfxID = LoadMemTexture(tex, 1024, 512);
     free(tex);
 
+}
+
+LbGraphicsBike *LbGraphicsImp::GetBike(int index)
+{
+    assert(index >= 0);
+    assert(index < lbbikes.size());
+    return &lbbikes[index];
 }
 
 LbGraphicsImp::LbGraphicsImp()

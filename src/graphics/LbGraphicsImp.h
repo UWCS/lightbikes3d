@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        David Capps
+       James Ross
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,99 +26,111 @@
 #ifndef __LBGRAPHICSIMP__
 #define __LBGRAPHICSIMP__
 
+// Forward declarations.
+class LbGraphicsBikeImp;
+class LbGraphicsLevelImp;
+
 class LbGraphicsImp : public LbGraphicsSys
 {
 public:
-
-/*
-** LbGraphicsSys methods
-*/
-virtual void CreateGraphicsBike();
-virtual void CreateGraphicsLevel(int x,int y);
-
-virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
-
-virtual void DrawText(float x,float y,float scale, const char *str);
-virtual void SetTextColor(LbRGBAColor color);
-
-virtual void TriggerEffect(LbGraphicsEffect effect);
-
-virtual void StartFrame();
-virtual void EndFrame();
-
-/*
-** LbGraphicsImp methods
-*/
-LbGraphicsImp();
-~LbGraphicsImp();
-
-void Init(LbOSLayerSys *os_sys);
-
-
+    
+    /*
+    ** LbGraphicsSys methods
+    */
+    virtual void CreateGraphicsBike();
+    virtual void CreateGraphicsLevel(int x,int y);
+    
+    virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
+    
+    virtual void DrawText(float x,float y,float scale, const char *str);
+    virtual void SetTextColor(LbRGBAColor color);
+    
+    virtual void TriggerEffect(LbGraphicsEffect effect);
+    
+    virtual void StartFrame();
+    virtual void EndFrame();
+    
+    virtual LbGraphicsBike *GetBike(int index);
+    
+    /*
+    ** LbGraphicsImp methods
+    */
+    LbGraphicsImp();
+    ~LbGraphicsImp();
+    
+    void Init(LbOSLayerSys *os_sys);
+    
+    
 private:
-
-void DrawEffect();
-void SetupOrtho();
-void FinishOrtho();
-int LoadBMPTexture(char *fname, int transcolour);
-int LoadMemTexture( char *pixels, int xsize, int ysize);
-void ActivateTexture(int texID);
-void DeleteTexture(int texID);
-
-int frameCount;
-int fontID, sfxID;
-int gfxStart;
-int sfxnums[8];
-LbVector campos, camtgt, camup;
-LbOSLayerSys *os;
-LbGraphicsEffect cureffect;
-LbRGBAColor textcolor;
+    
+    void DrawEffect();
+    void SetupOrtho();
+    void FinishOrtho();
+    int LoadBMPTexture(char *fname, int transcolour);
+    int LoadMemTexture( char *pixels, int xsize, int ysize);
+    void ActivateTexture(int texID);
+    void DeleteTexture(int texID);
+    
+    vector<LbGraphicsBikeImp> lbbikes;
+    vector<LbGraphicsLevelImp> lblevels;
+    int frameCount;
+    int fontID, sfxID;
+    int gfxStart;
+    int sfxnums[8];
+    LbVector campos, camtgt, camup;
+    LbOSLayerSys *os;
+    LbGraphicsEffect cureffect;
+    LbRGBAColor textcolor;
 };
-
-
 
 class LbGraphicsBikeImp : public LbGraphicsBike
 {
 public:
-
-/*
-** LbGraphicsBike methods
-*/
-
-virtual void SetColor(const LbRGBAColor &new_col);
-virtual void SetTexture(const char *tex_name);
-
-virtual void AddSegment(const LbVector &pt);
-
-virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt);
-virtual void DrawTrail();
-
-/*
-** LbGraphicsBikeImp methods
-*/
-LbGraphicsBikeImp();
-~LbGraphicsBikeImp();
-
+    
+    /*
+    ** LbGraphicsBike methods
+    */
+    
+    virtual void SetColor(const LbRGBAColor &new_col);
+    virtual void SetTexture(const char *tex_name);
+    
+    virtual void AddSegment(const LbVector &pt);
+    
+    virtual void DrawSegment(const LbVector &start_pt,const LbVector &end_pt);
+    virtual void DrawTrail();
+    
+    // DEBUG
+    virtual LbVector GetLastSegment();
+    // END
+    
+    /*
+    ** LbGraphicsBikeImp methods
+    */
+    LbGraphicsBikeImp();
+    ~LbGraphicsBikeImp();
+    
 private:
+    
+    vector<LbVector> lbtrail;
 };
 
 class LbGraphicsLevelImp : public LbGraphicsLevel
 {
 public:
-
-/*
-** LbGraphicsLevel methods
-*/
-
-virtual void SetBlock(LbBaseBlock *btype,int x,int y);
-virtual void DrawLevel(LbVector &offset);
-
-/*
-** LbGraphicsLevelImp methods
-*/
-LbGraphicsLevelImp();
-~LbGraphicsLevelImp();
-
+    
+    /*
+    ** LbGraphicsLevel methods
+    */
+    
+    virtual void SetBlock(LbBaseBlock *btype,int x,int y);
+    virtual void DrawLevel(LbVector &offset);
+    
+    /*
+    ** LbGraphicsLevelImp methods
+    */
+    LbGraphicsLevelImp();
+    ~LbGraphicsLevelImp();
+    
 private:
 };
 

@@ -1,72 +1,74 @@
 MISC_H_FILES=\
-	..\include\LbStandard.h \
-	..\include\LbPublic.h \
-	..\include\LbGraphics.h \
-	..\include\LbInput.h \
-	..\include\LbSound.h \
-	..\include\LbNet.h \
-	..\include\LbGame.h \
-	..\include\LbMath.h \
-	..\include\LbOSLayer.h \
-	..\include\LbMiscTypes.h
+    ..\include\LbStandard.h \
+    ..\include\LbPublic.h \
+    ..\include\LbGraphics.h \
+    ..\include\LbInput.h \
+    ..\include\LbSound.h \
+    ..\include\LbNet.h \
+    ..\include\LbGame.h \
+    ..\include\LbMath.h \
+    ..\include\LbOSLayer.h \
+    ..\include\LbMiscTypes.h
 
 MISC_C_FILES=\
-	misc\LbMatrix.cpp \
-	misc\LbMatrix4.cpp \
-	misc\LbVector.cpp \
-	misc\LbVector4.cpp \
-	LbMain.cpp
+    misc\LbMatrix.cpp \
+    misc\LbMatrix4.cpp \
+    misc\LbVector.cpp \
+    misc\LbVector4.cpp \
+    LbMain.cpp
 
 GAME_H_FILES=\
-	game\LbGameImp.h
+    game\LbGameImp.h
 GAME_C_FILES=\
-	game\LbGame.cpp
+    game\LbGame.cpp
 
 
 GRAPHICS_H_FILES=\
-	graphics\LbGraphicsImp.h
+    graphics\LbGraphicsImp.h
 GRAPHICS_C_FILES=\
-	graphics\LbGraphics.cpp
+    graphics\LbGraphics.cpp \
+    graphics\LbGraphicsBike.cpp \
+    graphics\LbGraphicsLevel.cpp
 
 INPUT_H_FILES=\
-	input\LbInputImp.h
+    input\LbInputImp.h
 INPUT_C_FILES=\
-	input\LbInput.cpp
+    input\LbInput.cpp
 
 NET_H_FILES=\
-	net\LbNetImp.h
+    net\LbNetImp.h
 NET_C_FILES=\
-	net\LbNet.cpp
+    net\LbNet.cpp
 
 SOUND_H_FILES=\
-	sound\LbSoundImp.h
+    sound\LbSoundImp.h
 SOUND_C_FILES=\
-	sound\LbSound.cpp
+    sound\LbSound.cpp
 
 OSLAYER_H_FILES=\
-	oslayer\LbOSWin32Imp.h
+    oslayer\LbOSWin32Imp.h
 OSLAYER_C_FILES=\
-	oslayer\LbOSWin32Imp.cpp \
+    oslayer\LbOSWin32Imp.cpp \
     oslayer\LbOSWin32InputImp.cpp \
     oslayer\LbOSWin32SoundImp.cpp
 
 ALL_C_FILES=\
-	$(MISC_C_FILES) \
-	$(GAME_C_FILES) \
-	$(GRAPHICS_C_FILES) \
-	$(INPUT_C_FILES) \
-	$(NET_C_FILES) \
-	$(SOUND_C_FILES) \
-	$(OSLAYER_C_FILES)
+    $(MISC_C_FILES) \
+    $(GAME_C_FILES) \
+    $(GRAPHICS_C_FILES) \
+    $(INPUT_C_FILES) \
+    $(NET_C_FILES) \
+    $(SOUND_C_FILES) \
+    $(OSLAYER_C_FILES)
 
 ALL_H_FILES=\
-	$(MISC_H_FILES) \
-	$(GAME_H_FILES) \
-	$(GRAPHICS_H_FILES) \
-	$(INPUT_H_FILES) \
-	$(NET_H_FILES) \
-	$(SOUND_H_FILES) \
-	$(OSLAYER_H_FILES)
+    $(MISC_H_FILES) \
+    $(GAME_H_FILES) \
+    $(GRAPHICS_H_FILES) \
+    $(INPUT_H_FILES) \
+    $(NET_H_FILES) \
+    $(SOUND_H_FILES) \
+    $(OSLAYER_H_FILES)
 
 LIB_FILES=\
     psdk\dinput.lib \
@@ -89,7 +91,7 @@ lb3d.exe: $(ALL_C_FILES) $(ALL_H_FILES)
         echo $(OSLAYER_C_FILES) >> compile.rsp
         echo $(LIB_FILES) >> compile.rsp
         bcc32 @compile.rsp
-	move Lb3D.exe ..\bin
+    move Lb3D.exe ..\bin
 
 clean:
    -@if exist *.obj del *.obj >nul

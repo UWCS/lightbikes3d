@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       James Ross
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,15 +40,48 @@ void LbGraphicsBikeImp::SetTexture(const char *tex_name)
 
 void LbGraphicsBikeImp::AddSegment(const LbVector &pt)
 {
+    int n = lbtrail.size();
+    lbtrail.resize(n + 1);
+    lbtrail[n] = pt;
 }
 
 void LbGraphicsBikeImp::DrawSegment(const LbVector &start_pt,const LbVector &end_pt)
 {
+    // OpenGL code to render a single segment of trail...
+    glPushMatrix();
+    glBegin(GL_QUADS);
+        glColor4f(0.0f, 0.6f, 0.8f, 0.5f);
+        glVertex3f( start_pt.getX(), start_pt.getZ()    , -start_pt.getY() );
+        glVertex3f( start_pt.getX(), start_pt.getZ() + 1, -start_pt.getY() );
+        glVertex3f(   end_pt.getX(),   end_pt.getZ() + 1,   -end_pt.getY() );
+        glVertex3f(   end_pt.getX(),   end_pt.getZ()    ,   -end_pt.getY() );
+        glVertex3f( start_pt.getX(), start_pt.getZ() + 1, -start_pt.getY() );
+        glVertex3f( start_pt.getX(), start_pt.getZ()    , -start_pt.getY() );
+        glVertex3f(   end_pt.getX(),   end_pt.getZ()    ,   -end_pt.getY() );
+        glVertex3f(   end_pt.getX(),   end_pt.getZ() + 1,   -end_pt.getY() );
+    glEnd();
+    glPopMatrix(); //restore the camera matrix for next block of drawing...
 }
 
 void LbGraphicsBikeImp::DrawTrail()
 {
+    for (int i = 1; i < lbtrail.size(); i++) {
+        // Render single section
+        // (from i-1 to i)
+        DrawSegment(lbtrail[i - 1], lbtrail[i]);
+    }
 }
+
+// DEBUG
+LbVector LbGraphicsBikeImp::GetLastSegment()
+{
+    if (lbtrail.size() > 0) {
+        return lbtrail[lbtrail.size() - 1];
+    } else {
+        return LbVector(0, 0, 0);
+    }
+}
+// END
 
 /*
 ** LbGraphicsBikeImp methods

@@ -24,6 +24,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
+#include <math.h>
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbGameImp.h"
@@ -46,84 +47,126 @@ LbGameImp::~LbGameImp()
 
 int LbGameImp::RunGame()
 {
+    //FILE *fp=fopen("c:\\dbglog.txt","W+");
+        
+    //fputs("Testing 123",fp);
+    
     LbOSLayerEvent os_event;
     LbGameEvent game_event;
-    LbVector target(0,0,0), up(0,1,0);
-    LbVector *eye;
-    float scroll,change;
+    LbVector up(0, 0, 1);
+    LbVector eye, target;
+    float scroll,change=5.0f;
     int count=0,lastms=0,fps=0, startms=0, keycount;
     int lpress=0, rpress=0;
     char msg[16] = "", inp[32] = "", keymsg[32] = "";
     LbOSLayerKeypress keys[32];
-
+    LbGraphicsBike *lbbike;
+    
+    // DEBUG CODE - TO BE REMOVED WHEN GameLogic IS WORKING
+    LbVector bikePos(0, 0, 0);
+    int direction = 0;		// 0 = y+, 1 = x+, 2 = y-, 3 = x-
+    float step = 0;
+    float dist = 0;
+    float Vacc = 0;
+    // END
+    
     InitSubsystems();
-
+    
     quit_flag=false;
-    eye = new LbVector(0,0,0);
-    change = 0.1f;
+    eye = LbVector(0, -20, 10);
+    target = LbVector(0, 0, 0);
     startms = lastms = os_sys->GetMS();
-
+    
     char k ;
     int i , p ;
     bool showscores;
-
+    
     // Default to not showing scores.
     showscores = false ;
-
+    
     // Clear the buffer that stores the typed text.
     string textbuf = "";
-
+    
     // Set our handle to the default for new players.
     ownhandle = "Unnamed" ;
-
+    
     // Clear players.
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         players [ i ].valid = false ;
-
+    
     // Clear the typed messages.
     for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
         txtmsgs [ i ] = "" ;
-
+    
     // Clear the scoreboard.
     for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
         scoremsgs [ i ] = "" ;
-
+    
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
-
+    
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
-
-
+    
+    // Create a single player
+    graph_sys->CreateGraphicsBike();
+    
+    // DEBUG
+    // Add start point for bike
+    lbbike = graph_sys->GetBike(0);
+    lbbike->AddSegment( LbVector(0, 0, 0) );
+    // END
+    
     while(!quit_flag)
     {
-        scroll = scroll + ( change* ( os_sys->GetMS() - startms) / 50.0f );
+        step = ( change * (float)( os_sys->GetMS() - startms ) / 1000.0f );
+        scroll += step;
         startms = os_sys->GetMS();
-        if (scroll > 15) change=-0.1f;
-        if (scroll < -15) change=0.1f;
+        //if (scroll > 10) change=-0.02f;
+        //if (scroll < -10) change=0.02f;
         if ( !(count++ % 20) ) {
             lastms = (os_sys->GetMS() - lastms);
-            fps = lastms? (20000 / lastms) : 0;
+            fps = lastms ? (20000 / lastms) : 0;
             lastms = os_sys->GetMS();
-            sprintf(msg,"FPS:%d",fps);
+            sprintf(msg,"FPS:%d  Step:%.2f",fps, step);
         }
-
-        delete(eye);
-        eye = new LbVector(scroll,0,-20);
-        graph_sys->SetCamera(*eye,target,up);
-
+        
+        //eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
+        dist = sqrt( pow(bikePos.getX() - eye.getX(), 2) + 
+                     pow(bikePos.getY() - eye.getY(), 2) + 
+                     pow(bikePos.getZ() - eye.getZ(), 2) );
+        eye = LbVector( bikePos.getX() + (eye.getX() - bikePos.getX()) * (20 / dist),
+                        bikePos.getY() + (eye.getY() - bikePos.getY()) * (20 / dist),
+                        bikePos.getZ() + 10 );
+        //target = LbVector(0, scroll, 0);
+        graph_sys->SetCamera(eye,bikePos,up);
+        
         keycount = 32;
         inp[0] = 0;
         if (input_sys->GetOSKey(&keys[0], &keycount)) {
             for (int i=0; i<keycount; i++) {
                 if (keys[i].down)
                     switch (keys[i].which) {
-                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; sound_sys->PlayWaveFile(wave); break;
-                        case LB_OSKEY_RIGHT:sprintf(inp, "Right Key Press"); rpress++; break;
+                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; sound_sys->PlayWaveFile(wave);
+                            // DEBUG
+                            // Add turing point
+                            lbbike = graph_sys->GetBike(0);
+                            lbbike->AddSegment( bikePos );
+                            direction = (direction + 3) % 4;
+                            // END
+                            break;
+                        case LB_OSKEY_RIGHT:sprintf(inp, "Right Key Press"); rpress++;
+                            // DEBUG
+                            // Add turing point
+                            lbbike = graph_sys->GetBike(0);
+                            lbbike->AddSegment( bikePos );
+                            direction = (direction + 1) % 4;
+                            // END
+                            break;
                     }
             }
             if (keycount>0) sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
         } else sprintf(inp, "Input Error");
-
+        
         // Get text entered.
         while ( ( k = input_sys->getNextTextKey ( ) ) != 0 )
         {
@@ -142,34 +185,70 @@ int LbGameImp::RunGame()
                     if ( textbuf.size ( ) > 0 )
                         textbuf.erase ( textbuf.size ( ) - 1 ) ;
                     break ;
+                // DEBUG CODE
+                case '#' :
+                    if ( abs(Vacc) < 0.001 ) Vacc = 5.0f;
+                    break;
+                // END
                 default:
                     textbuf += k ;
-                break ;
+                    break ;
             }
         }
-
+        
+        // DEBUG CODE
+        if (( abs(Vacc) > 0.001 ) || ( bikePos.getZ() > 0.001 )) {
+            lbbike = graph_sys->GetBike(0);
+            lbbike->AddSegment( bikePos );
+            Vacc -= 9.81 * (step / change);
+            bikePos = LbVector( bikePos.getX(), bikePos.getY(), bikePos.getZ() + Vacc * (step / change) );
+            if (bikePos.getZ() < 0) {
+                bikePos = LbVector( bikePos.getX(), bikePos.getY(), 0 );
+                lbbike->AddSegment( bikePos );
+                Vacc = 0;
+            }
+        }
+        // END
+        
         graph_sys->StartFrame();
         // draw here
+        
+        // Draw trials...
+        lbbike = graph_sys->GetBike(0);
+        lbbike->DrawTrail();
+        lbbike->DrawSegment( lbbike->GetLastSegment(), bikePos );
+        
+        // DEBUG
+        switch ( direction )
+        {
+            case 0: bikePos = LbVector( bikePos.getX(), bikePos.getY() + step, bikePos.getZ() ); break;
+            case 1: bikePos = LbVector( bikePos.getX() + step, bikePos.getY(), bikePos.getZ() ); break;
+            case 2: bikePos = LbVector( bikePos.getX(), bikePos.getY() - step, bikePos.getZ() ); break;
+            case 3: bikePos = LbVector( bikePos.getX() - step, bikePos.getY(), bikePos.getZ() ); break;
+        }
+        // END
+        
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
         graph_sys->DrawText(0.5f,0.82f,1.0f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
-        graph_sys->DrawText(0.6f,0.9f,1.0f,msg);
+        //graph_sys->DrawText(0.6f,0.9f,1.0f,msg);
+        graph_sys->DrawText(0.2f,0.89f,1.0f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1,1,0,1));
         graph_sys->DrawText(0.0f,0.25f,1.0f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0,1,1,1));
         graph_sys->DrawText(0.0f,0.1f,1.0f,keymsg);
-
+        
         // Display the typed text.
         graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
         graph_sys->DrawText ( 0.0f , 0.02f , 0.75f , textbuf.c_str ( ) ) ;
-
+        
         // Display the chat or status messages.
         for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
         {
             graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
             graph_sys->DrawText ( 0.05f , 0.9f - 0.04 * i , 0.5f , txtmsgs[i].c_str ( ) ) ;
         }
-
+        
         if ( input_sys->IsTabDown ( ) )
         {
             // Display the players' frag count, overlayed Counter Strike style.
@@ -179,10 +258,10 @@ int LbGameImp::RunGame()
                 graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.5f , scoremsgs[i].c_str ( ) ) ;
             }
         }
-
+        
         graph_sys->EndFrame();
-
-
+        
+        
         // poll the event queue.
         while(os_sys->PollEvent(os_event))
         {
@@ -202,15 +281,15 @@ int LbGameImp::RunGame()
             }
             // ignore unknown events...
         }
-
+        
         // Process Network messages (Networking) ie. convert them from
         // strings and packets to game messages, and add them to the
         // network module's queue of game messages.
         net_sys->ProcessMessages ( ) ;
-
+        
         // Probably won't do this ultimately.
         net_sys->PollSockets ( ) ;
-
+        
         // Deal with network messages.
         while ( net_sys->GetNextGameEvent ( game_event ) )
         {
@@ -218,12 +297,12 @@ int LbGameImp::RunGame()
             {
                 // Deal with players joining.
                 case LB_GAME_PLAYERJOIN :
-
+                    
                     AddPlayer ( game_event.playerHash , game_event.message ) ;
                     ShowStatusMessage (
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( " has joined the game." ) ) ;
-
+                        
                                         // If we are the server send information on the other players.
                                         if ( net_sys->GetStatus () == LB_NET_SERVER )
                                         {
@@ -239,10 +318,8 @@ int LbGameImp::RunGame()
                                                 }
                                             }
                     }
-
-
                     break;
-
+                
                 // Deal with players going.
                 case LB_GAME_PLAYERLEAVE :
                     ShowStatusMessage (
@@ -251,7 +328,7 @@ int LbGameImp::RunGame()
                         game_event.message ) ;
                     RemovePlayer ( game_event.playerHash ) ;
                     break;
-
+                
                 // Deal with players changing name.
                 case LB_GAME_HANDCHANGE :
                     ShowStatusMessage (
@@ -261,7 +338,7 @@ int LbGameImp::RunGame()
                     SetPlayerHandle ( game_event.playerHash ,
                                       game_event.message ) ;
                     break;
-
+                
                 // Deal with incoming chat messages.
                 case LB_GAME_CHAT:
                     ShowStatusMessage (
@@ -269,36 +346,36 @@ int LbGameImp::RunGame()
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( "> " ) + game_event.message ) ;
                     break;
-
+                
                 // New game message.  Abandon any current games.
                 case LB_GAME_NEWGAME:
                     NewGame ( ) ;
                     break ;
-
+                
                 // If the server decides the game is over, return to chat.
                 case LB_GAME_ENDGAME:
                     EndGame ( ) ;
                     break ;
-
+                
                 // If a round is being played kill it off.  Return players
                 // to start positions.
                 case LB_GAME_NEWROUND:
                     NewRound ( ) ;
                     break ;
-
+                
                 // If a new map is being sent.
                 case LB_GAME_NEWMAP:
                     break ;
-
+                
             }
-
+            
             // Rebroadcast iff we are server and it didn't come from us,
             // because otherwise we would have already broadcast it.
             if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
                 game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
                     net_sys->SendGameEvent ( game_event , false ) ;
         }
-
+        
         // Update game state (Game Logic)...
             /* Updateing actions:
             **  Poll for Input events
@@ -310,7 +387,7 @@ int LbGameImp::RunGame()
             **      Interface?
             **      Messages --> Network
             */
-
+        
         // Put a scoreboard together.  BTW I think we should be able to detect
         // 'kills' (when you cut in front of someone) fairly accurately,
         // experiments needed to distinguish between accidental deaths and
@@ -332,11 +409,10 @@ int LbGameImp::RunGame()
             p ++ ;
         }
     }
-
-    delete eye;
-
+    
     DeInitSubsystems ( ) ;
-
+    
+    //fclose(fp);
     return 0;
 }
 
