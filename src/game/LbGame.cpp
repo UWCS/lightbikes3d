@@ -39,7 +39,7 @@ LbGameImp::LbGameImp()
 
 LbGameImp::~LbGameImp()
 {
-    // make double sure things have been cleaned up.
+    // Make double sure things have been cleaned up.
     DeInitSubsystems();
 }
 
@@ -63,26 +63,36 @@ int LbGameImp::RunGame()
     change = 0.1f;
     startms = lastms = os_sys->GetMS();
 
-    string textbuf = "";
-
     char k ;
     int i , p ;
-    bool showscores = false ;
+    bool showscores;
 
+    // Default to not showing scores.
+    showscores = false ;
+
+    // Clear the buffer that stores the typed text.
+    string textbuf = "";
+
+    // Set our handle to the default for new players.
+    ownhandle = "Unnamed" ;
+
+    // Clear players.
+    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        players [ i ].valid = false ;
+
+    // Clear the typed messages.
     for ( i = 0 ; i < MAX_MESSAGE_LINES ; i ++ )
         txtmsgs [ i ] = "" ;
 
+    // Clear the scoreboard.
     for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
         scoremsgs [ i ] = "" ;
-
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
 
-    // Clear stuff.
-    NewGame ( ) ;
 
     while(!quit_flag)
     {
@@ -257,9 +267,21 @@ int LbGameImp::RunGame()
                         NewGame ( ) ;
                         break ;
 
-                    // A new server, switch to this server.
-                    case LB_GAME_CHANGESERVER :
-                        break;
+                    // If the server decides the game is over, return to chat.
+                    case LB_GAME_ENDGAME:
+                        EndGame ( ) ;
+                        break ;
+
+                    // If a round is being played kill it off.  Return players
+                    // to start positions.
+                    case LB_GAME_NEWROUND:
+                        NewRound ( ) ;
+                        break ;
+
+                    // If a new map is being sent.
+                    case LB_GAME_NEWMAP:
+                    break ;
+
                 }
 
                 // Rebroadcast iff we are server and it didn't come from us,
@@ -364,7 +386,7 @@ string LbGameImp::GetPlayerHandle ( int playerhash )
         if ( players [ i ].valid == true && playerhash == players [ i ].hash )
             if ( players [ i ] .handle != "" )
                 return players [ i ] .handle ;
-    return string ( "Not playing" ) ;
+    return ownhandle ;
 }
 
 /**
@@ -409,14 +431,33 @@ void LbGameImp::RemovePlayer ( int hash  )
 }
 
 /**
+ ** New Round.
+ **/
+void LbGameImp::NewRound ( )
+{
+    // Set up start positions etc.
+}
+
+/**
  ** New Game.
  **/
 void LbGameImp::NewGame ( )
 {
     int i ;
-    // Clear players.
-    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        players [ i ].valid = false ;
+    // Reset scores.
+    for ( i = 0 ; i < MAX_PLAYERS ; i++ )
+    {
+        players [ i ] .kills = 0  ;
+        players [ i ] .deaths = 0 ;
+    }
+}
+
+/**
+ ** End Game.
+ **/
+void LbGameImp::EndGame ( )
+{
+    // Set up start positions etc.
 }
 
 /**
@@ -432,27 +473,75 @@ void LbGameImp::ProcessCommand ( string t )
         string cmd = t.substr ( 1 , m - 1 ) ,
                prm = t.substr ( m + 1 , t.size ( ) - m - 2 ) ;
 
-        // See which command was typed.
-        if ( cmd == "quit" )
-            { quit_flag = true ; return ; }
+        // If a command only allowed on the server is issued.
+        if ( cmd == "newgame" ||
+             cmd == "newround" ||
+             cmd == "endgame" ||
+             cmd == "newmap" )
+        {
+            if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
+            {
+                e.message = prm ;
+
+                if ( cmd == "newgame" ) e.id = LB_GAME_NEWGAME ;
+                else if  ( cmd == "newround" ) e.id = LB_GAME_NEWROUND ;
+                else if  ( cmd == "endgame" ) e.id = LB_GAME_ENDGAME ;
+                else if ( cmd == "newmap" )
+                    e.id = LB_GAME_NEWMAP ;
+            }
+            else
+            {
+                ShowStatusMessage ( "Error: This is not a server.") ;
+                return ;
+            }
+        }
+
+        // If a general program message was typed.
+        else if ( cmd == "quit" )
+        {
+            quit_flag = true ;
+            return ;
+        }
         else if ( cmd == "connect" )
-            { net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
-        else if ( cmd == "startserver" )
-            { net_sys->InitiateServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
-        else if ( cmd == "join" )
+        {
+            net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
+            if ( net_sys->GetStatus ( ) == LB_NET_CONNECTEDTOSERVER )
+                ShowStatusMessage ( "Status: Connected to server." ) ;
+            else
+                ShowStatusMessage ( "Error: Could not connect." ) ;
+
+            // Send the join message.
             e.id = LB_GAME_PLAYERJOIN ;
+            e.message = ownhandle;
+        }
+        else if ( cmd == "startserver" )
+        {
+            net_sys->InitiateServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
+            if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
+                ShowStatusMessage ( "Status: Server running." ) ;
+            else
+                ShowStatusMessage ( "Error: Could not start server." ) ;
+            return ;
+        }
+
+        // General.
         else if ( cmd == "hand" )
+        {
+            e.message = prm ;
             e.id = LB_GAME_HANDCHANGE ;
+            ownhandle = prm ;
+        }
         else if ( cmd == "leave" )
+        {
+            e.message = prm ;
             e.id = LB_GAME_PLAYERLEAVE ;
+        }
         else
         {
             // Command was invalid.
-            ShowStatusMessage ( "Unknown command" ) ;
+            ShowStatusMessage ( "Error: Unknown command." ) ;
+            return ;
         }
-
-        // For standard commands add the parameter's typed.
-        e.message = prm ;
     }
     else
     {
@@ -476,6 +565,9 @@ void LbGameImp::ProcessCommand ( string t )
     net_sys->SendGameEvent ( e , ( net_sys->GetStatus ( ) == LB_NET_SERVER ) ) ;
 }
 
+/**
+ ** Starts stuff up.
+ **/
 void LbGameImp::InitSubsystems()
 {
     os_sys=CreateOSLayerSys();
@@ -485,6 +577,9 @@ void LbGameImp::InitSubsystems()
     net_sys=CreateNetSys(os_sys);
 }
 
+/**
+ ** Shuts stuff down.
+ **/
 void LbGameImp::DeInitSubsystems()
 {
     if(graph_sys!=NULL)

@@ -57,6 +57,8 @@ class LbGameImp : public LbGameSys
         virtual void RemovePlayer ( int hash ) ;
         virtual void AddPlayer ( int hash , const string & handle ) ;
         virtual void NewGame ( ) ;
+        virtual void NewRound ( ) ;
+        virtual void EndGame ( ) ;
 
         // Will get rid of this l8r.
         virtual string Pad ( string s , int l ) ;
@@ -71,6 +73,9 @@ class LbGameImp : public LbGameSys
         bool quit_flag;
         string txtmsgs [ MAX_MESSAGE_LINES ] ;
         string scoremsgs [ MAX_SCOREBOARD_LINES ] ;
+
+        // Used to store our handle between servers.
+        string ownhandle ;
 
         LbPlayer players [ MAX_PLAYERS ] ;
 };

@@ -115,9 +115,13 @@ void LbNetImp::SendGameEvent ( LbGameEvent &e , bool includeourself )
         case LB_GAME_PLAYERJOIN :  cmd = "JOIN" ;  break ;
         case LB_GAME_PLAYERLEAVE :  cmd = "LEAVE" ;  break ;
         case LB_GAME_HANDCHANGE :  cmd = "HAND";  break ;
+        case LB_GAME_AWAY :  cmd = "AWAY" ;  break ;
+        case LB_GAME_BACK :  cmd = "BACK" ;  break ;
         case LB_GAME_CHAT :  cmd = "CHAT" ;  break ;
         case LB_GAME_NEWGAME :  cmd = "NEWGAME" ;  break ;
-        case LB_GAME_CHANGESERVER :  cmd = "CHANGESERVER" ;  break ;
+        case LB_GAME_ENDGAME :  cmd = "ENDGAME" ;  break ;
+        case LB_GAME_NEWROUND :  cmd = "NEWROUND" ;  break ;
+        case LB_GAME_NEWMAP :  cmd = "NEWMAP" ;  break ;
     }
 
     // Construct the message.
@@ -185,8 +189,12 @@ void LbNetImp::ProcessMessages ( )
         else if ( commandstring == "LEAVE" ) t.id = LB_GAME_PLAYERLEAVE ;
         else if ( commandstring == "HAND" ) t.id = LB_GAME_HANDCHANGE ;
         else if ( commandstring == "CHAT" ) t.id = LB_GAME_CHAT ;
+        else if ( commandstring == "AWAY" ) t.id = LB_GAME_AWAY ;
+        else if ( commandstring == "BACK" ) t.id = LB_GAME_BACK ;
         else if ( commandstring == "NEWGAME" ) t.id = LB_GAME_NEWGAME ;
-        else if ( commandstring ==  "CHANGE" ) t.id = LB_GAME_CHANGESERVER ;
+        else if ( commandstring == "NEWROUND" ) t.id = LB_GAME_NEWROUND ;
+        else if ( commandstring == "ENDGAME" ) t.id = LB_GAME_ENDGAME ;
+        else if ( commandstring == "NEWMAP" ) t.id = LB_GAME_NEWMAP ;
 
         // Copy the message text.
         t.message=msgtext;
@@ -272,8 +280,8 @@ void LbNetImp::PollSockets ( )
     // Check for sockets ready to write.
     for (i = 0 ; i < errscks.fd_count ; i ++ )
     {
-         MessageBox ( NULL, "err scks" ,
-                    "Error" , MB_ICONSTOP ) ;
+         //MessageBox ( NULL, "err scks" ,
+         //           "Error" , MB_ICONSTOP ) ;
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
             if ( errscks.fd_array [ i ] == lbsockets [ j ].socket )
                 ;//;
