@@ -104,5 +104,6 @@ typedef struct
     Winamp_Output_Module *outMod; // filled in by winamp, optionally used :)
 } Winamp_Input_Module;
 
+typedef Winamp_Input_Module* (__stdcall *Winamp_GetInModule)();
 
 #endif

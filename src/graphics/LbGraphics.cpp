@@ -27,7 +27,7 @@
 #include "LbPublic.h"
 #include "LbMiscTypes.h"
 #include "LbGraphicsImp.h"
-#include <fstream.h>
+
 
 #define FADE_WHITE      //defining FADE_WHITE makes it fade to/from white
                         //rather than black

@@ -82,19 +82,20 @@ HINSTANCE hInstance, WinampIn, WinampOut;
 HWND hwnd_main;
 HDC hDC;
 HGLRC hRC;
+
 bool quit_flag;
 int TextBase;
 LARGE_INTEGER freq;
 char *desktop;
+
+
 LPDIRECTINPUT7          g_DI;
 LPDIRECTINPUTDEVICE7    g_KDIDev;
 BYTE                    olddiks[256]; //no, it's not rude! Old DInput KeyS
+
 int TickStart,PerfStart;
 
 queue<char> textkeybuffer ;
-
-LbNetSys * ns;
-
 };
 
 #endif

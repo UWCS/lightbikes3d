@@ -39,7 +39,8 @@ private:
     void InitSubsystems();
     void DeInitSubsystems();
     void ProcessCommand ( string t ) ;
-    char * GetPlayerHandle ( int playerhash ) ;
+    string GetPlayerHandle ( int playerhash ) ;
+
     LbOSLayerSys *os_sys;
     LbGraphicsSys *graph_sys;
     LbInputSys *input_sys;
@@ -49,16 +50,21 @@ private:
     bool quit_flag;
 };
 
-/*** Block implimentations...*/
+/*
+** Block implimentations...
+*/
 // impliment common functionality
-class LbBaseBlockImp : public LbBaseBlock{
+class LbBaseBlockImp : public LbBaseBlock
+{
     public:
 /*
 ** LbBaseBlock methods
 */
 virtual void GetColor(LbRGBAColor &col);
 virtual void SetColor(const LbRGBAColor &col);
-/*** LbBaseBlockImp methods*/
+/*
+** LbBaseBlockImp methods
+*/
 
 LbBaseBlockImp();
 ~LbBaseBlockImp();

@@ -44,7 +44,7 @@ struct LbGameEvent
 {
     LbGameEventId id ;
     int playerHash ;
-    char message [ 256 ] ;
+    string message;
 } ;
 
 class LbNetSys

@@ -211,9 +211,9 @@ int LbGameImp::RunGame()
                     chatmessages [ 0 ] = chatmessages [ 1 ] ;
                     chatmessages [ 1 ] = chatmessages [ 2 ] ;
                     chatmessages [ 2 ] =
-                        string ("<" ) +
-                        string ( GetPlayerHandle ( game_event.playerHash ) ) +
-                        string ( "> " ) + string ( game_event.message ) ;
+                        string ("<" );
+                        //GetPlayerHandle (game_event.playerHash) +
+//                        string ( "> " ) + game_event.message;
                 }
                 break;
             }
@@ -254,11 +254,11 @@ int LbGameImp::RunGame()
  ** Should return player's actual handle (name) as a string,
  ** currently just gives number.
  **/
-char * LbGameImp::GetPlayerHandle ( int playerhash )
+string LbGameImp::GetPlayerHandle ( int playerhash )
 {
     char temp[20] ;
     itoa ( playerhash , temp , 10 ) ;
-    return temp;
+    return string(temp);
 }
 
 /**
@@ -287,12 +287,12 @@ void LbGameImp::ProcessCommand ( string t )
         else if ( cmd == "leave" )
             e.id = LB_GAME_PLAYERLEAVE ;
 
-        strcpy ( e.message , prm.c_str ( ) ) ;
+        e.message=prm;
     }
     else
     {
         e.id = LB_GAME_CHAT ;
-        strcpy ( e.message , t.c_str ( ) ) ;
+        e.message=t;
     }
 
     e.playerHash = net_sys->GetOwnPlayerHash ( ) ;

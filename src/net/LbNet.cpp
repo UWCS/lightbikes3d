@@ -191,7 +191,7 @@ void LbNetImp::ProcessMessages ( )
         else if ( commandstring ==  "RESET " ) t.id = LB_GAME_RESETSERVER ;
 
         // Copy the message text.
-        strcpy ( t.message , msgtext.c_str ( ) ) ;
+        t.message=msgtext;
         t.playerHash = playerhash ;
 
         // If we are server check for players sending wrong player numbers.
@@ -241,11 +241,12 @@ void LbNetImp::PollSockets ( )
     timeval timeout;
     timeout.tv_sec = 0 ;
     timeout.tv_usec = 0 ;
+	 int i;
 
     // Construct read sockets.
     fd_set readscks , writescks , errscks;
     errscks.fd_count = writescks.fd_count = readscks.fd_count = lbsockets.size ( ) ;
-    for ( int i = 0 ; i < lbsockets.size ( ) ; i++ )
+    for (i = 0 ; i < lbsockets.size ( ) ; i++ )
     {
         errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = lbsockets[i].socket ;
     }
@@ -254,7 +255,7 @@ void LbNetImp::PollSockets ( )
     select ( 0 , ( fd_set * ) & readscks , ( fd_set * ) & writescks , (fd_set * ) & errscks , &timeout );
 
     // Check for data to read or incoming lbsockets.
-    for ( int i = 0 ; i < readscks.fd_count ; i ++ )
+    for (i = 0 ; i < readscks.fd_count ; i ++ )
     {
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
                 if ( readscks.fd_array [ i ] == lbsockets [ j ].socket )
@@ -263,7 +264,7 @@ void LbNetImp::PollSockets ( )
     }
 
     // Check for sockets ready to write.
-    for ( int i = 0 ; i < writescks.fd_count ; i ++ )
+    for (i = 0 ; i < writescks.fd_count ; i ++ )
     {
         for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
             if ( writescks.fd_array [ i ] == lbsockets [ j ].socket )

@@ -93,7 +93,7 @@ int LbOSWin32Imp::GetMS()
 
 char* LbOSWin32Imp::GetDesktop32()
 {
-    char *rslt = (char*)malloc(1024 * 512 * 4);
+    char *rslt = new char[1024 * 512 * 4];
     memcpy(rslt, desktop, 1024*512*4);
     return rslt;
 }
@@ -103,7 +103,7 @@ void LbOSWin32Imp::GetDesktopImage()
     HWND dWnd = GetDesktopWindow();
     HDC dDC = GetDC(0);
     //for the moment, just get 640x480
-    desktop = (char*)malloc(1024 * 512 * 4);
+    desktop = new char[1024 * 512 * 4];
     int *pixel = (int*)desktop;
 
     for (int y=0; y < 480; y++) {
@@ -155,6 +155,7 @@ hwnd_main=NULL;
 hDC=NULL;
 hRC=NULL;
 quit_flag=false;
+desktop=NULL;
 }
 
 LbOSWin32Imp::~LbOSWin32Imp()
@@ -162,7 +163,10 @@ LbOSWin32Imp::~LbOSWin32Imp()
 DestroyMainWindow();
 Deinit_DInput();
 Deinit_WinampPlugins();
-free(desktop);
+
+if(desktop!=NULL)
+    delete[] desktop;
+
 assert(the_oslayer==this);
 the_oslayer=NULL;
 }

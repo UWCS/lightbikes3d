@@ -28,7 +28,7 @@
 
 #define SOCKADDR_LEN sizeof(struct sockaddr)
 
-using namespace std;
+
 
 // Stores open connections.
 struct LbSocket

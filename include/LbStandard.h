@@ -37,35 +37,24 @@
 #include <deque>
 #include <list>
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <utility>
 
-#include <string.h>
+#include <string>
 
 #ifdef WIN32
-#   include <windows.h>
+/*
+** winsock2 needs to go first,
+** otherwise windows.h include winsock1
+*/
 #   include <winsock2.h>
+#   include <windows.h>
 #endif
 
 #include <GL/gl.h>
 #include <GL/glu.h>             //DC: Added GLU include
 
-// The port on the server to be used for connections.
-#define LB_SERVER_TCP_PORT 32001
-#define LB_SERVER_UDP_PORT 32002
-
-// The number of bytes for storing text waiting to be sent or processed to/from
-// the network.
-#define SOCKET_BUFFER_SIZE 256
-
-// The number of bytes to read/write from/to the socket in a single attempt.
-#define MAX_READ_SIZE 10
-#define MAX_WRITE_SIZE 10
-
-// Size of buffer allocated for message.
-#define MAX_MESSAGE_LENGTH 256
-
-// The max number of connections, clients only use 1, so really it's the
-// max players per server.
-#define MAX_CONNECTIONS 100
+using namespace std;
 
 #endif

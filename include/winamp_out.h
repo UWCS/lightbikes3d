@@ -52,4 +52,6 @@ typedef struct
 
 } Winamp_Output_Module;
 
+typedef Winamp_Output_Module* (__stdcall *Winamp_GetOutModule)();
+
 #endif
