@@ -31,11 +31,21 @@ LbNetImp::LbNetImp()
 }
 
 /**
- ** Process the messages waiting on the queue.  If this is a server sends out
- ** the messages to the clients.
+ ** Process the messages waiting on the queue.  If this is a server then it
+ ** sends out the messages to the clients.
  **/
 void LbNetImp::ProcessMessages()
 {
+    // Check the TCP message queue.
+    char addressString [20] , messageString [ 20 ] ;
+    while ( os->GetTCPMessage ( (char*)&addressString , (char*)&messageString ) )
+    {
+        // Translate each of the messages to game messages and add to the game queue.
+        MessageBox ( NULL , (char*)&addressString , (char*)&messageString , MB_ICONSTOP ) ;
+    }
+
+    // Check the UDP message queue.
+        // Translate the messages to game messages and add to the game queue.
 }
 
 /**
@@ -44,6 +54,7 @@ void LbNetImp::ProcessMessages()
  **/
 void LbNetImp::GetNextGameMessage ( )
 {
+
 }
 
 /**

@@ -38,10 +38,12 @@
 #include <GL/gl.h>
 #include <GL/glu.h>             //DC: Added GLU include
 
-// The port on the server to be used for TCP connections.
+// The port on the server to be used for connections.
 #define LB_SERVER_TCP_PORT 5000
 #define LB_SERVER_UDP_PORT 6000
 
-#define LB_SERVER_IP_ADDRESS 192.168.1.78
+// The max number of connections, clients only use 1, so really it's the
+// max players per server.
+#define MAX_CONNECTIONS 100
 
 #endif

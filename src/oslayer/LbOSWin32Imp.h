@@ -43,11 +43,12 @@ virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
 
 virtual void ConnectToServer( char * ) ;
-virtual void InitiateServer( int )  ;
+virtual void InitiateServer( int ) ;
 virtual void InitiateNetwork() ;
-virtual void ProcessClientEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError);
-virtual void ProcessServerEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError);
+virtual void ProcessSocketEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError);
 virtual void CloseNetwork() ;
+virtual bool GetTCPMessage ( char * address , char * message ) ;
+virtual void PutTCPMessage ( char * address , char * message ) ;
 
 /*
 ** LbOSWin32Imp methods
@@ -88,6 +89,27 @@ LPDIRECTINPUT7          g_DI;
 LPDIRECTINPUTDEVICE7    g_KDIDev;
 BYTE                    olddiks[256]; //no, it's not rude! Old DInput KeyS
 int TickStart,PerfStart;
+
+
+// Used by the server code
+struct LBCONNECTION
+{
+    SOCKET socket;
+    SOCKADDR_IN remoteAddress;
+    char readBuffer [ 100 ] ;
+    int readBufferSize ;
+    char writeBuffer [ 100 ] ;
+    int writeBufferSize ;
+    int prevInReadQ ;
+    int prevInWriteQ ;
+};
+
+LBCONNECTION connections [ MAX_CONNECTIONS ] ;
+int nCon ;
+int nHeadOfReadQ ;
+int nTailOfReadQ ;
+int nHeadOfWriteQ ;
+int nTailOfWriteQ ;
 };
 
 #endif

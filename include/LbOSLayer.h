@@ -72,9 +72,9 @@ virtual void ConnectToServer ( char *) = 0 ;
 virtual void InitiateServer ( int ) = 0 ;
 virtual void InitiateNetwork ( ) = 0 ;
 virtual void CloseNetwork ( ) = 0 ;
-virtual void ProcessClientEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
-virtual void ProcessServerEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
-
+virtual void ProcessSocketEvent ( SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
+virtual bool GetTCPMessage ( char * address , char * message ) = 0 ;
+virtual void PutTCPMessage ( char * address , char * message ) = 0 ;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}
