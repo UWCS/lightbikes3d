@@ -1,5 +1,5 @@
 /*********************************************************************************
-    LBVector.cc
+    LbVector.cc
     Implementation file for the LightBikes2001 Vector class
 
     Copyright (C) 2000  University of Warwick Computing Society
@@ -30,14 +30,14 @@
 #include <math.h>
 
 /* Default Constructor. Don't want to use it. */
-LBVector::LBVector() { 
+LbVector::LbVector() { 
   m_x = m_y = m_z = 0;
 
   return;
 }
 
 /* Proper constructor. */
-LBVector::LBVector( float _,
+LbVector::LbVector( float _,
 		    float __,
 		    float ___
 		    ) {
@@ -48,14 +48,14 @@ LBVector::LBVector( float _,
 }
 
 /* Destructor. Kill that vector! */
-LBVector::~LBVector() {
+LbVector::~LbVector() {
   return;
 }
 
 /**************** Access methods **********************/
 
 /* Return the modulus of the Vector */
-float LBVector::mod() {
+float LbVector::mod() {
   return sqrt( (m_x*m_x) +
 	       (m_y*m_y) +
 	       (m_z*m_z) );
@@ -63,7 +63,7 @@ float LBVector::mod() {
 
 /* Return a char* representation. */
 #ifdef HAVE_VECTOR_TOSTRING
-void LBVector::toString(char* rv) {
+void LbVector::toString(char* rv) {
   sprintf( rv, "(%5.2f, %5.2f, %5.2f)", m_x, m_y, m_z );
   return;
 }
@@ -71,15 +71,15 @@ void LBVector::toString(char* rv) {
 
 
 /**************** Scalar Arithmetic *******************/
-LBVector LBVector::operator *(float f) {
-  return LBVector ( m_x * f,
+LbVector LbVector::operator *(float f) {
+  return LbVector ( m_x * f,
 		    m_y * f,
 		    m_z * f
 		    );
 }
 
-LBVector LBVector::operator /(float f) {
-  return LBVector ( m_x / f,
+LbVector LbVector::operator /(float f) {
+  return LbVector ( m_x / f,
 		    m_y / f,
 		    m_z / f
 		    );
@@ -87,15 +87,15 @@ LBVector LBVector::operator /(float f) {
 
 
 /**************** Vector Arithmetic *******************/
-LBVector LBVector::operator +(LBVector& v) {
-  return LBVector ( m_x + v.getX(),
+LbVector LbVector::operator +(LbVector& v) {
+  return LbVector ( m_x + v.getX(),
 		    m_y + v.getY(),
 		    m_z + v.getZ() 
 		    );
 }
 
-LBVector LBVector::operator -(LBVector& v) {
-  return LBVector ( m_x - v.getX(),
+LbVector LbVector::operator -(LbVector& v) {
+  return LbVector ( m_x - v.getX(),
 		    m_y - v.getY(),
 		    m_z - v.getZ() 
 		    );
@@ -104,7 +104,7 @@ LBVector LBVector::operator -(LBVector& v) {
 /*************** Vector Multiplication ****************/
 // dammit if Soustroup can use >> and << for a stream
 // IO then I can use ^ for dot-product!
-float LBVector::operator ^(LBVector& v) {
+float LbVector::operator ^(LbVector& v) {
   return ( (m_x * v.getX()) +
 	   (m_y * v.getY()) +
 	   (m_z * v.getZ()) );
@@ -112,8 +112,8 @@ float LBVector::operator ^(LBVector& v) {
 
 
 /*************** Matrix Multiplication ****************/
-LBVector LBVector::operator *(LBMatrix& M ){
-  return LBVector( m_x*M.getXY(0,0) + m_y*M.getXY(0,1) + m_z*M.getXY(0,2),
+LbVector LbVector::operator *(LbMatrix& M ){
+  return LbVector( m_x*M.getXY(0,0) + m_y*M.getXY(0,1) + m_z*M.getXY(0,2),
 		   m_x*M.getXY(1,0) + m_y*M.getXY(1,1) + m_z*M.getXY(1,2),
 		   m_x*M.getXY(2,0) + m_y*M.getXY(2,1) + m_z*M.getXY(2,2) );
 }

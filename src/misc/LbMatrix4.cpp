@@ -1,5 +1,5 @@
 /*********************************************************************************
-    LBMatrix4.cc
+    LbMatrix4.cc
     Implementation file for the LightBikes2001 Matrix4 class
 
     Copyright (C) 2000  University of Warwick Computing Society
@@ -47,7 +47,7 @@
 #define P m_Values[3][3]
 
 /* Default constructor */
-LBMatrix4::LBMatrix4() {
+LbMatrix4::LbMatrix4() {
    int i, j;
 
   for ( i = 0; i < 4; i++ )
@@ -56,7 +56,7 @@ LBMatrix4::LBMatrix4() {
 }
 
 /* Proper Constructor */
-LBMatrix4::LBMatrix4( float Values[4][4] ) {
+LbMatrix4::LbMatrix4( float Values[4][4] ) {
   int i=0, j=0;
 
   for ( i = 0; i < 4; i++ )
@@ -67,13 +67,13 @@ LBMatrix4::LBMatrix4( float Values[4][4] ) {
 }
 
 /* Carrie-Anne Moss */
-LBMatrix4::~LBMatrix4() {
+LbMatrix4::~LbMatrix4() {
   return;
 }
 
 /**************** Access methods **********************/
 /* Return Matrix's determinate */
-float LBMatrix4::det() {
+float LbMatrix4::det() {
   return ( A * cofactor(0,0) ) -
          ( B * cofactor(1,0) ) +
          ( C * cofactor(2,0) ) -
@@ -82,7 +82,7 @@ float LBMatrix4::det() {
 
 /* Write matrix to console */
 #ifdef HAVE_MATRIX_DISPLAY
-void LBMatrix4::display() {
+void LbMatrix4::display() {
   printf( "[%5.2f %5.2f %5.2f %5.2f]\n[%5.2f %5.2f %5.2f %5.2f]\n[%5.2f %5.2f %5.2f %5.2f]\n[%5.2f %5.2f %5.2f %5.2f]\n",
 	  A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P );
 }
@@ -90,24 +90,24 @@ void LBMatrix4::display() {
 
 
 /*************** Scalar Operations ********************/
-LBMatrix4 LBMatrix4::operator *(float f) {
+LbMatrix4 LbMatrix4::operator *(float f) {
   float x[4][4] = { {A*f, B*f, C*f, D*f},
                     {E*f, F*f, G*f, H*f},
                     {I*f, J*f, K*f, L*f},
                     {M*f, N*f, O*f, P*f} };
-   return LBMatrix4( x );
+   return LbMatrix4( x );
 }
 
-LBMatrix4 LBMatrix4::operator /(float f) {
+LbMatrix4 LbMatrix4::operator /(float f) {
   float x[4][4] = { {A/f, B/f, C/f, D/f},
                     {E/f, F/f, G/f, H/f},
                     {I/f, J/f, K/f, L/f},
                     {M/f, N/f, O/f, P/f} };
-   return LBMatrix4( x );
+   return LbMatrix4( x );
 }
 
 /************** Matrix Arithmetic *********************/
-LBMatrix4 LBMatrix4::operator *( LBMatrix4& Mat ) {
+LbMatrix4 LbMatrix4::operator *( LbMatrix4& Mat ) {
   float m[4][4] = { {0.0, 0.0, 0.0, 0.0},
 		    {0.0, 0.0, 0.0, 0.0},
 		    {0.0, 0.0, 0.0, 0.0},
@@ -121,12 +121,12 @@ LBMatrix4 LBMatrix4::operator *( LBMatrix4& Mat ) {
 	        m_Values[y][2]*Mat.getXY(x,2)+
 	        m_Values[y][3]*Mat.getXY(x,3);
 
-  return LBMatrix4( m );
+  return LbMatrix4( m );
 
 }
 
-LBVector4 LBMatrix4::operator *( LBVector4& V ) {
-  return LBVector4 ( A * V.getX() + B * V.getY() + C * V.getZ() + D * V.getW(),
+LbVector4 LbMatrix4::operator *( LbVector4& V ) {
+  return LbVector4 ( A * V.getX() + B * V.getY() + C * V.getZ() + D * V.getW(),
 		     E * V.getX() + F * V.getY() + G * V.getZ() + H * V.getW(),
 		     I * V.getX() + J * V.getY() + K * V.getZ() + L * V.getW(),
 		     M * V.getX() + N * V.getY() + O * V.getZ() + P * V.getW() );
@@ -134,37 +134,37 @@ LBVector4 LBMatrix4::operator *( LBVector4& V ) {
 }
 
 /*************** Matrix Operations *******************/
-LBMatrix4 LBMatrix4::invert() {
-  if ( det() == 0 ) return LBMatrix4(m_Values);
+LbMatrix4 LbMatrix4::invert() {
+  if ( det() == 0 ) return LbMatrix4(m_Values);
 
   float m[4][4] = { {cofactor(0,0), cofactor(1,0), cofactor(2,0), cofactor(3,0) },
                     {cofactor(0,1), cofactor(1,1), cofactor(2,1), cofactor(3,1) },
                     {cofactor(0,2), cofactor(1,2), cofactor(2,2), cofactor(3,2) },
                     {cofactor(0,3), cofactor(1,3), cofactor(2,3), cofactor(3,3) } };
-  LBMatrix4 Mat = LBMatrix4(m).transpose().applyChequerboard() / det();
+  LbMatrix4 Mat = LbMatrix4(m).transpose().applyChequerboard() / det();
   return Mat;
 }
 
-LBMatrix4 LBMatrix4::transpose() {
+LbMatrix4 LbMatrix4::transpose() {
   float x[4][4] = { {A, E, I, M},
                     {B, F, J, N},
                     {C, G, K, O},
                     {D, H, L, P}  };
-  return LBMatrix4( x );
+  return LbMatrix4( x );
 }
 
 
-LBMatrix4 LBMatrix4::applyChequerboard() {
+LbMatrix4 LbMatrix4::applyChequerboard() {
   float m[4][4] = { { A, -B,  C, -D},
 		    {-E,  F, -G,  H},
 		    { I, -J,  K, -L},
 		    {-M,  N, -O,  P} };
-  return LBMatrix4( m );
+  return LbMatrix4( m );
 }
 
 
 // cofactor code by Adam Bowen
-float LBMatrix4::cofactor( int x, int y ) {
+float LbMatrix4::cofactor( int x, int y ) {
   float tmp[3][3];
   int i,j;
   int m,n;

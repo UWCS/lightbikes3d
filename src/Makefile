@@ -9,6 +9,10 @@ MISC_H_FILES=\
 	..\include\LbMath.h
 
 MISC_C_FILES=\
+	misc\LbMatrix.cpp \
+	misc\LbMatrix4.cpp \
+	misc\LbVector.cpp \
+	misc\LbVector4.cpp \
 	LbMain.cpp \
 	SDL_main.c
 

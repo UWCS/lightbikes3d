@@ -1,5 +1,5 @@
 /*********************************************************************************
-    LBMatrix.cc
+    LbMatrix.cc
     Implementation file for the LightBikes2001 Matrix class
 
     Copyright (C) 2000  University of Warwick Computing Society
@@ -38,7 +38,7 @@
 #define I m_Values[2][2]
 
 /* Default constructor */
-LBMatrix::LBMatrix() {
+LbMatrix::LbMatrix() {
    int i = 0, j = 0;
 
   for ( ; i < 3; i++ )
@@ -47,7 +47,7 @@ LBMatrix::LBMatrix() {
 }
 
 /* Useful constructor */
-LBMatrix::LBMatrix( float Values[3][3] ) {
+LbMatrix::LbMatrix( float Values[3][3] ) {
   int i, j;
 
   for ( i = 0; i < 3; i++ )
@@ -58,13 +58,13 @@ LBMatrix::LBMatrix( float Values[3][3] ) {
 }
 
 /* Make like Keanau Reeves and destroy the Matrix. */
-LBMatrix::~LBMatrix() {
+LbMatrix::~LbMatrix() {
   return;
 }
 
 /**************** Access methods **********************/
 /* Return Matrix's determinate */
-float LBMatrix::det() {
+float LbMatrix::det() {
   return ( A * ( E * I - F * H ) ) -
          ( B * ( D * I - F * G ) ) +
          ( C * ( D * H - G * E ) );
@@ -72,7 +72,7 @@ float LBMatrix::det() {
 
 /* Write matrix to console */
 #ifdef HAVE_MATRIX_DISPLAY
-void LBMatrix::display() {
+void LbMatrix::display() {
   printf( "[%5.2f %5.2f %5.2f]\n[%5.2f %5.2f %5.2f]\n[%5.2f %5.2f %5.2f]\n",
 	  A, B, C, D, E, F, G, H, I );
 }
@@ -80,23 +80,23 @@ void LBMatrix::display() {
 
 
 /************** Scalar Arithmetic *********************/
-LBMatrix LBMatrix::operator *(float f) {
+LbMatrix LbMatrix::operator *(float f) {
   float x[3][3] = { {A*f, B*f, C*f},
                     {D*f, E*f, F*f},
                     {G*f, H*f, I*f}  };
-   return LBMatrix( x );
+   return LbMatrix( x );
 }
 
-LBMatrix LBMatrix::operator /(float f) {
+LbMatrix LbMatrix::operator /(float f) {
   float x[3][3] = { {A/f, B/f, C/f},
                     {D/f, E/f, F/f},
                     {G/f, H/f, I/f}  };
-   return LBMatrix( x );
+   return LbMatrix( x );
 }
 
 
 /************** Matrix Arithmetic *********************/
-LBMatrix LBMatrix::operator *( LBMatrix& M ) {
+LbMatrix LbMatrix::operator *( LbMatrix& M ) {
   float m[3][3] = { {0.0, 0.0, 0.0},
 		    {0.0, 0.0, 0.0},
 		    {0.0, 0.0, 0.0} };
@@ -108,40 +108,40 @@ LBMatrix LBMatrix::operator *( LBMatrix& M ) {
 	        m_Values[y][1]*M.getXY(x,1)+
 	        m_Values[y][2]*M.getXY(x,2);
 
-  return LBMatrix( m );
+  return LbMatrix( m );
 }
 
-LBVector LBMatrix::operator *( LBVector& V ) {
-  return LBVector( A * V.getX() + B * V.getY() + C * V.getZ(),
+LbVector LbMatrix::operator *( LbVector& V ) {
+  return LbVector( A * V.getX() + B * V.getY() + C * V.getZ(),
 		   D * V.getX() + E * V.getY() + F * V.getZ(),
 		   G * V.getX() + H * V.getY() + I * V.getZ() );
   
 }
 
 /*************** Matrix Operations *******************/
-LBMatrix LBMatrix::invert() {
-  if ( det() == 0 ) return LBMatrix(m_Values);
+LbMatrix LbMatrix::invert() {
+  if ( det() == 0 ) return LbMatrix(m_Values);
 
   float m[3][3] = { {cofactor(1,2,1,2), cofactor(0,2,1,2), cofactor(0,1,1,2) },
 		    {cofactor(1,2,0,2), cofactor(0,2,0,2), cofactor(0,1,0,2) },
 		    {cofactor(1,2,0,1), cofactor(0,2,0,1), cofactor(0,1,0,1) } };
-  LBMatrix M = LBMatrix(m).transpose().applyChequerboard() / det();
+  LbMatrix M = LbMatrix(m).transpose().applyChequerboard() / det();
   return M;
 }
 
-LBMatrix LBMatrix::transpose() {
+LbMatrix LbMatrix::transpose() {
   float x[3][3] = { {A, D, G},
                     {B, E, H},
                     {C, F, I}  };
-  return LBMatrix( x );
+  return LbMatrix( x );
 }
 
 
-LBMatrix LBMatrix::applyChequerboard() {
+LbMatrix LbMatrix::applyChequerboard() {
   float m[3][3] = { { A, -B,  C},
 		    {-D,  E, -F},
 		    { G, -H,  I} };
-  return LBMatrix( m );
+  return LbMatrix( m );
 }
 
 
