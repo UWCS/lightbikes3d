@@ -33,12 +33,12 @@ LbRGBAColor()
     r=g=b=a=0;
 }
 
-LbRGBAColor(float nr,float ng,float nb,float na)
+LbRGBAColor(byte nr,byte ng,byte nb,byte na)
 {
 	r=nr; g=ng; b=nb; a=na;
 }
 
-float r,g,b,a;
+byte r,g,b,a;
 };
 
 enum LbBlockDirection
