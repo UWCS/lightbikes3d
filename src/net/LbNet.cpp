@@ -51,11 +51,14 @@
 //        Threading to make polling better.
 //        Use UDP, define UDP packets.
 
-LbNetImp::LbNetImp()
+LbNetImp::LbNetImp ( )
 {
 
 }
 
+/**
+ ** Is there a server running at the moment.
+ **/
 bool LbNetImp::IsServer ( )
 {
     return true ;
@@ -80,7 +83,7 @@ void LbNetImp::Init ( LbOSLayerSys *os_sys )
     if ( IsServer ( ) )
         InitiateServer ( LB_SERVER_TCP_PORT ) ;
     else
-        ConnectToServer ( "127.0.0.1" , 32001 );
+        ConnectToServer ( "127.0.0.1" , LB_SERVER_TCP_PORT );
 }
 
 /**
@@ -101,9 +104,9 @@ bool LbNetImp::GetNextGameEvent ( LbGameEvent &e )
     return false ;
 }
 
-/*
-** Add a LbGameEvent to the send queue.
-*/
+/**
+ ** Add a LbGameEvent to the send queue.
+ **/
 void LbNetImp::SendGameEvent ( LbGameEvent &e )
 {
     string cmd , msgtext = e.message , ply ;
@@ -130,6 +133,9 @@ void LbNetImp::SendGameEvent ( LbGameEvent &e )
         BroadcastTCPMessage ( msgtext.c_str ( ) ) ;
     //else
     //   PutTCPMessage ( SERVER_HASH , msgtext.c_str ( ) ) ;
+
+    // Keep a copy for ourselves.
+    gameMessageQueue.push ( e ) ;
 }
 
 /**
@@ -182,9 +188,9 @@ void LbNetImp::ProcessMessages ( )
     }
 }
 
-/*
-** Get the playerHash for a particular socket.
-*/
+/**
+ ** Get the playerHash for a particular socket.
+ **/
 int LbNetImp::socketToPlayerhash ( LbSocket * s )
 {
     int i ;
@@ -195,9 +201,9 @@ int LbNetImp::socketToPlayerhash ( LbSocket * s )
                    lbsockets [ i ].remoteAddress.sin_addr.S_un.S_un_b.s_b3 + i ;
 }
 
-/*
-** Get the socket for a particular playerHash
-*/
+/**
+ ** Get the socket for a particular playerHash
+ **/
 LbSocket * LbNetImp::playerhashToSocket ( int playerhash )
 {
     int i ;
@@ -249,13 +255,11 @@ void LbNetImp::PollSockets ( )
     }
 }
 
-/*
-** Used by a client to connect to a server.
-*/
+/**
+ ** Used by a client to connect to a server.
+ **/
 void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
 {
-    MessageBox ( NULL , "connecting to server...", "fish", MB_ICONSTOP);
-
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
 
@@ -278,9 +282,9 @@ void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
     int nRet = connect ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
-       MessageBox ( NULL, "Error binding to the server port.  Another " \
-                          "application may be using this port." , "Error" ,
-                          MB_ICONSTOP ) ;
+       MessageBox ( NULL, "Error binding to the port to connect to server.  "\
+                    "Another application may be using this port." ,
+                    "Error" , MB_ICONSTOP ) ;
     }
 
     iServCon = n ;
@@ -289,13 +293,13 @@ void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
 
-    PutTCPMessage ( & lbsockets [ iServCon ] , "CHAT 0 Client Test\n\r\n" ) ;
+    PutTCPMessage ( & lbsockets [ iServCon ] , "JOIN 0 Fish\r\n" ) ;
 }
 
-/*
-** Used by a server to set up the listening on a port which picks up clients
-** attempting to connect.
-*/
+/**
+ ** Used by a server to set up the listening on a port which picks up clients
+ ** attempting to connect.
+ **/
 void LbNetImp::InitiateServer ( int port )
 {
     int n = lbsockets.size ( ) ;
@@ -339,9 +343,9 @@ void LbNetImp::InitiateServer ( int port )
     lbsockets [ n ] .writeBufferSize = 0 ;
 }
 
-/*
-** Called to accept the connection when a client connects.
-*/
+/**
+ ** Called to accept the connection when a client connects.
+ **/
 void LbNetImp::AcceptConnection (  )
 {
     int n = lbsockets.size ( ) ;
@@ -366,9 +370,9 @@ void LbNetImp::AcceptConnection (  )
     PutTCPMessage ( & lbsockets [ n ] , "Welcome to Lightbikes 2001" ) ;
 }
 
-/*
-** Called to read data.
-*/
+/**
+ ** Called to read data.
+ **/
 void LbNetImp::ReadData  ( int c )
 {
     // Read the data from the client.
@@ -388,9 +392,9 @@ void LbNetImp::ReadData  ( int c )
 }
 
 
-/*
-** Called to send data when socket is available to send data in queue.
-*/
+/**
+ ** Called to send data when socket is available to send data in queue.
+ **/
 void LbNetImp::SendData ( int c )
 {
     // Send the contents of the writebuffer.
@@ -407,9 +411,9 @@ void LbNetImp::SendData ( int c )
     }
 }
 
-/*
-** Get the next message in the socket read queue.
-*/
+/**
+ ** Get the next message in the socket read queue.
+ **/
 bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
 {
     // Get the message out of the buffer and return it in "message".
@@ -426,9 +430,9 @@ bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
     return false ;
 }
 
-/*
-** Add this message to the socket write buffer.
-*/
+/**
+ ** Add this message to the socket write buffer.
+ **/
 void LbNetImp::PutTCPMessage ( LbSocket * s , const char * message )
 {
     // Stick it in the write buffer.
@@ -436,10 +440,10 @@ void LbNetImp::PutTCPMessage ( LbSocket * s , const char * message )
     ( * s ) . writeBufferSize += strlen ( message ) ;
 }
 
-/*
-** Used by server to send a message to all clients.  Doesn't use the
-** broadcast address, instead just sends a message to all players.
-*/
+/**
+ ** Used by server to send a message to all clients.  Doesn't use the
+ ** broadcast address, instead just sends a message to all players.
+ **/
 void LbNetImp::BroadcastTCPMessage ( const char * message )
 {
     // Write to all sockets except the listening one.
@@ -448,18 +452,18 @@ void LbNetImp::BroadcastTCPMessage ( const char * message )
             PutTCPMessage ( & lbsockets [ i ] , message ) ;
 }
 
-/*
-** Shuts down the network cleanly, closing all sockets.
-*/
+/**
+ ** Shuts down the network cleanly, closing all sockets.
+ **/
 LbNetImp::~LbNetImp ( )
 {
     for ( int i = 0 ; i < lbsockets.size ( ) ; i ++ )
         closesocket ( lbsockets [ i ] . socket ) ;
 }
 
-/*
-** Create.
-*/
+/**
+ ** Create.
+ **/
 LbNetSys *CreateNetSys ( LbOSLayerSys *os_sys )
 {
     LbNetSys *rval = new LbNetImp;

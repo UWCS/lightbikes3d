@@ -67,6 +67,7 @@ virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
     //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
 virtual void InitiateNetwork ( ) = 0 ;
+virtual char getNextTextKey ( ) = 0 ;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}

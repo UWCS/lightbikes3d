@@ -30,6 +30,9 @@
 #define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
 
+using namespace std;
+
+
 class LbOSWin32Imp : public LbOSLayerSys
 {
 public:
@@ -46,6 +49,7 @@ virtual char* GetDesktop32();
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
 virtual void InitiateNetwork() ;
+virtual char getNextTextKey ( ) ;
 
 /*
 ** LbOSWin32Imp methods
@@ -86,6 +90,8 @@ LPDIRECTINPUT7          g_DI;
 LPDIRECTINPUTDEVICE7    g_KDIDev;
 BYTE                    olddiks[256]; //no, it's not rude! Old DInput KeyS
 int TickStart,PerfStart;
+
+queue<char> textkeybuffer ;
 
 LbNetSys * ns;
 

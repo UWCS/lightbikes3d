@@ -65,6 +65,10 @@ int LbGameImp::RunGame()
     change = 0.1f;
     startms = lastms = os_sys->GetMS();
 
+    string textbuf = "";
+    char k ;
+    string chatmessages [ 3 ] = { "" , "" ,"" } ;
+
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
 
     //sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
@@ -99,19 +103,39 @@ int LbGameImp::RunGame()
             if (keycount>0) sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
         } else sprintf(inp, "Input Error");
 
+        // Get text entered.
+        while ( ( k = os_sys->getNextTextKey ( ) ) != 0 )
+        {
+            textbuf += k ;
+            if ( textbuf [ textbuf.size() - 1 ] == '\r' )
+            {
+                ProcessCommand ( textbuf ) ;
+                textbuf.erase() ;
+            }
+        }
+
         graph_sys->StartFrame();
         // draw here
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
-        graph_sys->DrawText(0.0f,0.5f,"LightBikes3d");
-        graph_sys->SetTextColor(LbRGBAColor(0,1,0,1));
-        graph_sys->DrawText(0.8f,0.5f,"ABHDE");
+        graph_sys->DrawText(0.5f,0.82f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
-        graph_sys->DrawText(0.5f,0.9f,msg);
+        graph_sys->DrawText(0.6f,0.9f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1,1,0,1));
         graph_sys->DrawText(0.0f,0.25f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0,1,1,1));
         graph_sys->DrawText(0.0f,0.1f,keymsg);
 
+        // Display the typed text.
+        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.02f , textbuf.c_str ( ) ) ;
+
+        // Display the chat or status messages.
+        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.9f , chatmessages[0].c_str ( ) ) ;
+        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.82f , chatmessages[1].c_str ( ) ) ;
+        graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+        graph_sys->DrawText ( 0.0f , 0.74f , chatmessages[2].c_str ( ) ) ;
 
         graph_sys->EndFrame();
 
@@ -135,6 +159,9 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
+        // Probably won't do this ultimately.
+        net_sys->PollSockets();
+
         // Process Network messages (Networking) ie. convert them from strings
         // and packets to game messages, and add them to the network module's
         // queue of game messages.
@@ -148,9 +175,7 @@ int LbGameImp::RunGame()
            **  Send level data
            */
 
-        // Probably won't do this ultimately.
-        net_sys->PollSockets();
-
+        // Deal with network messages.
         while ( net_sys->GetNextGameEvent ( game_event ) )
         {
             switch ( game_event.id )
@@ -169,8 +194,12 @@ int LbGameImp::RunGame()
                 {
                     char temp[20] ;
                     itoa ( game_event.playerHash , temp , 10 ) ;
-                    MessageBox ( NULL , game_event.message , temp , MB_ICONSTOP ) ;
-                    net_sys->SendGameEvent ( game_event ) ;
+                    chatmessages [ 2 ] = chatmessages [ 1 ] ;
+                    chatmessages [ 1 ] = chatmessages [ 0 ] ;
+                    chatmessages [ 0 ] = "<" ;
+                    chatmessages [ 0 ] += temp ;
+                    chatmessages [ 0 ] += "> " ;
+                    chatmessages [ 0 ] += game_event.message ;
                 }
                 break;
             }
@@ -198,6 +227,24 @@ int LbGameImp::RunGame()
     DeInitSubsystems();
 
     return 0;
+}
+
+/**
+ ** Takes a command entered, and deals with it appropriately.
+ **/
+void LbGameImp::ProcessCommand ( string t )
+{
+    LbGameEvent e ;
+    if ( t.substr ( 0 , 1 ) == "\\" )
+    {
+    }
+    else
+    {
+        e.id = LB_GAME_CHAT ;
+        strcpy ( e.message , t.c_str() ) ;
+        e.playerHash = 0 ;
+        net_sys->SendGameEvent ( e ) ;
+    }
 }
 
 void LbGameImp::InitSubsystems()

@@ -27,23 +27,20 @@
 
 class LbBaseBlock
 {
-virtual void GetGeometrySize(int &num_points,int &num_normals)=0;
-virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)=0;
-
-virtual void GetColor(LbRGBAColor &col)=0;
-virtual void SetColor(const LbRGBAColor &col)=0;
+    virtual void GetGeometrySize(int &num_points,int &num_normals)=0;
+    virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals)=0;
+    virtual void GetColor(LbRGBAColor &col)=0;
+    virtual void SetColor(const LbRGBAColor &col)=0;
 };
 
 class LbGameSys
 {
-public:
+    public:
+        virtual int RunGame()=0;
 
-virtual int RunGame()=0;
-
-// empty virtual destructor to ensure proper cleanup
-virtual ~LbGameSys(){}
+        // empty virtual destructor to ensure proper cleanup
+        virtual ~LbGameSys(){}
 };
-
 
 LbGameSys *CreateGameSys();
 

@@ -24,45 +24,39 @@
 #ifndef __LBGAMEIMP__
 #define __LBGAMEIMP__
 
+using namespace std;
+
 class LbGameImp : public LbGameSys
 {
 public:
-LbGameImp();
-~LbGameImp();
+    LbGameImp();
+    ~LbGameImp();
 
-virtual int RunGame();
+    virtual int RunGame();
 
 private:
 
-void InitSubsystems();
-void DeInitSubsystems();
+    void InitSubsystems();
+    void DeInitSubsystems();
+    void ProcessCommand ( string t ) ;
 
-LbOSLayerSys *os_sys;
-
-LbGraphicsSys *graph_sys;
-LbInputSys *input_sys;
-LbSoundSys *sound_sys;
-LbNetSys *net_sys;
+    LbOSLayerSys *os_sys;
+    LbGraphicsSys *graph_sys;
+    LbInputSys *input_sys;
+    LbSoundSys *sound_sys;
+    LbNetSys *net_sys;
 };
 
-/*
-** Block implimentations...
-*/
-
+/*** Block implimentations...*/
 // impliment common functionality
-class LbBaseBlockImp : public LbBaseBlock
-{
-public:
-
+class LbBaseBlockImp : public LbBaseBlock{
+    public:
 /*
 ** LbBaseBlock methods
 */
 virtual void GetColor(LbRGBAColor &col);
 virtual void SetColor(const LbRGBAColor &col);
-
-/*
-** LbBaseBlockImp methods
-*/
+/*** LbBaseBlockImp methods*/
 
 LbBaseBlockImp();
 ~LbBaseBlockImp();

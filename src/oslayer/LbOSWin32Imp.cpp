@@ -53,7 +53,7 @@ while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE))
     if(GetMessage(&msg,NULL,0,0)>0)
         {
         assert(msg.message!=WM_CLOSE);
-
+        TranslateMessage(&msg); //convert wmkeydowns to wmchars
         DispatchMessage(&msg);// send to window proc
         }
     }
@@ -235,6 +235,11 @@ switch(uMsg)
         CreateOGLContext(hwnd);
     break;
 
+    // This is only for the keys not trapped by dinput
+    case WM_CHAR:
+        textkeybuffer.push ( ( char ) wParam  ) ;
+    break;
+
     case WM_SIZE:
         PerformResize();
     break;
@@ -251,6 +256,14 @@ switch(uMsg)
     }
 
 return DefWindowProc (hwnd,uMsg,wParam,lParam);
+}
+
+char LbOSWin32Imp::getNextTextKey ( )
+{
+    if ( textkeybuffer.empty ( ) ) return 0 ;
+    char t = textkeybuffer.front ( ) ;
+    textkeybuffer.pop ( ) ;
+    return t ;
 }
 
 void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
