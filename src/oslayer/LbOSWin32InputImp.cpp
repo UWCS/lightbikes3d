@@ -44,8 +44,7 @@ bool LbOSLayerInputImp::GetOSKey(LbOSLayerKeypress *data, int *num)
 
     dwElements = DINPUT_BUFFERSIZE;
 
-    if (!lpDIDevKeyb)
-    return false;
+    if (!lpDIDevKeyb) return false;
 
     HRESULT hr;
 
@@ -73,8 +72,9 @@ bool LbOSLayerInputImp::GetOSKey(LbOSLayerKeypress *data, int *num)
         }
 
         *num = 0;
-        for (int i=0; i<dwElements; i++) {
-            for (int j=0; j<NumKeys; j++) {
+        int i,j;
+        for (i=0; i<dwElements; i++) {
+            for (j=0; j<NumKeys; j++) {
                 if ( didod[i].dwOfs == KeyMapping[j] ) {
                     data[*num].which = (LbOSLayerKey)j;
                     data[*num].time = didod[i].dwTimeStamp - TickStart;
@@ -85,9 +85,6 @@ bool LbOSLayerInputImp::GetOSKey(LbOSLayerKeypress *data, int *num)
             }
         }
     } else {
-//        char msg[32];
-//        sprintf(msg,"Failed buffer get on %d",hr);
-//        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
         return false;
     }
 
