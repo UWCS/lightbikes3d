@@ -103,7 +103,8 @@ int LbGameImp::RunGame()
     for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
         scoremsgs [ i ] = "" ;
 
-    graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
+    // Removed fade-in effect.  --JGR
+    //graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
     int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
