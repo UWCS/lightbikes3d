@@ -169,15 +169,19 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
+
+
         if ( net_sys->GetStatus ( ) != LB_NET_DISCONNECTED )
         {
-        // Process Network messages (Networking) ie. convert them from strings
-        // and packets to game messages, and add them to the network module's
-        // queue of game messages.
-        net_sys->ProcessMessages();
 
-        // Probably won't do this ultimately.
-        net_sys->PollSockets();
+            // Process Network messages (Networking) ie. convert them from strings
+            // and packets to game messages, and add them to the network module's
+            // queue of game messages.
+            net_sys->ProcessMessages();
+
+            // Probably won't do this ultimately.
+            net_sys->PollSockets();
+
 
         // Read in Network messages (Networking)...
             /* Game Events - Messages from network:
@@ -204,15 +208,21 @@ int LbGameImp::RunGame()
                 // Deal with incoming chat messages.
                 case LB_GAME_CHAT:
                 {
-                    chatmessages [ 2 ] = chatmessages [ 1 ] ;
-                    chatmessages [ 1 ] = chatmessages [ 0 ] ;
-                    chatmessages [ 0 ] = string ("<" ) +
-                                         string ( GetPlayerHandle ( game_event.playerHash ) ) +
-                                         string ( "> " ) +
-                                         string ( game_event.message ) ;
+                    chatmessages [ 0 ] = chatmessages [ 1 ] ;
+                    chatmessages [ 1 ] = chatmessages [ 2 ] ;
+                    chatmessages [ 2 ] =
+                        string ("<" ) +
+                        string ( GetPlayerHandle ( game_event.playerHash ) ) +
+                        string ( "> " ) + string ( game_event.message ) ;
                 }
                 break;
             }
+
+            // Rebroadcast iff we are server and it didn't come from us,
+            // because otherwise we would have already broadcast it.
+            if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
+                 game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
+                    net_sys->SendGameEvent ( game_event , false ) ;
         }
 
     }
@@ -278,16 +288,15 @@ void LbGameImp::ProcessCommand ( string t )
             e.id = LB_GAME_PLAYERLEAVE ;
 
         strcpy ( e.message , prm.c_str ( ) ) ;
-        e.playerHash = 0 ;
-        net_sys->SendGameEvent ( e ) ;
     }
     else
     {
         e.id = LB_GAME_CHAT ;
         strcpy ( e.message , t.c_str ( ) ) ;
-        e.playerHash = 0 ;
-        net_sys->SendGameEvent ( e ) ;
     }
+
+    e.playerHash = net_sys->GetOwnPlayerHash ( ) ;
+    net_sys->SendGameEvent ( e , ( net_sys->GetStatus ( ) == LB_NET_SERVER ) ) ;
 }
 
 void LbGameImp::InitSubsystems()

@@ -52,7 +52,7 @@ class LbNetSys
     public:
         virtual int GetStatus ( ) = 0 ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
-        virtual void SendGameEvent ( LbGameEvent &e ) = 0 ;
+        virtual void SendGameEvent ( LbGameEvent &e , bool includeourself ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
         virtual void Init ( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
@@ -60,6 +60,7 @@ class LbNetSys
         virtual void InitiateServer ( const char * address ,  int port ) = 0 ;
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}
+        virtual int GetOwnPlayerHash ( ) = 0 ;
 };
 
 LbNetSys *CreateNetSys ( LbOSLayerSys *os_sys ) ;

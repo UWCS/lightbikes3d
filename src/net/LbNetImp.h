@@ -49,13 +49,13 @@ class LbNetImp : public LbNetSys
 
         virtual int GetStatus ( ) ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) ;
-        virtual void SendGameEvent ( LbGameEvent &e ) ;
+        virtual void SendGameEvent ( LbGameEvent &e , bool includeourself ) ;
         virtual void ProcessMessages ( ) ;
         virtual void Init(LbOSLayerSys *os_sys);
         virtual void PollSockets ( );
         virtual void ConnectToServer( const char * address , int port ) ;
         virtual void InitiateServer( const char * address , int port ) ;
-
+        virtual int GetOwnPlayerHash ( ) ;
     private:
         // LbNet's reference to the OS Layer.
         LbOSLayerSys *os;
@@ -65,8 +65,9 @@ class LbNetImp : public LbNetSys
         virtual bool GetTCPMessage ( LbSocket * * s , char * message ) ;
         virtual void PutTCPMessage ( LbSocket * s , const char * message ) ;
         virtual void BroadcastTCPMessage ( const char * message ) ;
-        virtual LbSocket * playerhashToSocket ( int playerHash ) ;
-        virtual int socketToPlayerhash ( LbSocket * s ) ;
+        virtual LbSocket * PlayerhashToSocket ( int playerHash ) ;
+        virtual int SocketToPlayerhash ( LbSocket * s ) ;
+        virtual void ResetConnections ( ) ;
 
         // Store the game messages ready to be collected by the game logic.
         queue<LbGameEvent> gameMessageQueue ;
@@ -82,6 +83,8 @@ class LbNetImp : public LbNetSys
 
         // The index of the socket on which, if this is a client, it is connected to the server.
         int iServCon ;
+
+        int ownplayerhash ;
 
         // type of operation ( client, server, disconnected )
         int mode ;
