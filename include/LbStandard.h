@@ -1,6 +1,6 @@
 /*********************************************************************************
     LbStandard.h
-    Header file for the LightBikes2001 Matrix and Vector classes
+    Header file with standard includes the LightBikes2001 classes
 
     Copyright (C) 2000  University of Warwick Computing Society
 

@@ -1,6 +1,6 @@
 /*********************************************************************************
     LbInput.h
-    Header file for the LightBikes2001 Matrix and Vector classes
+    Header file for the LightBikes2001 Input subsystem classes
 
     Copyright (C) 2000  University of Warwick Computing Society
 
