@@ -75,6 +75,9 @@ class LbGameImp : public LbGameSys
 
         bool gameinprogress ;
 
+        int dirns [ 10 ]  ;
+        LbRGBAColor cols [ 10 ];
+        LbVector start  [ 10 ];
 };
 
 /*
@@ -102,26 +105,26 @@ private:
 };
 class LbEmptyBlock : public LbBaseBlockImp
 {
-	public:
-	/*
-	** LbBaseBlock methods
-	*/
+    public:
+    /*
+    ** LbBaseBlock methods
+    */
 
-	virtual void GetGeometrySize(int &num_points,int &num_normals);
-	virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
+    virtual void GetGeometrySize(int &num_points,int &num_normals);
+    virtual void GetGeometry(LbVector *bpoints,int num_points,LbVector *bnormals,int num_normals);
 
-	virtual LbCollideEvent Collide(LbBlockDirection &dir);
+    virtual LbCollideEvent Collide(LbBlockDirection &dir);
     virtual float GetZInBlock(float &x, float &y);
 
-	/*
-	** LbFullBlock methods
-	*/
+    /*
+    ** LbFullBlock methods
+    */
 
-	LbEmptyBlock();
+    LbEmptyBlock();
 
-	~LbEmptyBlock();
+    ~LbEmptyBlock();
 
-	private:
+    private:
 };
 
 
@@ -173,124 +176,124 @@ class LbLevelImp;
 
 class LbArenaImp : public LbArena
 {
-	LbLevel **levels;
-	int numLevels;
+    LbLevel **levels;
+    int numLevels;
     static LbLevelImp full_level;
 
-	public:
-	LbArenaImp(LbLevel **levs, int num);
-	~LbArenaImp();
+    public:
+    LbArenaImp(LbLevel **levs, int num);
+    ~LbArenaImp();
 
-	virtual LbLevel * GetLevel(int level);
-	inline int GetZSize() { return numLevels; };
+    virtual LbLevel * GetLevel(int level);
+    inline int GetZSize() { return numLevels; };
 };
 
 class LbLevelImp : public LbLevel
 {
-	LbBaseBlock **blocks;
-	int xsize, ysize;
+    LbBaseBlock **blocks;
+    int xsize, ysize;
     static LbFullBlock full_block;
 
-	public:
-	LbLevelImp();
-	LbLevelImp(int x, int y);
-	~LbLevelImp();
+    public:
+    LbLevelImp();
+    LbLevelImp(int x, int y);
+    ~LbLevelImp();
 
-	virtual void SetBlockAt(int x, int y, LbBaseBlock &block);
-	virtual LbBaseBlock * GetBlockAt(int x, int y);
+    virtual void SetBlockAt(int x, int y, LbBaseBlock &block);
+    virtual LbBaseBlock * GetBlockAt(int x, int y);
 
-	inline int GetXSize() { return xsize; };
-	inline int GetYSize() { return ysize; };
+    inline int GetXSize() { return xsize; };
+    inline int GetYSize() { return ysize; };
 };
 
 
 class LbPlayerImp : public LbPlayer
 {
-	public:
+    public:
 
-		/*
-		** LbPlayer methods
-		*/
+        /*
+        ** LbPlayer methods
+        */
 
-		// Get player name.
-		virtual int GetHash ( ) ;
+        // Get player name.
+        virtual int GetHash ( ) ;
 
-		// Get player handle.
-		virtual string GetHandle ( ) ;
+        // Get player handle.
+        virtual string GetHandle ( ) ;
 
-		// Get player kills.
-		virtual int GetKills ( ) ;
+        // Get player kills.
+        virtual int GetKills ( ) ;
 
-		// Get player deaths.
-		virtual int GetDeaths ( ) ;
+        // Get player deaths.
+        virtual int GetDeaths ( ) ;
 
-		// Get player ping.
-		virtual int GetPing ( ) ;
+        // Get player ping.
+        virtual int GetPing ( ) ;
 
-		// Get player valid.
-		virtual bool IsValid ( ) ;
+        // Get player valid.
+        virtual bool IsValid ( ) ;
 
-		// Set player hash.
-		virtual void SetHash ( int h ) ;
+        // Set player hash.
+        virtual void SetHash ( int h ) ;
 
-		// Set player handle.
-		virtual void SetHandle ( string h) ;
+        // Set player handle.
+        virtual void SetHandle ( string h) ;
 
-		// Set player kills.
-		virtual void SetKills ( int k ) ;
+        // Set player kills.
+        virtual void SetKills ( int k ) ;
 
-		// Set player deaths.
-		virtual void SetDeaths ( int d ) ;
+        // Set player deaths.
+        virtual void SetDeaths ( int d ) ;
 
-		// Set player ping.
-		virtual void SetPing ( int p ) ;
+        // Set player ping.
+        virtual void SetPing ( int p ) ;
 
-		// Set player valid.
-		virtual void SetValid ( bool v ) ;
+        // Set player valid.
+        virtual void SetValid ( bool v ) ;
 
-		// Get the graphics bike.
-		virtual LbGraphicsBike * GetBike ( ) ;
+        // Get the graphics bike.
+        virtual LbGraphicsBike * GetBike ( ) ;
 
-		// Get the position.
-		virtual LbVector * GetPosition ( ) ;
+        // Get the position.
+        virtual LbVector * GetPosition ( ) ;
 
-		// Get the graphics bike.
-		virtual void SetBike ( LbGraphicsBike * g ) ;
+        // Get the graphics bike.
+        virtual void SetBike ( LbGraphicsBike * g ) ;
 
-		// Get the position.
-		virtual void SetPosition ( LbVector * v ) ;
+        // Get the position.
+        virtual void SetPosition ( LbVector * v ) ;
 
-		// Set player valid.
-		virtual void SetPlaying ( bool v ) ;
+        // Set player valid.
+        virtual void SetPlaying ( bool v ) ;
 
-		// Get player kills.
-		virtual bool IsPlaying ( ) ;
+        // Get player kills.
+        virtual bool IsPlaying ( ) ;
 
-		// Set player the direction.
-		virtual void SetDirection ( int d ) ;
+        // Set player the direction.
+        virtual void SetDirection ( int d ) ;
 
-		// Get player direction.
-		virtual int GetDirection ( ) ;
+        // Get player direction.
+        virtual int GetDirection ( ) ;
 
-		// END
+        // END
 
-		/*
-		** LbPlayer methods
-		*/
-		LbPlayerImp();
-		~LbPlayerImp();
+        /*
+        ** LbPlayer methods
+        */
+        LbPlayerImp();
+        ~LbPlayerImp();
 
-	private:
-		int hash ;
-		string handle ;
-		int kills ;
-		int deaths ;
-		int ping ;
-		bool valid ;
-		LbGraphicsBike * bike ;
-		LbVector * bikepos ;
-		bool playing ;
-		int direction ;
+    private:
+        int hash ;
+        string handle ;
+        int kills ;
+        int deaths ;
+        int ping ;
+        bool valid ;
+        LbGraphicsBike * bike ;
+        LbVector * bikepos ;
+        bool playing ;
+        int direction ;
 };
 
 

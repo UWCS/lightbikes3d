@@ -50,6 +50,16 @@ struct LbGameEvent
     string message;
 } ;
 
+struct LbGamePositionUpdate
+{
+    //LbGamePositionUpdateID id ;
+    int playerHash ;
+    int x1 , y1 , x2 , y2 ;
+    int level ;
+    int sequence ;
+    int direction ;
+}
+
 class LbNetSys
 {
     public:

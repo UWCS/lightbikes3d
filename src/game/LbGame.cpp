@@ -44,10 +44,9 @@ LbGameImp::~LbGameImp()
     DeInitSubsystems();
 }
 
-
 int LbGameImp::RunGame()
 {
-	//FILE *fp=fopen("c:\\dbglog.txt","W+");
+    //FILE *fp=fopen("c:\\dbglog.txt","W+");
     //fputs("Testing 123",fp);
 
     LbOSLayerEvent os_event;
@@ -61,7 +60,7 @@ int LbGameImp::RunGame()
     LbOSLayerKeypress keys[32];
 
     // DEBUG CODE - TO BE REMOVED WHEN GameLogic IS WORKING
-    //Directions		// 0 = y+, 1 = x+, 2 = y-, 3 = x-
+    //Directions        // 0 = y+, 1 = x+, 2 = y-, 3 = x-
     float step = 0;
     float dist = 0;
     float Vacc = 0;
@@ -78,21 +77,19 @@ int LbGameImp::RunGame()
     int i , p ;
     bool showscores;
 
-	// Initialise players.
-	for ( i = 0 ; i < MAX_PLAYERS ; i++ )
-	{
-		players [ i ] = new LbPlayerImp ( ) ;
+    // Initialise players.
+    for ( i = 0 ; i < MAX_PLAYERS ; i++ )
+    {
+        players [ i ] = new LbPlayerImp ( ) ;
         players [ i ]->SetValid ( false ) ;
         players [ i ]->SetPlaying ( false ) ;
-	}
-
-	thisplayer = players [ 0 ] ;
+    }
 
     // Default to not showing scores.
     showscores = false ;
 
     // Clear the buffer that stores the typed text.
-    string textbuf = "";
+    string textbuf = "" ;
 
     // Set our handle to the default for new players.
     ownhandle = "Unnamed" ;
@@ -107,116 +104,154 @@ int LbGameImp::RunGame()
 
     // Removed fade-in effect.  --JGR
     //graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
-    sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
+    sound_sys->PlayMusicFile ( "TRACK1.MP3" ) ; //just for the moment
 
-    int wave = sound_sys->CacheWaveFile("SOUND1.WAV"); //just for the moment
+    int wave = sound_sys->CacheWaveFile ( "SOUND1.WAV" ) ; //just for the moment
 
-    // Create a single player
+    // Create a single player.
 
-    // DEBUG
+    // DEBUG.
     graph_sys->CreateGraphicsBike();
     graph_sys->CreateGraphicsBike();
-	graph_sys->CreateGraphicsBike();
     graph_sys->CreateGraphicsBike();
     graph_sys->CreateGraphicsBike();
-	graph_sys->CreateGraphicsBike();
-	graph_sys->CreateGraphicsBike();
-	graph_sys->CreateGraphicsBike();
-	graph_sys->CreateGraphicsBike();
-	//DEBUGGING: REMOVE
+    graph_sys->CreateGraphicsBike();
+    graph_sys->CreateGraphicsBike();
+    graph_sys->CreateGraphicsBike();
+    graph_sys->CreateGraphicsBike();
+    graph_sys->CreateGraphicsBike();
+    //DEBUGGING: REMOVE.
 
-	LbLevel ** levels = new LbLevel*[3];
-	int x;
-	for (x=0; x < 3; x++)
-	{
-		levels[x] = new LbLevelImp(3,3);
-		levels[x]->SetBlockAt(1,1, LbFullBlock());
-	}
+    LbLevel ** levels = new LbLevel * [ 3 ] ;
+    int x ;
+    for (x = 0; x < 3; x ++ )
+    {
+        levels[x] = new LbLevelImp(3,3);
+        levels[x]->SetBlockAt(1,1, LbFullBlock());
+    }
 
-	LbArenaImp * arena = new LbArenaImp(levels, 3);
+    LbArenaImp * arena = new LbArenaImp(levels, 3);
 
-	for (x=0; x < arena->GetZSize(); x++)
-	{
-		LbLevel *l = arena->GetLevel(x);
-		l->GetXSize();
-		l->GetYSize();
-		l->GetBlockAt(-1,-10);
-		l->GetBlockAt(0,0);
-		l->GetBlockAt(1,1);
-	}
+    for (x=0; x < arena->GetZSize(); x++)
+    {
+        LbLevel *l = arena->GetLevel(x);
+        l->GetXSize();
+        l->GetYSize();
+        l->GetBlockAt(-1,-10);
+        l->GetBlockAt(0,0);
+        l->GetBlockAt(1,1);
+    }
 
-	delete arena;
+    delete arena;
 
-	//DEBUGGING: REMOVE END
-;
-	MessageBox ( NULL , "cheese" ,
-                "Error" , MB_ICONSTOP ) ;
+    //DEBUGGING: REMOVE END
 
-	gameinprogress = false ;
+
+    // HARD CODED START POSITIONS.
+    //   THIS WILL BE IN THE LEVEL FILE ULTIMATELY
+
+    start [ 0 ] = LbVector ( -10  , 10 , 0 ) ;
+    start [ 1 ] = LbVector ( 10 , 10 , 0 ) ;
+    start [ 2 ] = LbVector ( 10 , -10 , 0 ) ;
+    start [ 3 ] = LbVector ( -10 , -10 , 0 ) ;
+
+    dirns [ 0 ] = 0 ;
+    dirns [ 1 ] = 1 ;
+    dirns [ 2 ] = 2 ;
+    dirns [ 3 ] = 3 ;
+
+    cols [ 0 ] = LbRGBAColor ( 0.0f , 0.2f , 1.0f , 0.2f ) ;
+    cols [ 1 ] = LbRGBAColor ( 0.0f , 1.0f , 0.0f , 0.2f ) ;
+    cols [ 2 ] = LbRGBAColor ( 1.0f , 0.0f , 1.0f , 0.2f ) ;
+    cols [ 3 ] = LbRGBAColor ( 1.0f , 1.0f , 0.0f , 0.2f ) ;
+
+    // END OF HARD CODED STUFF
+
+    gameinprogress = false ;
 
     while( ! quit_flag )
     {
-		if ( gameinprogress )
-		{
+        if ( gameinprogress )
+        {
 
-			step = ( change * (float)( os_sys->GetMS() - startms ) / 1000.0f );
-			scroll += step;
-			startms = os_sys->GetMS();
-			//if (scroll > 10) change=-0.02f;
-			//if (scroll < -10) change=0.02f;
-			if ( !(count++ % 20) ) {
-				lastms = (os_sys->GetMS() - lastms);
-				fps = lastms ? (20000 / lastms) : 0;
-				lastms = os_sys->GetMS();
-				sprintf(msg,"FPS:%d  Step:%.2f",fps, step);
-			}
+            step = ( change * (float)( os_sys->GetMS() - startms ) / 1000.0f );
+            scroll += step;
+            startms = os_sys->GetMS();
+            //if (scroll > 10) change=-0.02f;
+            //if (scroll < -10) change=0.02f;
+            if ( !(count++ % 20) ) {
+                lastms = (os_sys->GetMS() - lastms);
+                fps = lastms ? (20000 / lastms) : 0;
+                lastms = os_sys->GetMS();
+                sprintf(msg,"FPS:%d  Step:%.2f",fps, step);
+            }
 
-			// Set eye to point to bike
+            // Set eye to point to bike
 
-			//eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
-			dist = sqrt( pow(thisplayer->GetPosition()->getX() - eye.getX(), 2) +
-						 pow(thisplayer->GetPosition()->getY() - eye.getY(), 2) +
-						 pow(thisplayer->GetPosition()->getZ() - eye.getZ(), 2) );
-			eye = LbVector( thisplayer->GetPosition()->getX() + (eye.getX() - thisplayer->GetPosition()->getX()) * (20 / dist),
-							thisplayer->GetPosition()->getY() + (eye.getY() - thisplayer->GetPosition()->getY()) * (20 / dist),
-							thisplayer->GetPosition()->getZ() + 10 );
-			//target = LbVector(0, scroll, 0);
-			graph_sys->SetCamera(eye, * thisplayer->GetPosition(),up);
+            //eye = LbVector(bikePos.getX() + 20 * sin(scroll), bikePos.getY() + 20 * cos(scroll), 10);
+            dist = sqrt( pow(thisplayer->GetPosition()->getX() - eye.getX(), 2) +
+                         pow(thisplayer->GetPosition()->getY() - eye.getY(), 2) +
+                         pow(thisplayer->GetPosition()->getZ() - eye.getZ(), 2) );
+            eye = LbVector( thisplayer->GetPosition()->getX() + (eye.getX() - thisplayer->GetPosition()->getX()) * (20 / dist),
+                            thisplayer->GetPosition()->getY() + (eye.getY() - thisplayer->GetPosition()->getY()) * (20 / dist),
+                            thisplayer->GetPosition()->getZ() + 10 );
+            //target = LbVector(0, scroll, 0);
+            graph_sys->SetCamera(eye, * thisplayer->GetPosition(),up);
 
-			keycount = 32;
-			inp[0] = 0;
-			if (input_sys->GetOSKey(&keys[0], &keycount))
-			{
-				for (int i=0; i<keycount; i++)
-				{
-					if (keys[i].down)
-					{
-						switch (keys[i].which)
-						{
-							// Left key press means add a turning point.
-							case LB_OSKEY_LEFT:
-								sprintf(inp, "Left Key Press");
-								lpress++;
-								sound_sys->PlayWaveFile(wave);
-								thisplayer->GetBike()->AddSegment( * thisplayer->GetPosition() );
-								thisplayer->SetDirection( ( thisplayer->GetDirection() + 3 ) % 4 );
-							break;
+            keycount = 32;
+            inp[0] = 0;
+            if (input_sys->GetOSKey(&keys[0], &keycount))
+            {
+                for (int i=0; i<keycount; i++)
+                {
+                    if (keys[i].down)
+                    {
+                        switch (keys[i].which)
+                        {
+                            // Left key press means add a turning point.
+                            case LB_OSKEY_LEFT:
+                                sprintf(inp, "Left Key Press");
+                                lpress++;
+                                sound_sys->PlayWaveFile(wave);
+                                thisplayer->GetBike()->AddSegment( * thisplayer->GetPosition() );
+                                thisplayer->SetDirection( ( thisplayer->GetDirection() + 3 ) % 4 );
 
-							// Right key press means add a turning point.
-							case LB_OSKEY_RIGHT:
-								sprintf(inp, "Right Key Press");
-								rpress++;
-								thisplayer->GetBike()->AddSegment( * thisplayer->GetPosition() );
-								thisplayer->SetDirection( ( thisplayer->GetDirection() + 1 ) % 4 );
-							break;
-						}
-					}
-				}
-				if (keycount>0)
-					sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
-			}
-			else sprintf(inp, "Input Error");
-		}
+                                // Send message.
+                                //LbPositionUpdate u ;
+                                //u.playerHash = ???
+                                //u.xpos =??
+                                //u.ypos = ??
+                                //u.level = ??
+                                //u.sequence = ??
+                                //u.direction = ??
+                                //net_sys->sendPositionUpdate ( u ) ;
+                            break;
+
+                            // Right key press means add a turning point.
+                            case LB_OSKEY_RIGHT:
+                                sprintf(inp, "Right Key Press");
+                                rpress++;
+                                thisplayer->GetBike()->AddSegment( * thisplayer->GetPosition() );
+                                thisplayer->SetDirection( ( thisplayer->GetDirection() + 1 ) % 4 );
+
+                                // Send message.
+                                //LbPositionUpdate u ;
+                                //u.playerHash = ???
+                                //u.xpos =??
+                                //u.ypos = ??
+                                //u.level = ??
+                                //u.sequence = ??
+                                //u.direction = ??
+                                //net_sys->sendPositionUpdate ( u ) ;
+                            break;
+                        }
+                    }
+                }
+                if (keycount>0)
+                    sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
+            }
+            else sprintf(inp, "Input Error");
+        }
 
         // Get text entered.
         while ( ( k = input_sys->getNextTextKey ( ) ) != 0 )
@@ -253,7 +288,7 @@ int LbGameImp::RunGame()
 
             Vacc -= 9.81 * (step / change);
             players[0]->SetPosition ( LbVector (
-				players[0]->GetPosition().getX(), bikePos.getY(), bikePos.getZ() + Vacc * (step / change) );
+                players[0]->GetPosition().getX(), bikePos.getY(), bikePos.getZ() + Vacc * (step / change) );
             if (bikePos.getZ() < 0) {
                 bikePos = LbVector( bikePos.getX(), bikePos.getY(), 0 );
                 players[0]->GetBike()->AddSegment( bikePos );
@@ -263,72 +298,24 @@ int LbGameImp::RunGame()
          */        // END
 
         graph_sys->StartFrame();
-        // draw here
+        // Draw here.
 
         // Draw trails for all bikes.
         for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         {
-			if ( players[i]->IsPlaying() )
-			{
-        		players [ i ] ->GetBike ( ) ->DrawTrail ( ) ;
-        		players [ i ] -> GetBike( ) ->DrawSegment (
-					players [ i ] ->GetBike ( ) ->GetLastSegment ( ) ,
-					* players[i]->GetPosition() ) ;
-			}
-		}
-
-		// Move all the bikes forward.
-		for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-		{
-			if ( players[i]->IsPlaying ( ) )
-			{
-        		switch ( players[i]->GetDirection ( ) )
-        		{
-        		    case 0:
-        		    {
-        		    	LbVector * v = new LbVector (
-							players[i]->GetPosition()->getX(),
-							players[i]->GetPosition()->getY() + step,
-							players[i]->GetPosition()->getZ() ) ;
-        		    	players[i]->SetPosition( v ) ;
-					}
-        		    break;
-        		    case 1:
-        		    {
-        		    	LbVector * v = new LbVector (
-							players[i]->GetPosition()->getX() + step ,
-							players[i]->GetPosition()->getY() ,
-							players[i]->GetPosition()->getZ() ) ;
-        		    	players[i]->SetPosition( v ) ;
-					}
-        		    break;
-        		    case 2:
-        		    {
-        		    	LbVector * v = new LbVector (
-							players[i]->GetPosition()->getX(),
-							players[i]->GetPosition()->getY() - step,
-							players[i]->GetPosition()->getZ() ) ;
-        		    	players[i]->SetPosition( v ) ;
-					}
-        		    break;
-        		    case 3:
-        		    {
-        		    	LbVector * v = new LbVector (
-							players[i]->GetPosition()->getX() - step,
-							players[i]->GetPosition()->getY() ,
-							players[i]->GetPosition()->getZ() ) ;
-        		    	players[i]->SetPosition( v ) ;
-					}
-        		    break;
-				}
-        	}
-		}
+            if ( players[i]->IsPlaying() )
+            {
+                players [ i ] ->GetBike ( ) ->DrawTrail ( ) ;
+                players [ i ] -> GetBike( ) ->DrawSegment (
+                    players [ i ] ->GetBike ( ) ->GetLastSegment ( ) ,
+                    * players[i]->GetPosition() ) ;
+            }
+        }
 
         graph_sys->SetTextColor(LbRGBAColor(1.0f,0.0f,0.0f,1.0f));
         graph_sys->DrawText(0.5f,0.82f,1.0f,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0.0f,0.0f,1.0f,1.0f));
-        graph_sys->DrawText(0.6f,0.9f,1.0f,msg);
-        graph_sys->DrawText(0.2f,0.89f,1.0f,msg);
+        graph_sys->DrawText(0.6f,0.9f,0.5f,msg);
         graph_sys->SetTextColor(LbRGBAColor(1.0f,1.0f,0.0f,1.0f));
         graph_sys->DrawText(0.0f,0.25f,1.0f,inp);
         graph_sys->SetTextColor(LbRGBAColor(0.0f,1.0f,1.0f,1.0f));
@@ -357,8 +344,54 @@ int LbGameImp::RunGame()
 
         graph_sys->EndFrame();
 
+        // Move all the bikes forward.
+        for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+        {
+            if ( players[i]->IsPlaying ( ) )
+            {
+                switch ( players[i]->GetDirection ( ) )
+                {
+                    case 0:
+                    {
+                        LbVector * v = new LbVector (
+                            players[i]->GetPosition()->getX(),
+                            players[i]->GetPosition()->getY() + step,
+                            players[i]->GetPosition()->getZ() ) ;
+                        players[i]->SetPosition( v ) ;
+                    }
+                    break;
+                    case 1:
+                    {
+                        LbVector * v = new LbVector (
+                            players[i]->GetPosition()->getX() + step ,
+                            players[i]->GetPosition()->getY() ,
+                            players[i]->GetPosition()->getZ() ) ;
+                        players[i]->SetPosition( v ) ;
+                    }
+                    break;
+                    case 2:
+                    {
+                        LbVector * v = new LbVector (
+                            players[i]->GetPosition()->getX(),
+                            players[i]->GetPosition()->getY() - step,
+                            players[i]->GetPosition()->getZ() ) ;
+                        players[i]->SetPosition( v ) ;
+                    }
+                    break;
+                    case 3:
+                    {
+                        LbVector * v = new LbVector (
+                            players[i]->GetPosition()->getX() - step,
+                            players[i]->GetPosition()->getY() ,
+                            players[i]->GetPosition()->getZ() ) ;
+                        players[i]->SetPosition( v ) ;
+                    }
+                    break;
+                }
+            }
+        }
 
-        // poll the event queue.
+        // Poll the event queue.
         while(os_sys->PollEvent(os_event))
         {
             /* OS event:
@@ -368,14 +401,14 @@ int LbGameImp::RunGame()
             **  Normal keypress (for menus, etc.)
             **  Return: Send player quip
             */
-            // handle the event.
+            // Handle the event.
             switch ( os_event.id )
             {
                 case LB_OSEVENT_QUIT:
                     quit_flag=true;// bye bye...
-                    break;
+                break;
             }
-            // ignore unknown events...
+            // Ignore unknown events...
         }
 
         // Process Network messages (Networking) ie. convert them from
@@ -399,22 +432,22 @@ int LbGameImp::RunGame()
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( " has joined the game." ) ) ;
 
-					// If we are the server send information on the other players.
-					if ( net_sys->GetStatus () == LB_NET_SERVER )
-					{
-						LbGameEvent e ;
-						for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-						{
-							if ( players[i]->IsValid ( ) == true )
-							{
-								e.id = LB_GAME_PLAYERJOIN ;
-								e.playerHash = players[i]->GetHash ( ) ;
-								e.message = GetPlayerHandle ( players[i]->GetHash ( ) ) ;
-								net_sys->SendGameEvent ( e , false ) ;
-							}
-						}
+                    // If we are the server send information on the other players.
+                    if ( net_sys->GetStatus () == LB_NET_SERVER )
+                    {
+                        LbGameEvent e ;
+                        for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+                        {
+                            if ( players[i]->IsValid ( ) == true )
+                            {
+                                e.id = LB_GAME_PLAYERJOIN ;
+                                e.playerHash = players[i]->GetHash ( ) ;
+                                e.message = GetPlayerHandle ( players[i]->GetHash ( ) ) + "#" + ItoS ( i ) ;
+                                net_sys->SendGameEvent ( e , false ) ;
+                            }
+                        }
                     }
-                    break;
+                break ;
 
                 // Deal with players going.
                 case LB_GAME_PLAYERLEAVE :
@@ -423,7 +456,7 @@ int LbGameImp::RunGame()
                         string ( " has left the game." ) +
                         game_event.message ) ;
                     RemovePlayer ( game_event.playerHash ) ;
-                    break;
+                break ;
 
                 // Deal with players changing name.
                 case LB_GAME_HANDCHANGE :
@@ -433,7 +466,7 @@ int LbGameImp::RunGame()
                         game_event.message + string ( "." ) ) ;
                     SetPlayerHandle ( game_event.playerHash ,
                                       game_event.message ) ;
-                    break;
+                break ;
 
                 // Deal with incoming chat messages.
                 case LB_GAME_CHAT:
@@ -441,35 +474,36 @@ int LbGameImp::RunGame()
                         string ("<" ) +
                         GetPlayerHandle ( game_event.playerHash ) +
                         string ( "> " ) + game_event.message ) ;
-                    break;
+                break ;
 
                 // New game message.  Abandon any current games.
                 case LB_GAME_NEWGAME:
                     NewGame ( ) ;
-                    break ;
+                break ;
 
                 // If the server decides the game is over, return to chat.
                 case LB_GAME_ENDGAME:
                     EndGame ( ) ;
-                    break ;
+                break ;
 
                 // If a round is being played kill it off.  Return players
                 // to start positions.
                 case LB_GAME_NEWROUND:
                     NewRound ( ) ;
-                    break ;
+                break ;
 
                 // If a new map is being sent.
                 case LB_GAME_NEWMAP:
-                    break ;
-
+                break ;
             }
 
             // Rebroadcast iff we are server and it didn't come from us,
             // because otherwise we would have already broadcast it.
             if ( net_sys->GetStatus ( ) == LB_NET_SERVER &&
-                game_event.playerHash != net_sys->GetOwnPlayerHash ( ) )
+                game_event.playerHash != net_sys->GetOwnPlayerHash ( ) &&
+                game_event.id != LB_GAME_PLAYERJOIN )
                     net_sys->SendGameEvent ( game_event , false ) ;
+
         }
 
         // Put a scoreboard together.  BTW I think we should be able to detect
@@ -486,8 +520,8 @@ int LbGameImp::RunGame()
                 scoremsgs [ i ] = "" ;
             else
                 scoremsgs [ i ] =
-                        " " + Pad ( players[p]->GetHandle ( ) , 18 ) +
-                        Pad ( ItoS ( players[p]->GetKills ( ) ) , 11 ) +
+                    " " + Pad ( players[p]->GetHandle ( ) , 18 ) +
+                    Pad ( ItoS ( players[p]->GetKills ( ) ) , 11 ) +
                         Pad ( ItoS ( players[p]->GetDeaths ( ) ) , 11 ) +
                         ItoS ( players[p]->GetPing ( ) ) ;
             p ++ ;
@@ -562,12 +596,14 @@ bool LbGameImp::SetPlayerHandle ( int hash , const string & handle )
 {
     int i ;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
+    {
         if ( players[i]->IsValid ( ) == true &&
              hash == players[i]->GetHash ( ) )
         {
              players[i]->SetHandle ( handle ) ;
              return true ;
         }
+    }
     return false ;
 }
 
@@ -576,21 +612,50 @@ bool LbGameImp::SetPlayerHandle ( int hash , const string & handle )
  **/
 void LbGameImp::AddPlayer ( int hash , const string & handle )
 {
-    // Check for existing player.
-    if ( SetPlayerHandle ( hash , handle ) ) return ;
+    int p = -1 , i;
 
-    int i ;
-    for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players[i]->IsValid ( ) == false )
+    // If we are the server find a free slot.
+    if ( net_sys->GetStatus () == LB_NET_SERVER )
+    {
+        for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
         {
-            players[i]->SetValid ( true ) ;
-            players[i]->SetHash ( hash ) ;
-			players[i]->SetBike( graph_sys->GetBike(i) );
-            if ( handle == "" )
-                players[i]->SetHandle ( "New Player" ) ;
-            else players[i]->SetHandle ( handle ) ;
-            return ;
+            if ( players[i]->IsValid ( ) == false )
+            {
+                p = i ;
+                break ;
+            }
         }
+    }
+    else
+    {
+        // Parse for the player number.
+        int m = handle.find_first_of ( "#" ) ;
+        string prm = handle.substr ( m + 1 , handle.size ( ) - m - 1 ) ;
+
+        p = atoi ( prm.c_str() ) ;
+
+    //MessageBox ( NULL , "Client id number." ,
+    //           prm.c_str() , MB_ICONSTOP ) ;
+
+    }
+
+    //MessageBox ( NULL , "Client id number." ,
+    //           "fisgh ", MB_ICONSTOP ) ;
+
+    if ( players[p]->IsValid ( ) == false )
+    {
+        players[p]->SetValid ( true ) ;
+        players[p]->SetHash ( hash ) ;
+        players[p]->SetBike( graph_sys->GetBike(p) );
+        if ( handle == "" )
+            players[p]->SetHandle ( "New Player" ) ;
+        else players[p]->SetHandle ( handle ) ;
+        return ;
+    }
+
+    // Check for existing player.
+    //if ( SetPlayerHandle ( hash , handle ) ) return ;
+
     // No spare slots.
 }
 
@@ -601,7 +666,8 @@ void LbGameImp::RemovePlayer ( int hash  )
 {
     int i;
     for ( i = 0 ; i < MAX_PLAYERS ; i ++ )
-        if ( players[i]->IsValid ( ) == true && hash == players[i]->GetHash ( ) )
+        if ( players[i]->IsValid ( ) == true &&
+             hash == players[i]->GetHash ( ) )
             players[i]->SetValid ( false ) ;
 }
 
@@ -619,20 +685,26 @@ void LbGameImp::NewRound ( )
 void LbGameImp::NewGame ( )
 {
     int i ;
-    // Reset scores.
     for ( i = 0 ; i < MAX_PLAYERS ; i++ )
     {
         // Start the play.
-        if ( players[i]->IsValid() )
+        if ( players[i]->IsValid ( ) )
         {
-	        players[i]->SetKills ( 0 ) ;
-	        players[i]->SetDeaths ( 0 ) ;
-			players[i]->GetBike()->AddSegment( LbVector(10, 10, 0) );
-			players[i]->GetBike()->SetColor( LbRGBAColor ( 0.0f , 1.0f , 0.0f , 0.2f ) ) ;
-			players[i]->SetPosition( & LbVector ( 10 , 10 , 0 ) ) ;
-			players[i]->SetDirection ( 0 ) ;
-       		players[i]->SetPlaying ( true ) ;
-		}
+            players[i]->SetKills ( 0 ) ;
+            players[i]->SetDeaths ( 0 ) ;
+            players[i]->GetBike()->AddSegment ( start [ i ] ) ;
+            players[i]->GetBike()->SetColor ( cols [ i ] ) ;
+            players[i]->SetPosition( & start [ i ] ) ;
+            players[i]->SetDirection ( dirns [ i ] ) ;
+            players[i]->SetPlaying ( true ) ;
+        }
+
+        if ( players[i]->GetHash ( ) == net_sys->GetOwnPlayerHash ( ) )
+            thisplayer = players[ i ] ;
+
+        if ( net_sys->GetStatus () == LB_NET_SERVER )
+            thisplayer = players[ 0 ] ;
+
     }
 
     gameinprogress = true ;
@@ -695,7 +767,9 @@ void LbGameImp::ProcessCommand ( string t )
         {
             net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
             if ( net_sys->GetStatus ( ) == LB_NET_CONNECTEDTOSERVER )
+            {
                 ShowStatusMessage ( "Status: Connected to server." ) ;
+            }
             else
             {
                 ShowStatusMessage ( "Error: Could not connect." ) ;
@@ -710,7 +784,9 @@ void LbGameImp::ProcessCommand ( string t )
         {
             net_sys->InitiateServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ;
             if ( net_sys->GetStatus ( ) == LB_NET_SERVER )
+            {
                 ShowStatusMessage ( "Status: Server running." ) ;
+            }
             else
             {
                 ShowStatusMessage ( "Error: Could not start server." ) ;
