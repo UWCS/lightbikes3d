@@ -37,9 +37,10 @@ virtual void CreateGraphicsLevel(int x,int y);
 
 virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
 
-virtual void TriggerEffect(LbGraphicsEffect effect);
-
 virtual void DrawText(float x,float y,const char *str);
+virtual void SetTextColor(LbRGBAColor color);
+
+virtual void TriggerEffect(LbGraphicsEffect effect);
 
 virtual void StartFrame();
 virtual void EndFrame();
@@ -50,7 +51,7 @@ virtual void EndFrame();
 LbGraphicsImp();
 ~LbGraphicsImp();
 
-void Init();
+void Init(LbOSLayerSys *os_sys);
 
 
 private:
@@ -63,20 +64,14 @@ int LoadMemTexture( char *pixels, int xsize, int ysize);
 void ActivateTexture(int texID);
 void DeleteTexture(int texID);
 
-//effect stuff
-LbGraphicsEffect cureffect;
-int effectprogress;
-int sfxID;
-
-// text stuff
-LbRGBAColor textcolor;
-int fontID
-
-// camera setup
-LbVector campos, camtgt, camup;
-
-LbOSLayerSys *os;
 int frameCount;
+int fontID, sfxID;
+int gfxStart;
+int sfxnums[8];
+LbVector *campos, *camtgt, *camup;
+LbOSLayerSys *os;
+LbGraphicsEffect cureffect;
+LbRGBAColor textcolor;
 };
 
 

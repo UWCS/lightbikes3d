@@ -26,17 +26,32 @@
 #ifndef __LBOSLAYER__
 #define __LBOSLAYER__
 
+typedef Winamp_Input_Module* WA_InputPtr;
+typedef Winamp_Output_Module* WA_OutputPtr;
 
 enum LbOSLayerEventId
 	{
 	LB_OSEVENT_QUIT		=0,
 	};
 
+enum LbOSLayerKey
+    {
+    LB_OSKEY_LEFT       =0,
+    LB_OSKEY_RIGHT      =1,
+    };
+
 struct LbOSLayerEvent 
 {
 LbOSLayerEventId id;
 };
 
+struct LbOSLayerKeypress
+{
+LbOSLayerKey which;     //which key (duh)
+BOOL down;              //down or not? (true=just pressed, false=just released)
+int time;               //when pressed
+int sequence;           //when pressed relative to other keypress messages
+};
 
 class LbOSLayerSys
 {
@@ -47,6 +62,10 @@ virtual void SwapDoubleBuffers()=0;
 virtual int GLTextListBase()=0;
 virtual int GetMS()=0; //get accurate millisecond count
 virtual char* GetDesktop32()=0; //get an image of the desktop. Bwahaha!
+virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
+    //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
+
+virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}

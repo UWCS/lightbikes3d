@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,10 +29,24 @@ class LbSoundImp : public LbSoundSys
 {
 public:
 
+bool PlayMusicFile(char *fname);
+bool StopMusic();
+
 LbSoundImp();
 ~LbSoundImp();
 
+void Init(LbOSLayerSys *os_sys);
+
 private:
+
+WA_InputPtr musicIn;
+WA_OutputPtr musicOut;
+LbOSLayerSys *os;
+bool musicOK; //is music inited and OK
+
+void InitMusic();
+void DeinitMusic();
+
 };
 
 #endif

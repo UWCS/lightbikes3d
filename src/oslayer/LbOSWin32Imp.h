@@ -39,6 +39,9 @@ virtual void SwapDoubleBuffers();
 virtual int GLTextListBase();
 virtual int GetMS();
 virtual char* GetDesktop32();
+virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
+virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
+
 /*
 ** LbOSWin32Imp methods
 */
@@ -57,21 +60,27 @@ void SetupPalette(HDC dc);
 void PerformResize();
 void DestroyOGLContext();
 void GetDesktopImage();
+bool Init_DInput();
+void Deinit_DInput();
+void Deinit_WinampPlugins();
 
 static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
 static LbOSWin32Imp *the_oslayer;
 
-HINSTANCE hInstance;
+HINSTANCE hInstance, WinampIn, WinampOut;
 HWND hwnd_main;
 HDC hDC;
 HGLRC hRC;
 bool quit_flag;
-
 int TextBase;
 LARGE_INTEGER freq;
 char *desktop;
+LPDIRECTINPUT7          g_DI;
+LPDIRECTINPUTDEVICE7    g_KDIDev;
+BYTE                    olddiks[256]; //no, it's not rude! Old DInput KeyS
+int TickStart,PerfStart;
 };
 
 #endif

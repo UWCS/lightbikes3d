@@ -34,7 +34,6 @@ enum LbGraphicsEffect
     LB_GFX_FADEOUTTEXTURE   = 4,
 	};
 
-
 class LbGraphicsBike
 {
 public:

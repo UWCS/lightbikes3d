@@ -1,5 +1,5 @@
 /*********************************************************************************
-    LbGraphics.h
+    LbMiscTypes.h
     Header file to define useful types for LightBikes2001 
 
     Copyright (C) 2000  University of Warwick Computing Society
@@ -27,11 +27,15 @@
 
 struct LbRGBAColor
 {
-LbRGBAColor(){}
+LbRGBAColor()
+{
+    r=g=b=a=0;
+}
+
 LbRGBAColor(float nr,float ng,float nb,float na)
-	{
+{
 	r=nr; g=ng; b=nb; a=na;
-	}
+}
 
 float r,g,b,a;
 };

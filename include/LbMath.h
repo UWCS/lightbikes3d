@@ -7,8 +7,6 @@
     Contributors to this file:
        Henry Southgate
        David Capps
-       David Black
-      
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,39 +54,35 @@ public:
   /* {Con,De}structor methods */
   LbVector();
   LbVector( float _, float __, float ___ );
-  LbVector(const LbVector &a) {
-    (*this)=a;
-    }
+//  LbVector( const LbVector src);                      //DC: Added copy constructor
   ~LbVector();
 
   /* Access methods */
-  inline float getX() const { return m_x; };
-  inline float getY() const { return m_y; };
-  inline float getZ() const { return m_z; };
-  float mod() const;
+  inline const float getX() { return m_x; };    //DC: Made get()'s const
+  inline const float getY() { return m_y; };
+  inline const float getZ() { return m_z; };
+  float mod();
+
+  LbVector getCopy();
 
 #ifdef HAVE_VECTOR_TOSTRING
-  void toString( char* rv );
+  const void toString( char* rv );
 #endif
 
 
   /* Scalar Arithmetic */
-  LbVector operator *(float f) const;
-  LbVector operator /(float f) const;
+  LbVector operator *(float f);
+  LbVector operator /(float f);
 
   /* Vector Arithmetic */
-  LbVector operator +(LbVector& v) const;
-  LbVector operator -(LbVector& v) const;
+  LbVector operator +(LbVector& v);
+  LbVector operator -(LbVector& v);
 
   /* Vector Multiplication */
-  float operator ^(LbVector& v) const; // . product 
+  float operator ^(LbVector& v) ; // . product 
 
   /* Matrix Multiplication */
-  LbVector operator *(LbMatrix& M) const;
-  
-  LbVector &operator=(const LbVector &a) {
-    m_x=a.m_x; m_y=a.m_y; m_z=a.m_z;
-    }
+  LbVector operator *(LbMatrix& M);
 
   
 private:

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +28,8 @@
 #include "LbMiscTypes.h"
 #include "LbMath.h"
 
+#include "winamp_in.h" //until someone can be arsed to write better music code,
+#include "winamp_out.h"//we're going to use Winamp plugins dammit!
 #include "LbOSLayer.h"
 #include "LbGame.h"
 #include "LbGraphics.h"

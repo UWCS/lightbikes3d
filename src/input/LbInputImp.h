@@ -31,7 +31,14 @@ public:
 LbInputImp();
 ~LbInputImp();
 
+virtual void Poll();
+virtual void Init(LbOSLayerSys *os_sys);
+
 private:
+
+LbOSLayerSys *os;
+BYTE keybuf[256];
+
 };
 
 #endif

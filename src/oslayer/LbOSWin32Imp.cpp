@@ -23,9 +23,15 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
+#include <dinput.h>
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbOSWin32Imp.h"
+
+#define DINPUT_BUFFERSIZE 32; //size of buffer for DirectInput
+
+const int KeyMapping[] = { DIK_LEFT, DIK_RIGHT };
+const int NumKeys = 2;
 
 LbOSWin32Imp *LbOSWin32Imp::the_oslayer=NULL;
 
@@ -77,12 +83,12 @@ int LbOSWin32Imp::GetMS()
 {
     LARGE_INTEGER rslt;
     QueryPerformanceCounter(&rslt);
-    return (int)( 1000 * rslt.QuadPart / freq.QuadPart);
+    return (int)( 1000 * rslt.QuadPart / freq.QuadPart) - PerfStart;
 }
 
 char* LbOSWin32Imp::GetDesktop32()
 {
-    char *rslt = new char[1024 * 512 * 4];
+    char *rslt = (char*)malloc(1024 * 512 * 4);
     memcpy(rslt, desktop, 1024*512*4);
     return rslt;
 }
@@ -92,7 +98,7 @@ void LbOSWin32Imp::GetDesktopImage()
     HWND dWnd = GetDesktopWindow();
     HDC dDC = GetDC(0);
     //for the moment, just get 640x480
-    desktop = new char[1024 * 512 * 4];
+    desktop = (char*)malloc(1024 * 512 * 4);
     int *pixel = (int*)desktop;
 
     for (int y=0; y < 480; y++) {
@@ -110,41 +116,50 @@ void LbOSWin32Imp::GetDesktopImage()
 */
 void LbOSWin32Imp::Init()
 {
+    LARGE_INTEGER rslt;
+
     hInstance=GetModuleHandle(NULL);
     TextBase=-1;
     GetDesktopImage();
     CreateMainWindow();
+
+    QueryPerformanceFrequency(&freq);   //DC: Get ready to use hi-performance counter
+    QueryPerformanceCounter(&rslt);
+    TickStart = GetTickCount();
+    PerfStart = (int)( 1000 * rslt.QuadPart / freq.QuadPart);
+
+    Init_DInput();
+    WinampIn = WinampOut = 0;
+
+    ShowWindow(hwnd_main,SW_SHOWNORMAL); //Finally, once init is done
+    UpdateWindow (hwnd_main);            //show the window
+
+
 }
 
 LbOSWin32Imp::LbOSWin32Imp()
 {
 // there can only be one...
-    assert(the_oslayer==NULL);
+assert(the_oslayer==NULL);
 
-    the_oslayer=this;
+the_oslayer=this;
 
-    hwnd_main=NULL;
-    hInstance=NULL;
-    hwnd_main=NULL;
-    hDC=NULL;
-    hRC=NULL;
-    
-    quit_flag=false;
-    
-    desktop=NULL;
+hwnd_main=NULL;
+hInstance=NULL;
+hwnd_main=NULL;
+hDC=NULL;
+hRC=NULL;
+quit_flag=false;
 }
 
 LbOSWin32Imp::~LbOSWin32Imp()
 {
-    DestroyMainWindow();
-
-    if(desktop!=NULL) {
-        delete[] desktop;
-        desktop=NULL;
-        }
-    
-    assert(the_oslayer==this);
-    the_oslayer=NULL;
+DestroyMainWindow();
+Deinit_DInput();
+Deinit_WinampPlugins();
+free(desktop);
+assert(the_oslayer==this);
+the_oslayer=NULL;
 }
 
 void LbOSWin32Imp::CreateMainWindow()
@@ -173,7 +188,6 @@ assert(rval);
 /*
 ** create the window
 */    /* Create the frame */
-							  
 hwnd_main=CreateWindow("LightBikes3D WndClass",
 							  "LightBikes",
 //                            WS_OVERLAPPEDWINDOW |
@@ -189,10 +203,6 @@ hwnd_main=CreateWindow("LightBikes3D WndClass",
 							  NULL);
 assert(hwnd_main!=NULL);
 	
-ShowWindow(hwnd_main,SW_SHOWNORMAL);
-UpdateWindow (hwnd_main);
-
-QueryPerformanceFrequency(&freq);   //DC: Get ready to use hi-performance counter
 }
 
 void LbOSWin32Imp::DestroyMainWindow()
@@ -240,7 +250,7 @@ return DefWindowProc (hwnd,uMsg,wParam,lParam);
 
 void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
 {
-    DestroyOGLContext();
+DestroyOGLContext();
 
     // create device context
     hDC=GetDC(hwnd);
@@ -322,32 +332,273 @@ if(hRC==NULL)
 	return;
 
 RECT client_rect;
-GetClientRect(hwnd_main,&client_rect);
+GetWindowRect(hwnd_main,&client_rect);
 
 glViewport(0,0,client_rect.right,client_rect.bottom);
 
 InvalidateRect(hwnd_main,NULL,TRUE); 
 }
 
+bool LbOSWin32Imp::Init_DInput() {
+
+    g_DI = NULL;
+    g_KDIDev = NULL;
+
+    CoInitialize(NULL);
+
+    HRESULT hr = CoCreateInstance(  CLSID_DirectInput,
+                                    NULL,
+                                    CLSCTX_INPROC_SERVER,
+                                    IID_IDirectInput7,
+                                    (void**)&g_DI );
+    if (!SUCCEEDED(hr)) return false;
+    g_DI->AddRef();
+    g_DI->Initialize( hInstance, DIRECTINPUT_VERSION );
+  
+
+/*  if ( DirectInputCreateEx(   hInstance,
+                                DIRECTINPUT_VERSION,
+                                IID_IDirectInput7,
+                                (void**)&g_DI,
+                                NULL ) ) return false;
+    //DirectInputCreateEx is what we SHOULD use, not CoCreateInstance...
+    //...but not if we're using crappy Borland DirectX libraries...
+    //...well, compatibility is high with this method...
+*/
+
+
+    if ( g_DI->CreateDeviceEx(  GUID_SysKeyboard,
+                                IID_IDirectInputDevice7,
+                                (void**)&g_KDIDev,
+                                NULL ) ) return false;
+    if ( g_KDIDev->SetDataFormat(&c_dfDIKeyboard) ) return false;
+    if ( g_KDIDev->SetCooperativeLevel( hwnd_main, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) ) return false;
+
+    if ( g_KDIDev)
+        g_KDIDev->Acquire();
+    else
+        return false;
+
+    DIPROPDWORD dipdw;
+
+    dipdw.diph.dwSize = sizeof(DIPROPDWORD);
+    dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+    dipdw.diph.dwObj = 0;
+    dipdw.diph.dwHow = DIPH_DEVICE;
+    dipdw.dwData = DINPUT_BUFFERSIZE; //keyboard buffer size
+
+    MessageBox(NULL, "Please wait...", "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
+    //DirectInput doesn't work unless I put the above messagebox in.
+    //Can SOMEBODY who understands DirectInput please figure out what
+    //the hell is going on?
+    hr = g_KDIDev->SetProperty( DIPROP_BUFFERSIZE, &dipdw.diph );
+
+    if (!SUCCEEDED(hr)) return false;
+
+    return true;
+}
+
+bool LbOSWin32Imp::GetOSKey(LbOSLayerKeypress *data, int *num) {
+
+
+    DIDEVICEOBJECTDATA didod[32];
+    DWORD dwElements;
+
+    dwElements = DINPUT_BUFFERSIZE;
+
+    if (!g_KDIDev)
+    return false;
+
+    HRESULT hr;
+
+    hr = DIERR_INPUTLOST;
+
+    while ( hr == DIERR_INPUTLOST ) {
+        hr= g_KDIDev->GetDeviceData(    sizeof(DIDEVICEOBJECTDATA),
+                                                &didod[0],
+                                                &dwElements,
+                                                0 );
+
+        if ( hr == DIERR_INPUTLOST ) {
+            hr = g_KDIDev->Acquire();
+        }
+    }
+
+//    if ( FAILED(hr) ) return false;
+
+    if (SUCCEEDED(hr)) {
+        if (*num < dwElements) {
+
+        char msg[32];
+        sprintf(msg,"Failed buffer oversize: num %d, received %d",*num, dwElements);
+        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
+        return false;
+
+        }
+
+        *num = 0;
+        for (int i=0; i<dwElements; i++) {
+            for (int j=0; j<NumKeys; j++) {
+                if ( didod[i].dwOfs == KeyMapping[j] ) {
+                    data[*num].which = (LbOSLayerKey)j;
+                    data[*num].time = didod[i].dwTimeStamp - TickStart;
+                    data[*num].sequence = didod[i].dwSequence;
+                    data[*num].down = (didod[i].dwData & 0x80);
+                    (*num)++;
+                }
+            }
+        }
+    } else {
+        char msg[32];
+        sprintf(msg,"Failed buffer get on %d",hr);
+//        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
+        return false;
+    }
+//      The above code implements buffered input key reading. This is
+//      far preferable - it'll pick up a keystroke and store it for you
+//      if you miss a poll for a while. More importantly, it timestamps
+//      the key presses. But I haven't got it working yet. Bleh.
+
+
+/*
+    BYTE diks[256];
+    HRESULT hr;
+
+    hr = DIERR_INPUTLOST;
+
+    while ( hr == DIERR_INPUTLOST ) {
+        hr = g_KDIDev->GetDeviceState( sizeof(diks), &diks );
+
+        if ( hr == DIERR_INPUTLOST ) {
+            hr = g_KDIDev->Acquire();
+        }
+    }
+
+    if ( FAILED(hr) ) return false;
+    *num = 0;
+    if ( (diks[DIK_LEFT] & 0x80) && !(olddiks[DIK_LEFT] & 0x80)) {
+        data[*num].which = LB_OSKEY_LEFT;
+        data[*num].time = 0;
+        data[*num].sequence = 0;
+        (*num)++;
+    }
+    if ( (diks[DIK_RIGHT] & 0x80) && !(olddiks[DIK_RIGHT] & 0x80)) {
+        data[*num].which = LB_OSKEY_RIGHT;
+        data[*num].time = 0;
+        data[*num].sequence = 0;
+        (*num)++;
+    }
+    memcpy(olddiks, diks, 256);
+*/
+return true;
+
+}
+
+void LbOSWin32Imp::Deinit_DInput() {
+
+    if (g_DI) {
+        if (g_KDIDev) {
+            g_KDIDev->Unacquire();
+            g_KDIDev->Release();
+            g_KDIDev = NULL;
+        }
+
+        g_DI->Release();
+        g_DI = NULL;
+    }
+
+    CoUninitialize();
+}
+
+//Start of crappy useless Winamp functions. Yay!
+
+void WA_SetInfo1(int bitrate, int srate, int stereo, int synched) { }
+int WA_Dsp_IsActive1() { return 0; }
+int WA_Dsp_DoSamples1(short *samples, int numsamples, int bps, int nch, int srate) { return numsamples; }
+void WA_SA_VSA_Init1(int maxlatency, int srate) { }
+void WA_SA_VSA_DeInit1() { }
+void WA_SA_AddPCMData1(void *data, int nch, int bps, int timestamp) { }
+int WA_SA_GetMode1() { return 1; }
+void WA_SA_Add1(void *data, int timestamp, int csa) { }
+void WA_VSA_AddPCMData1(void *data, int nch, int bps, int timestamp) { }
+int WA_VSA_GetMode1(int *specnch, int *wavench) { return 0; }
+void WA_VSA_Add1(void *data, int timestamp) { }
+void WA_VSA_SetInfo1(int nch, int srate) { }
+
+//End of crappy useless Winamp functions
+
+bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp) {
+
+    Winamp_Input_Module* __stdcall (* GetInModule ) (void);
+    Winamp_Output_Module* __stdcall (* GetOutModule) (void);
+
+    WinampIn = LoadLibrary("MUSICIN.DLL");
+    if (!WinampIn) return false;
+
+    GetInModule = ( Winamp_Input_Module* __stdcall (*)(void) )GetProcAddress(WinampIn, "winampGetInModule2");
+    if (!GetInModule) return false;
+    *inp = GetInModule();
+
+    WinampOut = LoadLibrary("MUSICOUT.DLL");
+    if (!WinampOut) return false ;
+
+    GetOutModule = (Winamp_Output_Module* __stdcall (*)(void) )GetProcAddress(WinampOut, "winampGetOutModule");
+    if (!GetOutModule) return false;
+    *outp = GetOutModule();
+
+    (*inp)->hMainWindow = hwnd_main;
+    (*inp)->hDllInstance = hInstance;
+    (*inp)->outMod = *outp;
+    (*inp)->SetInfo = WA_SetInfo1;
+    (*inp)->dsp_isactive = WA_Dsp_IsActive1;
+    (*inp)->dsp_dosamples = WA_Dsp_DoSamples1;
+    (*inp)->SAVSAInit = WA_SA_VSA_Init1;
+    (*inp)->SAVSADeInit = WA_SA_VSA_DeInit1;
+    (*inp)->SAAddPCMData = WA_SA_AddPCMData1;
+    (*inp)->SAGetMode = WA_SA_GetMode1;
+    (*inp)->SAAdd = WA_SA_Add1;
+    (*inp)->VSASetInfo = WA_VSA_SetInfo1;
+    (*inp)->VSAAddPCMData = WA_VSA_AddPCMData1;
+    (*inp)->VSAGetMode = WA_VSA_GetMode1;
+    (*inp)->VSAAdd = WA_VSA_Add1;
+    (*inp)->Init();
+
+    (*outp)->hMainWindow = hwnd_main;
+    (*outp)->hDllInstance = hInstance;
+    (*outp)->Init();
+    (*outp)->SetVolume(255);    //max volume
+    (*outp)->SetPan(0);         //centre pan
+
+    (*inp)->outMod = *outp;
+    return true;
+}
+
+void LbOSWin32Imp::Deinit_WinampPlugins() {
+    if (WinampIn) FreeLibrary(WinampIn);
+    if (WinampOut) FreeLibrary(WinampOut);
+    WinampIn = WinampOut = 0;
+}
+ 
 void LbOSWin32Imp::DestroyOGLContext()
 {
     if(TextBase!=-1) {
         glDeleteLists(TextBase,256);
         TextBase=-1;
     }
-    
+
     if(hDC!=NULL)
-    	{
-    	assert(hwnd_main!=NULL);
-    	ReleaseDC(hwnd_main,hDC);
-    	hDC=NULL;
-    	}
+        {
+        assert(hwnd_main!=NULL);
+        ReleaseDC(hwnd_main,hDC);
+        hDC=NULL;
+        }
     if(hRC!=NULL)
-    	{
-    	wglMakeCurrent(NULL,NULL);
-    	wglDeleteContext(hRC);
-    	hRC=NULL;
-    	}
+        {
+        wglMakeCurrent(NULL,NULL);
+        wglDeleteContext(hRC);
+        hRC=NULL;
+        }
+
 }
 
 

@@ -39,5 +39,13 @@ LbInputSys *CreateInputSys(LbOSLayerSys *os_sys)
 LbInputSys *rval=new LbInputImp;
 assert(rval!=NULL);
 
+rval->Init(os_sys);
 return rval;
+}
+
+void LbInputImp::Poll() {
+}    
+
+void LbInputImp::Init(LbOSLayerSys *os_sys) {
+    os = os_sys;
 }

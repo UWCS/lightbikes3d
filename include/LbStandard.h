@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,13 +30,12 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
-#include <fstream.h>
 
 #ifdef WIN32
 #	include <windows.h>
 #endif
 
 #include <GL/gl.h>
-#include <GL/glu.h>
+#include <GL/glu.h>             //DC: Added GLU include
 
 #endif

@@ -46,27 +46,32 @@ LbGameImp::~LbGameImp()
 
 int LbGameImp::RunGame()
 {
-    bool quit_flag;
-    LbOSLayerEvent os_event;
+	bool quit_flag;
+	LbOSLayerEvent os_event;
     LbVector target(0,0,0), up(0,1,0);
-    LbVector eye;
+    LbVector *eye;
     float scroll,change;
-    int count=0,lastms=0,fps=0;
-    char msg[16] = "";
+    int count=0,lastms=0,fps=0, startms=0, keycount;
+    int lpress=0, rpress=0;
+    char msg[16] = "", inp[32] = "", keymsg[32] = "";
+    LbOSLayerKeypress keys[32];
 
 	InitSubsystems();
 	
 	quit_flag=false;
 
-    eye = LbVector(0,0,0);
+    eye = new LbVector(0,0,0);
     change = 0.1f;
-    lastms = os_sys->GetMS();
+    startms = lastms = os_sys->GetMS();
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
 
+    sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
+
 	while(!quit_flag)
 	{
-        scroll = scroll + change;
+        scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
+        startms = os_sys->GetMS();
         if (scroll > 15) change=-0.1f;
         if (scroll < -15) change=0.1f;
         if ( !(count++ % 20) ) {
@@ -76,9 +81,22 @@ int LbGameImp::RunGame()
             sprintf(msg,"FPS:%d",fps);
         }
 
-        eye = LbVector(scroll,0,-20);
-        graph_sys->SetCamera(eye,target,up);
+        delete(eye);
+        eye = new LbVector(scroll,0,-20);
+        graph_sys->SetCamera(*eye,target,up);
 
+        keycount = 32;
+        inp[0] = 0;
+        if (os_sys->GetOSKey(&keys[0], &keycount)) {
+            for (int i=0; i<keycount; i++) {
+                if (keys[i].down)
+                    switch (keys[i].which) {
+                        case LB_OSKEY_LEFT: sprintf(inp, "Left Key Press"); lpress++; break;
+                        case LB_OSKEY_RIGHT:sprintf(inp, "Right Key Press"); rpress++; break;
+                    }
+            }
+            if (keycount>0) sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
+        } else sprintf(inp, "Input Error");
 
 		graph_sys->StartFrame();
 		// draw here
@@ -88,7 +106,12 @@ int LbGameImp::RunGame()
         graph_sys->DrawText(0.8,0.5,"ABHDE");
         graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
         graph_sys->DrawText(0.5,0.9,msg);
-    
+        graph_sys->SetTextColor(LbRGBAColor(1,1,0,1));
+        graph_sys->DrawText(0,0.25,inp);
+        graph_sys->SetTextColor(LbRGBAColor(0,1,1,1));
+        graph_sys->DrawText(0,0.1,keymsg);
+
+
 		graph_sys->EndFrame();
 		
 		// poll the event queue.
@@ -131,6 +154,7 @@ int LbGameImp::RunGame()
 		// Send Network messages (Networking)...
 	}
 
+    delete eye;
 
 	DeInitSubsystems();
 	

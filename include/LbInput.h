@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +31,9 @@ public:
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbInputSys(){}
+
+virtual void Poll()=0;
+virtual void Init(LbOSLayerSys *os_sys)=0;
 };
 
 LbInputSys *CreateInputSys(LbOSLayerSys *os_sys);

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        Henry Southgate
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,8 +55,13 @@ LbVector::~LbVector() {
 
 /**************** Access methods **********************/
 
+/* DC: Added copy constructor */
+LbVector LbVector::getCopy() {
+    return LbVector(m_x,m_y,m_z);
+}
+
 /* Return the modulus of the Vector */
-float LbVector::mod() const{
+float LbVector::mod() {
   return (float)sqrt( (m_x*m_x) +
 	       (m_y*m_y) +
 	       (m_z*m_z) );
@@ -63,7 +69,7 @@ float LbVector::mod() const{
 
 /* Return a char* representation. */
 #ifdef HAVE_VECTOR_TOSTRING
-void LbVector::toString(char* rv) {
+const void LbVector::toString(char* rv) {
   sprintf( rv, "(%5.2f, %5.2f, %5.2f)", m_x, m_y, m_z );
   return;
 }
@@ -71,14 +77,14 @@ void LbVector::toString(char* rv) {
 
 
 /**************** Scalar Arithmetic *******************/
-LbVector LbVector::operator *(float f) const {
+LbVector LbVector::operator *(float f) {
   return LbVector ( m_x * f,
 		    m_y * f,
 		    m_z * f
 		    );
 }
 
-LbVector LbVector::operator /(float f) const {
+LbVector LbVector::operator /(float f) {
   return LbVector ( m_x / f,
 		    m_y / f,
 		    m_z / f
@@ -87,14 +93,14 @@ LbVector LbVector::operator /(float f) const {
 
 
 /**************** Vector Arithmetic *******************/
-LbVector LbVector::operator +(LbVector& v) const {
+LbVector LbVector::operator +(LbVector& v) {
   return LbVector ( m_x + v.getX(),
 		    m_y + v.getY(),
 		    m_z + v.getZ() 
 		    );
 }
 
-LbVector LbVector::operator -(LbVector& v) const {
+LbVector LbVector::operator -(LbVector& v) {
   return LbVector ( m_x - v.getX(),
 		    m_y - v.getY(),
 		    m_z - v.getZ() 
@@ -104,7 +110,7 @@ LbVector LbVector::operator -(LbVector& v) const {
 /*************** Vector Multiplication ****************/
 // dammit if Soustroup can use >> and << for a stream
 // IO then I can use ^ for dot-product!
-float LbVector::operator ^(LbVector& v) const {
+float LbVector::operator ^(LbVector& v) {
   return ( (m_x * v.getX()) +
 	   (m_y * v.getY()) +
 	   (m_z * v.getZ()) );
@@ -112,7 +118,7 @@ float LbVector::operator ^(LbVector& v) const {
 
 
 /*************** Matrix Multiplication ****************/
-LbVector LbVector::operator *(LbMatrix& M ) const{
+LbVector LbVector::operator *(LbMatrix& M ){
   return LbVector( m_x*M.getXY(0,0) + m_y*M.getXY(0,1) + m_z*M.getXY(0,2),
 		   m_x*M.getXY(1,0) + m_y*M.getXY(1,1) + m_z*M.getXY(1,2),
 		   m_x*M.getXY(2,0) + m_y*M.getXY(2,1) + m_z*M.getXY(2,2) );

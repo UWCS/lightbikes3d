@@ -28,6 +28,9 @@ class LbSoundSys
 {
 public:
 
+virtual bool PlayMusicFile(char *fname)=0;
+virtual bool StopMusic()=0;
+
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbSoundSys(){}
 };

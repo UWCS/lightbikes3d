@@ -25,18 +25,30 @@
 *********************************************************************************/
 #include "LbStandard.h"
 #include "LbPublic.h"
+#include "LbMiscTypes.h"
 #include "LbGraphicsImp.h"
+#include <fstream.h>
 
 #define FADE_WHITE      //defining FADE_WHITE makes it fade to/from white
                         //rather than black
 
-#define TEX_FORMAT  GL_RGB5_A1
+#define TEX_FORMAT  GL_RGBA4
                         //texture format to use. RGB5_A1 means 16 bit colour
                         //5 bits per colour, 1 alpha bit
                         //Alternatives could be:
                         //GL_RGBA8 (32-bit total: 8 bits per component)
                         //GL_RGBA4 (16-bit total: 4 bits per component)
                         //Note an alpha component is required for blending
+
+#define TRANS_REDMASK -1
+#define TRANS_GREENMASK -2
+#define TRANS_BLUEMASK -3
+#define TRANS_LUMMASK -4
+#define TRANS_NONE -5
+//values to pass into LoadBMPTexture
+//pass in a colour to make transparent, or one of these values to
+//take a colour channel as the alpha mask
+// LUMMASK = brightness = average of colour values
 
 /*
 ** LbGraphicsSys methods
@@ -51,9 +63,12 @@ void LbGraphicsImp::CreateGraphicsLevel(int x,int y)
 
 void LbGraphicsImp::SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)
 {
-    campos = pos);
-    camtgt = target;
-    camup = up;
+    delete campos;
+    delete camtgt;
+    delete camup;
+    campos = new LbVector(pos);
+    camtgt = new LbVector(target);
+    camup = new LbVector(up);
 }
 
 void LbGraphicsImp::SetupOrtho()
@@ -115,6 +130,16 @@ int LbGraphicsImp::LoadBMPTexture(char *fname, int transcolour)
         tmp = (*bigpixel).rgbRed;
         (*bigpixel).rgbRed = (*bigpixel).rgbBlue;
         (*bigpixel).rgbBlue = tmp;
+        switch (transcolour) {
+            case TRANS_REDMASK:     (*bigpixel).rgbReserved = (*bigpixel).rgbRed;
+                                    break;
+            case TRANS_GREENMASK:   (*bigpixel).rgbReserved = (*bigpixel).rgbGreen;
+                                    break;
+            case TRANS_BLUEMASK:    (*bigpixel).rgbReserved = (*bigpixel).rgbBlue;
+                                    break;
+            case TRANS_LUMMASK:     (*bigpixel).rgbReserved = ( (*bigpixel).rgbRed+(*bigpixel).rgbGreen+(*bigpixel).rgbBlue ) /3;
+                                    break;
+        }
         bigpixel++;
         pixel++;
     }
@@ -134,6 +159,13 @@ int LbGraphicsImp::LoadBMPTexture(char *fname, int transcolour)
     free(data);
     return num;
 }
+void Copy256Square(char *src, char *dst, int stride) {
+    for (int i=0; i<256; i++) {
+        memcpy(dst,src,256*4);
+        dst += 256;
+        src += stride;
+    }
+}
 
 int LbGraphicsImp::LoadMemTexture( char *pixels, int xsize, int ysize)
 {
@@ -148,6 +180,26 @@ int LbGraphicsImp::LoadMemTexture( char *pixels, int xsize, int ysize)
     glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
     glBindTexture(GL_TEXTURE_2D, num);
     return num;
+/*
+    glGenTextures(8, (UINT*)&sfxnums );
+    char newpix[256*256*4];
+    char *oldpix, *pixstart;
+    pixstart = pixels;
+    for ( int i = 0; i<8; i++ ) {
+        glBindTexture(GL_TEXTURE_2D,sfxnums[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        Copy256Square(pixstart, (char*)&newpix, 1024*4);
+        glTexImage2D(GL_TEXTURE_2D, 0, TEX_FORMAT, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, (char*)&newpix);
+        glBindTexture(GL_TEXTURE_2D,sfxnums[i]);
+        pixstart += 256*4;
+        if (i==3) pixstart += (255*1024*4);
+    }
+    return 0;
+*/
 }
 
 void LbGraphicsImp::ActivateTexture(int texID)
@@ -161,7 +213,7 @@ void LbGraphicsImp::DeleteTexture(int texID)
 }
 
 void LbGraphicsImp::DrawText(float x,float y,const char *str)
-{       //TODO: colour, font?, size?
+{       //TODO: font?, size?
 /*  SetupOrtho();
         glListBase(os->GLTextListBase());
         glColor4fv( &textcolor.r );
@@ -172,7 +224,9 @@ void LbGraphicsImp::DrawText(float x,float y,const char *str)
     char chr;
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //works much better for fonts
     glDisable(GL_DEPTH_TEST);
     SetupOrtho();
     glEnable(GL_TEXTURE_2D);
@@ -195,7 +249,7 @@ void LbGraphicsImp::DrawText(float x,float y,const char *str)
         texx = (cval % 10);
         texy = (cval / 10);
 
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glColor4f(textcolor.r, textcolor.g, textcolor.b, 1.0f);
         glTexCoord2f((GLfloat)texx*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
         glVertex2f(xpos, ypos);
         glTexCoord2f((GLfloat)(texx+1)*24.0f/256.0f, 1.0f-(GLfloat)(texy+1)*24.0f/256.0f);
@@ -238,15 +292,15 @@ void LbGraphicsImp::SetTextColor(LbRGBAColor color)
 void LbGraphicsImp::TriggerEffect(LbGraphicsEffect effect)
 {       //Current overrides current effect. TODO: Implement a list of effects?
     cureffect = effect;
-    effectprogress = 0.0f;
+    gfxStart = os->GetMS();
 }
 
 void LbGraphicsImp::DrawEffect()
 {
     if (!cureffect) return; //exit straight away if cur effect is NONE
 
-    effectprogress++; //for the moment, inc. by 1.0f per frame.
-    float progress = (float)(effectprogress) / 250.0f; //as a percentage 0.0f-1.0f
+    float progress = (float)(os->GetMS() - gfxStart) / 5000.0f;
+    //assume 5 sec length for effects for the moment
 
 #ifdef FADE_WHITE
     float fadecolour = 1.0f;
@@ -293,17 +347,39 @@ void LbGraphicsImp::DrawEffect()
             glEnable(GL_TEXTURE_2D);
             ActivateTexture(sfxID);
             glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(fadecolour,fadecolour,fadecolour, 1.0f - progress );
+
             glBegin(GL_TRIANGLE_STRIP);
-                glColor4f(fadecolour,fadecolour,fadecolour, 1.0f - progress );
-                glTexCoord2f(0.0f,480.0f/512.0f);
-                glVertex2f(0.0f,0.0f);
-                glTexCoord2f(640.0f/1024.0f,480.0f/512.0f);
-                glVertex2f(640.0f,0.0f);
-                glTexCoord2f(0.0f,0.0f);
-                glVertex2f(0.0f,480.0f);
-                glTexCoord2f(640.0f/1024.0f,0.0f);
-                glVertex2f(640.0f,480.0f);
+                glTexCoord2f(0.0f, 480.0f/512.0f);
+                glVertex2f(0.0f, 0.0f);
+                glTexCoord2f(640.0f/1024.0f, 480.0f/512.0f);
+                glVertex2f(640.0f, 0.0f);
+                glTexCoord2f(0.0f, 0.0f);
+                glVertex2f(0.0f, 480.0f);
+                glTexCoord2f(640.0f/1024.0f, 0.0f);
+                glVertex2f(640.0f, 480.0f);
             glEnd();
+
+            /*
+            for (int i=0; i<8; i++) {
+            glBegin(GL_QUADS);
+                int col = (i % 4);
+                int row = (i / 4);
+                float colf = (float)col, rowf = (float)row;
+                ActivateTexture(sfxnums[i]);
+
+                glTexCoord2f(0.0f,0.0f);
+                glVertex2f(colf*256.0f, 480.0f - rowf*256.0f);
+                glTexCoord2f(1.0f, 0.0f);
+                glVertex2f(256.0f*(colf+1), 480.0f - rowf*256.0f);
+                glTexCoord2f(1.0f, 1.0f);
+                glVertex2f(256.0f*(colf+1), 480.0f - (rowf+1)*256.0f);
+                glTexCoord2f(0.0f, 1.0f);
+                glVertex2f(colf*256.0f, 480.0f - (rowf+1)*256.0f);
+            glEnd();
+            }
+            */
+
             FinishOrtho();
             break;
 
@@ -332,7 +408,10 @@ void LbGraphicsImp::DrawEffect()
 
     glPopAttrib();
 
-    if (effectprogress >= 250.0f) cureffect = LB_GFX_NONE;
+    if (progress >= 1.0f) {
+        cureffect = LB_GFX_NONE;
+        gfxStart = 0;
+    }
 }
 
 void LbGraphicsImp::StartFrame()
@@ -348,16 +427,18 @@ void LbGraphicsImp::StartFrame()
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
 
-    gluLookAt( campos.getX(), campos.getY(), campos.getZ(),
-        camtgt.getX(), camtgt.getY(), camtgt.getZ(),
-        camup.getX(), camup.getY(), camup.getZ() );
+    gluLookAt( campos->getX(), campos->getY(), campos->getZ(),
+        camtgt->getX(), camtgt->getY(), camtgt->getZ(),
+        camup->getX(), camup->getY(), camup->getZ() );
         //if we use LoadIdentity after this point we lose the camera position
         //so ALWAYS push and pop the matrix instead for each block of drawing
         //so the original camera matrix is always available
 
     glPushMatrix();
 
-    glRotatef(((GLfloat)frameCount / 5), 0.0f, 0.0f, -1.0f);
+    int progress = os->GetMS() - frameCount;
+
+    glRotatef(((GLfloat)progress / 50), 0.0f, 0.0f, -1.0f);
     glTranslatef(-1.5f, 0.0f, -8.0f);
 	glBegin(GL_TRIANGLES);
         glColor3f(0.0f, 0.4f, 0.8f);
@@ -370,9 +451,9 @@ void LbGraphicsImp::StartFrame()
     glPushMatrix();//and push it again to save a copy
 
     glTranslatef(1.5f, 0.0f, -8.0f);
-    glRotatef(((GLfloat)frameCount / 5), 1.0f, 0.0f, 0.0f);
-    glRotatef(((GLfloat)frameCount / 7), 0.0f, 1.0f, 0.0f);
-    glRotatef(((GLfloat)frameCount / 11), 0.0f, 0.0f, 1.0f);
+    glRotatef(((GLfloat)progress / 50), 1.0f, 0.0f, 0.0f);
+    glRotatef(((GLfloat)progress / 70), 0.0f, 1.0f, 0.0f);
+    glRotatef(((GLfloat)progress / 110), 0.0f, 0.0f, 1.0f);
 
 	glBegin(GL_QUADS);
 		// TOP
@@ -442,16 +523,16 @@ void LbGraphicsImp::StartFrame()
 void LbGraphicsImp::EndFrame()
 {
     DrawEffect(); //after drawing so it affects everything drawn this frame.
-	frameCount++;
     glFinish(); //not really needed, but good style
     os->SwapDoubleBuffers();
 }
 
 
-void LbGraphicsImp::Init()
+void LbGraphicsImp::Init(LbOSLayerSys *os_sys)
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);		// Clear to black.
-	glClearDepth(1.0);				// Enables clearing of depth buffer.
+    os = os_sys;
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);       // Clear to black.
+    glClearDepth(1.0f);              // Enables clearing of depth buffer.
 	glDepthFunc(GL_LESS);				// Depth test to use.
 	glEnable(GL_DEPTH_TEST);			// Actually enables depth testing.
 	glShadeModel(GL_SMOOTH);			// Enables smooth colouring.
@@ -459,41 +540,44 @@ void LbGraphicsImp::Init()
 	// Set up Projection...
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
-	//gluLookAt(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
+    gluPerspective(45.0f, 1.0f, 0.1f, 100.0f);
 	
 	if (glGetError()) {
 		MessageBox(NULL, "Error initalising OpenGL.", "LbGraphics::Init()", MB_ICONSTOP);
 	}
-	frameCount = 0;
+    frameCount = os->GetMS();
     cureffect = LB_GFX_NONE;
 
-    fontID = LoadBMPTexture("font.bmp",0);
+    fontID = LoadBMPTexture("font.bmp",TRANS_LUMMASK);
 
     char *tex = os->GetDesktop32();
     sfxID = LoadMemTexture(tex, 1024, 512);
-    delete tex;
+    free(tex);
+
 }
 
 LbGraphicsImp::LbGraphicsImp()
 {
-    campos = LbVector(0.0f,0.0f,-1.0f);
-    camtgt = LbVector();
-    camup = LbVector(0.0f,1.0f,0.0f);
+    campos = new LbVector(0.0f,0.0f,-1.0f);
+    camtgt = new LbVector();
+    camup = new LbVector(0.0f,1.0f,0.0f);
 }
 
 LbGraphicsImp::~LbGraphicsImp()
 {
     DeleteTexture(fontID);
     DeleteTexture(sfxID);
+    delete campos;
+    delete camtgt;
+    delete camup;
 }
 
 LbGraphicsSys *CreateGraphicsSys(LbOSLayerSys *os_sys)
 {
-LbGraphicsImp *rval=new LbGraphicsImp;
-assert(rval!=NULL);
+    LbGraphicsImp *rval=new LbGraphicsImp;
+    assert(rval!=NULL);
 
-rval->Init();
+    rval->Init(os_sys);
 
-return rval;
+    return rval;
 }
