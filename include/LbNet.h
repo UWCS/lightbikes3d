@@ -40,23 +40,24 @@ struct LbGameEvent
 {
     LbGameEventId id ;
     int playerHash ;
-    char message [ 20 ] ;
-};
+    char message [ 256 ] ;
+} ;
 
 class LbNetSys
 {
     public:
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
+        virtual void SendGameEvent ( LbGameEvent &e ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
-        virtual void Init( LbOSLayerSys *os_sys ) = 0 ;
+        virtual void Init ( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
-        virtual void ConnectToServer ( char * ) = 0 ;
+        virtual void ConnectToServer ( char * address , int port ) = 0 ;
         virtual void InitiateServer ( int ) = 0 ;
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}
 };
 
-LbNetSys *CreateNetSys(LbOSLayerSys *os_sys);
+LbNetSys *CreateNetSys ( LbOSLayerSys *os_sys ) ;
 
 #endif

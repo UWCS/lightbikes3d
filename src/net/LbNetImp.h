@@ -30,6 +30,17 @@
 
 using namespace std;
 
+// Stores open connections.
+struct LbSocket
+{
+    SOCKET socket ;
+    SOCKADDR_IN remoteAddress ;
+    char readBuffer [ SOCKET_BUFFER_SIZE ] ;
+    int readBufferSize ;
+    char writeBuffer [ SOCKET_BUFFER_SIZE ] ;
+    int writeBufferSize ;
+};
+
 class LbNetImp : public LbNetSys
 {
     public:
@@ -37,6 +48,7 @@ class LbNetImp : public LbNetSys
         ~LbNetImp();
 
         virtual bool GetNextGameEvent (  LbGameEvent &e ) ;
+        virtual void SendGameEvent ( LbGameEvent &e ) ;
         virtual void ProcessMessages ( ) ;
         virtual void Init(LbOSLayerSys *os_sys);
         virtual void PollSockets ( );
@@ -45,35 +57,25 @@ class LbNetImp : public LbNetSys
         // LbNet's reference to the OS Layer.
         LbOSLayerSys *os;
 
-        virtual void ConnectToServer( char * ) ;
+        virtual bool LbNetImp::IsServer ( ) ;
+        virtual void ConnectToServer( char * , int port ) ;
         virtual void InitiateServer( int ) ;
         virtual void AcceptConnection (  ) ;
-        virtual void MakeConnection (  ) ;
         virtual void ReadData ( int c  ) ;
         virtual void SendData ( int c  ) ;
-        virtual bool GetTCPMessage ( int * playerHash , char * message ) ;
-        virtual void PutTCPMessage ( int playerHash , char * message ) ;
-        virtual void BroadcastTCPMessage ( char * message ) ;
+        virtual bool GetTCPMessage ( LbSocket * * s , char * message ) ;
+        virtual void PutTCPMessage ( LbSocket * s , const char * message ) ;
+        virtual void BroadcastTCPMessage ( const char * message ) ;
+        virtual LbSocket * playerhashToSocket ( int playerHash ) ;
+        virtual int socketToPlayerhash ( LbSocket * s ) ;
 
         // Store the game messages ready to be collected by the game logic.
         queue<LbGameEvent> gameMessageQueue ;
 
-        // Stores open connections.  Uses a crude queue implementation.
-        struct LbSocket
-        {
-            SOCKET socket ;
-            SOCKADDR_IN remoteAddress ;
-            char readBuffer [ SOCKET_BUFFER_SIZE ] ;
-            int readBufferSize ;
-            char writeBuffer [ SOCKET_BUFFER_SIZE ] ;
-            int writeBufferSize ;
-        };
-
         // Array of all connections and the number of valid connections.
-        LbSocket connections [ MAX_CONNECTIONS ] ;
-        int nCon ;
+        vector<LbSocket> lbsockets;
 
-        // Socket connections with data available to be read from buffer.
+        // Socket connections with data available waiting to be read from buffer.
         queue<LbSocket*> readSocketQueue ;
 
         // The index of the socket on which, if this is a server, it is listening.

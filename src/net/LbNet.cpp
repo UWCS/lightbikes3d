@@ -25,15 +25,17 @@
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbNetImp.h"
-#include <string.h>
 
 // Overview.
 //
 // When running as a client the software connects to a specified server, when
 // running as a server the application listens on a port and opens connections
 // to clients that attempt to connect.  In either mode, send and receive
-// buffers are maintained as part of the socket structure.  In server mode
-// there has to be a mapping between players and open connections (sockets).
+// buffers are maintained as part of the socket structure.
+//
+// There has to be a mapping between players and open connections (sockets) on
+// the server.  Players are assigned a unique playerHash which is constant
+// while they are connected, the game logic can convert this to player objects.
 //
 // TCP and UDP connections are maintained (currently just TCP).
 //
@@ -42,24 +44,24 @@
 // Similarly received messages are decoded and retreived by the game logic
 // modules.
 //
-// Players are assigned a unique playerHash which is constant while they are
-// connected, the game logic can convert this to players.
 
 // TO DO:
-//        Sort out the text buffering.
-//        Proper player hashes, use collection rather than connection array.
-//        Implement broadcasting IN LBGAME.
-//        Implement client/server in Lb Game.
+//        Implement client/server.
 //        Implement text IO in Lb Game.
 //        Threading to make polling better.
 //        Use UDP, define UDP packets.
-
-//        MINIMAL WRAPPER STUFF IN LB GAME
 
 LbNetImp::LbNetImp()
 {
 
 }
+
+bool LbNetImp::IsServer ( )
+{
+    return true ;
+}
+
+// ----- Stuff for translating game messages, to text or packets and v.v. -----
 
 /**
  ** Initialisation of networking subsystem.
@@ -74,66 +76,11 @@ void LbNetImp::Init ( LbOSLayerSys *os_sys )
 
     iListCon = -1 ;
     iServCon = -1 ;
-    nCon = 0 ;
 
-    // THIS LINE WILL BE USED BY THE CLIENT.
-    // os_sys->ConnectToServer ( LB_SERVER_IP_ADDRESS );
-
-    // ASSUME THAT WE ARE RUNNING A SERVER.
-    InitiateServer ( LB_SERVER_TCP_PORT ) ;
-}
-
-/**
- ** Process the messages waiting on the queue.  If this is a server then it
- ** sends out the messages to the clients.
- **/
-void LbNetImp::ProcessMessages ( )
-{
-    // Check the TCP message queue.
-    char mesStr [ 20 ] ;
-    int playerHash ;
-    while ( GetTCPMessage ( & playerHash , ( char* ) & mesStr ) )
-    {
-        // Translate each of the messages to game messages and add to the game queue.
-
-        // As a client, create game messages.
-        LbGameEvent t ;
-
-        // JOIN message.
-        if ( memcmp ( (char*)&mesStr , "JOIN " , 4 ) == 0 )
-            t.id = LB_GAME_PLAYERJOIN ;
-
-        // LEAVE message.
-        else if ( memcmp ( (char*)&mesStr , "LEAVE " , 5 ) == 0 )
-            t.id = LB_GAME_PLAYERLEAVE ;
-
-        // HAND message.
-        else if ( memcmp ( (char*)&mesStr , "HAND " , 4 ) == 0 )
-            t.id = LB_GAME_HANDCHANGE ;
-
-        // CHAT message.
-        else if ( memcmp ( (char*)&mesStr , "CHAT " , 4 ) == 0 )
-            t.id = LB_GAME_CHAT ;
-
-        // NEWGAME message.
-        else if ( memcmp ( (char*)&mesStr , "NEWGAME " , 7 ) == 0 )
-            t.id = LB_GAME_NEWGAME ;
-
-        // CHANGE message.
-        else if ( memcmp ( (char*)&mesStr , "CHANGE " , 6 ) == 0 )
-            t.id = LB_GAME_CHANGESERVER ;
-
-        // RESET message.
-        else if ( memcmp ( (char*)&mesStr , "RESET " , 5 ) == 0 )
-            t.id = LB_GAME_RESETSERVER ;
-
-        memcpy( (char*)&t.message , (char*)&mesStr , 19 ) ;
-        t.playerHash = playerHash ;
-        gameMessageQueue.push ( t ) ;
-    }
-
-    // Check the UDP message queue.
-        // Translate the messages to game messages and add to the game queue.
+    if ( IsServer ( ) )
+        InitiateServer ( LB_SERVER_TCP_PORT ) ;
+    else
+        ConnectToServer ( "127.0.0.1" , 32001 );
 }
 
 /**
@@ -142,17 +89,126 @@ void LbNetImp::ProcessMessages ( )
  **/
 bool LbNetImp::GetNextGameEvent ( LbGameEvent &e )
 {
-    if ( !gameMessageQueue.empty() )
+    if ( !gameMessageQueue.empty ( ) )
     {
         LbGameEvent t = gameMessageQueue.front();
         gameMessageQueue.pop();
         e.id = t.id ;
-        memcpy ( (char*)&e.message , (char*)&t.message  , 19 ) ;
+        memcpy ( ( char * ) & e.message , ( char * ) & t.message  , 19 ) ;
         e.playerHash = t.playerHash ;
         return true ;
     }
     return false ;
 }
+
+/*
+** Add a LbGameEvent to the send queue.
+*/
+void LbNetImp::SendGameEvent ( LbGameEvent &e )
+{
+    string cmd , msgtext = e.message , ply ;
+    char buf [ 20 ] ;
+    itoa ( e.playerHash , buf , 10 ) ;
+    ply = buf ;
+
+    switch ( e.id )
+    {
+        case LB_GAME_PLAYERJOIN :  cmd = "JOIN" ;  break ;
+        case LB_GAME_PLAYERLEAVE :  cmd = "LEAVE" ;  break ;
+        case LB_GAME_HANDCHANGE :  cmd = "HAND";  break ;
+        case LB_GAME_CHAT :  cmd = "CHAT" ;  break ;
+        case LB_GAME_NEWGAME :  cmd = "NEWGAME" ;  break ;
+        case LB_GAME_CHANGESERVER :  cmd = "CHANGESERVER" ;  break ;
+        case LB_GAME_RESETSERVER :  cmd = "RESETSERVER" ;  break ;
+    }
+
+    // Construct the message.
+    msgtext = cmd + " " + ply + " " + msgtext ;
+
+    // If we are a server.
+    if ( IsServer ( ) )
+        BroadcastTCPMessage ( msgtext.c_str ( ) ) ;
+    //else
+    //   PutTCPMessage ( SERVER_HASH , msgtext.c_str ( ) ) ;
+}
+
+/**
+ ** Process the messages waiting on the queue.
+ **/
+void LbNetImp::ProcessMessages ( )
+{
+    // Check the TCP message queue.
+    char messagebuf [ MAX_MESSAGE_LENGTH ] ;
+    LbSocket * s ;
+
+    while ( GetTCPMessage ( & s , messagebuf ) )
+    {
+        // NOTE: CRASHES WITH INVALID MESSAGE!
+        // Assign the buffer to a proper string object, parse for command
+        // and playerhash.
+        string completemessage = messagebuf ;
+        int n = completemessage.find_first_of ( " " , 0 );
+        int m = completemessage.find_first_of ( " " , n + 1 );
+        string commandstring = completemessage.substr ( 0 , n ) ;
+        string playerhashstring = completemessage.substr ( n , m - n ) ;
+        string msgtext = completemessage.substr ( m + 1, completemessage.size() - 2 - m ) ;
+        int playerhash = atoi ( playerhashstring.c_str ( ) ) ;
+
+        // As a client, create game messages.
+        LbGameEvent t ;
+
+        // Deal with the messages.
+        if ( commandstring == "JOIN" ) t.id = LB_GAME_PLAYERJOIN ;
+        else if ( commandstring == "LEAVE " ) t.id = LB_GAME_PLAYERLEAVE ;
+        else if ( commandstring == "HAND " ) t.id = LB_GAME_HANDCHANGE ;
+        else if ( commandstring == "CHAT" ) t.id = LB_GAME_CHAT ;
+        else if ( commandstring == "NEWGAME " ) t.id = LB_GAME_NEWGAME ;
+        else if ( commandstring ==  "CHANGE " ) t.id = LB_GAME_CHANGESERVER ;
+        else if ( commandstring ==  "RESET " ) t.id = LB_GAME_RESETSERVER ;
+
+        // Copy the message text.
+        strcpy ( t.message , msgtext.c_str ( ) ) ;
+        t.playerHash = playerhash ;
+
+        // If we are server check for players sending wrong player numbers.
+        if ( IsServer() &&
+             playerhash != socketToPlayerhash ( s ) &&
+             t.id != LB_GAME_PLAYERJOIN )
+            MessageBox ( NULL , "Client sent invalid data." ,
+                "Error" , MB_ICONSTOP ) ;
+
+        // Add the game message to the queue.
+        gameMessageQueue.push ( t ) ;
+    }
+}
+
+/*
+** Get the playerHash for a particular socket.
+*/
+int LbNetImp::socketToPlayerhash ( LbSocket * s )
+{
+    int i ;
+    for ( i = 0 ; i < lbsockets.size ( ) ; i ++ )
+        if ( s == &lbsockets [ i ] )
+            break ;
+    return ( int ) lbsockets [ i ].remoteAddress.sin_addr.S_un.S_un_b.s_b4  +
+                   lbsockets [ i ].remoteAddress.sin_addr.S_un.S_un_b.s_b3 + i ;
+}
+
+/*
+** Get the socket for a particular playerHash
+*/
+LbSocket * LbNetImp::playerhashToSocket ( int playerhash )
+{
+    int i ;
+    for ( i = 0 ; i < lbsockets.size ( ) ; i ++ )
+        if ( ( int ) ( lbsockets [ i ].remoteAddress.sin_addr.S_un.S_un_b.s_b4  +
+                       lbsockets [ i ].remoteAddress.sin_addr.S_un.S_un_b.s_b3  + i ) == playerhash )
+            break ;
+    return ( & lbsockets [ i ] ) ;
+}
+
+// ----- Lower level network functions. -----
 
 /**
  ** Checks for sockets waiting to be serviced.
@@ -163,60 +219,77 @@ void LbNetImp::PollSockets ( )
     timeval timeout;
     timeout.tv_sec = 0 ;
     timeout.tv_usec = 0 ;
-	 int i;
 
     // Construct read sockets.
     fd_set readscks , writescks , errscks;
-    errscks.fd_count = writescks.fd_count = readscks.fd_count = nCon ;
-    for (i = 0 ; i < nCon ; i++ )
+    errscks.fd_count = writescks.fd_count = readscks.fd_count = lbsockets.size ( ) ;
+    for ( int i = 0 ; i < lbsockets.size ( ) ; i++ )
     {
-        errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = connections[i].socket ;
+        errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = lbsockets[i].socket ;
     }
 
     // Call to check the sockets.
-    select ( 0 , (fd_set * )&readscks , (fd_set * )&writescks , (fd_set * )&errscks , &timeout );
+    select ( 0 , ( fd_set * ) & readscks , ( fd_set * ) & writescks , (fd_set * ) & errscks , &timeout );
 
-    // Check for data to read or incoming connections.
-    for (i = 0 ; i < readscks.fd_count ; i ++ )
+    // Check for data to read or incoming lbsockets.
+    for ( int i = 0 ; i < readscks.fd_count ; i ++ )
     {
-        for ( int j = 0 ; j < nCon ; j ++ )
-                if ( readscks.fd_array [ i ] == connections [ j ].socket )
+        for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
+                if ( readscks.fd_array [ i ] == lbsockets [ j ].socket )
                     if ( j == iListCon ) AcceptConnection ( ) ;
                     else ReadData ( j ) ;
     }
 
     // Check for sockets ready to write.
-    for (i = 0 ; i < writescks.fd_count ; i ++ )
+    for ( int i = 0 ; i < writescks.fd_count ; i ++ )
     {
-        for ( int j ; j < nCon ; j ++ )
-            if ( writescks.fd_array [ i ] == connections [ j ].socket )
-                if ( j == iServCon ) MakeConnection ( ) ;
-                else SendData ( j ) ;
+        for ( int j = 0 ; j < lbsockets.size ( ) ; j ++ )
+            if ( writescks.fd_array [ i ] == lbsockets [ j ].socket )
+                SendData ( j ) ;
     }
 }
 
 /*
 ** Used by a client to connect to a server.
 */
-void LbNetImp::ConnectToServer( char * dottedServerAddress )
+void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
 {
+    MessageBox ( NULL , "connecting to server...", "fish", MB_ICONSTOP);
+
+    int n = lbsockets.size ( ) ;
+    lbsockets.resize ( n + 1 ) ;
+
     // Get the server address as a long number rather than a string.
     unsigned long serverAddress = inet_addr ( dottedServerAddress ) ;
 
     // Set up a socket to connect to the server.
-    SOCKET hClientSock = socket ( AF_INET , SOCK_STREAM , 0 ) ;
-    if ( hClientSock == INVALID_SOCKET )
+    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , 0 ) ;
+    if ( hSock == INVALID_SOCKET )
         MessageBox ( NULL , "There was an error opening the socket." ,
                      "Error" , MB_ICONSTOP ) ;
 
-    MessageBox ( NULL, "connecting to server...", "fish", MB_ICONSTOP);
+    SOCKADDR_IN sockName ;
+    PSOCKADDR_IN pSockName ;
+    pSockName = & sockName ;
+    pSockName->sin_family = PF_INET ;
+    pSockName->sin_addr.S_un.S_addr = serverAddress ;
+    pSockName->sin_port = htons ( port ) ;
 
-    iServCon = nCon ;
-    connections[nCon].socket = hClientSock ;
-   // connections[nCon].remoteAddress = serverAddress ;
-    connections[nCon].readBufferSize = 0 ;
-    connections[nCon].writeBufferSize = 0 ;
-    nCon ++ ;
+    int nRet = connect ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
+    if ( nRet == SOCKET_ERROR )
+    {
+       MessageBox ( NULL, "Error binding to the server port.  Another " \
+                          "application may be using this port." , "Error" ,
+                          MB_ICONSTOP ) ;
+    }
+
+    iServCon = n ;
+    lbsockets [ n ] .socket = hSock ;
+    lbsockets [ n ] .remoteAddress = sockName ;
+    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .writeBufferSize = 0 ;
+
+    PutTCPMessage ( & lbsockets [ iServCon ] , "CHAT 0 Client Test\n\r\n" ) ;
 }
 
 /*
@@ -225,6 +298,9 @@ void LbNetImp::ConnectToServer( char * dottedServerAddress )
 */
 void LbNetImp::InitiateServer ( int port )
 {
+    int n = lbsockets.size ( ) ;
+    lbsockets.resize ( n + 1 ) ;
+
     // Open the socket, reporting any errors.
     //   AF_INET means use IP ADDRESSING
     //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
@@ -235,13 +311,12 @@ void LbNetImp::InitiateServer ( int port )
                      "Error" , MB_ICONSTOP ) ;
 
     // Set the port and address, and report the error.
-    SOCKADDR_IN sockName;
-    PSOCKADDR_IN pSockName;
-    pSockName = &sockName;
-    pSockName->sin_family = PF_INET;
-    pSockName->sin_addr.S_un.S_addr = (u_long) inet_addr ( "127.0.0.1" ) ;
+    SOCKADDR_IN sockName ;
+    PSOCKADDR_IN pSockName ;
+    pSockName = &sockName ;
+    pSockName->sin_family = PF_INET ;
     pSockName->sin_port = htons ( port ) ;
-    int nRet = bind ( hSock , (LPSOCKADDR) pSockName, SOCKADDR_LEN ) ;
+    int nRet = bind ( hSock , ( LPSOCKADDR ) pSockName , SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
        MessageBox ( NULL, "Error binding to the server port.  Another " \
@@ -257,12 +332,11 @@ void LbNetImp::InitiateServer ( int port )
                     "on the port" , "Error" , MB_ICONSTOP ) ;
     }
 
-    iListCon = nCon ;
-    connections[nCon].socket = hSock ;
-    connections[nCon].remoteAddress = sockName ;
-    connections[nCon].readBufferSize = 0 ;
-    connections[nCon].writeBufferSize = 0 ;
-    nCon ++ ;
+    iListCon = n ;
+    lbsockets [ n ] .socket = hSock ;
+    lbsockets [ n ] .remoteAddress = sockName ;
+    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .writeBufferSize = 0 ;
 }
 
 /*
@@ -270,30 +344,26 @@ void LbNetImp::InitiateServer ( int port )
 */
 void LbNetImp::AcceptConnection (  )
 {
+    int n = lbsockets.size ( ) ;
+    lbsockets.resize ( n + 1 ) ;
+
     int nLen = SOCKADDR_LEN ;
-    SOCKET hSock = connections[iListCon].socket , hNewSock;
+    SOCKET hSock = lbsockets [ iListCon ].socket , hNewSock ;
     SOCKADDR_IN remoteName ;
 
-    // Check connection limit not exceeded.
-    if ( nCon >= MAX_CONNECTIONS - 1 )
-    {
-            MessageBox ( NULL, "Too many clients trying to connect " ,
-                           "Error.", MB_ICONSTOP ) ;
-    }
-
     // Accept the connection.
-    hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , (LPINT) &nLen ) ;
+    hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , ( LPINT ) & nLen ) ;
     if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-            MessageBox ( NULL, "An error occured accepting an incoming "\
-                           "connection.", "Error.", MB_ICONSTOP ) ;
+        MessageBox ( NULL , "An error occured accepting an incoming "\
+                            "connection." , "Error." , MB_ICONSTOP ) ;
 
     // Create a new entry in the client connections list.
-    connections[nCon].socket = hNewSock ;
-    connections[nCon].remoteAddress = remoteName ;
-    connections[nCon].readBufferSize = 0 ;
-    sprintf ( connections[nCon].writeBuffer , "Welcome to Lightbikes 2001" );
-    connections[nCon].writeBufferSize = 26 ;
-    nCon++;
+    lbsockets [ n ] .socket = hNewSock ;
+    lbsockets [ n ] .remoteAddress = remoteName ;
+    lbsockets [ n ] .readBufferSize = 0 ;
+    lbsockets [ n ] .writeBufferSize = 0 ;
+
+    PutTCPMessage ( & lbsockets [ n ] , "Welcome to Lightbikes 2001" ) ;
 }
 
 /*
@@ -301,70 +371,56 @@ void LbNetImp::AcceptConnection (  )
 */
 void LbNetImp::ReadData  ( int c )
 {
-    int nRet ;
-
-    // Read the data from the client.  SHOULD READ BIGGER CHUNKS.
-    nRet = recv ( connections[ c ].socket ,
-                  (LPSTR)&connections[ c ].readBuffer +
-                  connections[c].readBufferSize , 1 , 0 );
-    if ( nRet == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
+    // Read the data from the client.
+    int nRet  = recv ( lbsockets [ c ].socket ,
+                  ( LPSTR )&lbsockets [ c ].readBuffer +
+                  lbsockets [ c ] .readBufferSize , MAX_READ_SIZE , 0 );
+    if ( nRet == SOCKET_ERROR && WSAGetLastError ( ) != WSAEWOULDBLOCK )
         MessageBox ( NULL, "An error occured reading data from the "\
                            "connection.", "Error.", MB_ICONSTOP ) ;
-    else connections[c].readBufferSize += nRet ;
+    else lbsockets [ c ].readBufferSize += nRet ;
 
     // See if we have an end of line character indicating the message
-    // is complete.
-    if ( connections [ c ] . readBuffer[
-         connections [ c ] . readBufferSize - 1 ] == 10 )
-    {
-        // If we do stick this on the tail of the queue.
-        readSocketQueue.push ( &connections[c] ) ;
-    }
+    // is complete. If we do stick this on the tail of the queue.
+    if ( lbsockets [ c ] . readBuffer [
+         lbsockets [ c ] . readBufferSize - 1 ] == 10 )
+        readSocketQueue.push ( &lbsockets [ c ] ) ;
 }
 
-/*
-** Called by client when server accepts connection.
-*/
-void LbNetImp::MakeConnection ( )
-{
-    MessageBox(NULL, "client connected to server", "fish", MB_ICONSTOP);
-    // Nothing to do so far.
-}
 
 /*
 ** Called to send data when socket is available to send data in queue.
 */
 void LbNetImp::SendData ( int c )
 {
-    // Send the contents of the writebuffer, no MTU checking.
-    if ( connections[ c ] . writeBufferSize > 0 )
+    // Send the contents of the writebuffer.
+    if ( lbsockets [ c ] . writeBufferSize > 0 )
     {
-        int nRet = send ( connections[ c ].socket ,
-                         (LPSTR)&connections[ c ].writeBuffer ,
-                         connections[ c ].writeBufferSize , 0 );
+        int nRet = send ( lbsockets [ c ] . socket ,
+                         (LPSTR)&lbsockets [ c ] . writeBuffer ,
+                         lbsockets [ c ] . writeBufferSize , 0 ) ;
         if ( nRet == SOCKET_ERROR &&
-             WSAGetLastError() != WSAEWOULDBLOCK )
+             WSAGetLastError ( ) != WSAEWOULDBLOCK )
             MessageBox ( NULL, "An error occured writing data to the "\
-                               "socket.", "Error.", MB_ICONSTOP ) ;
-        else connections[ c ].writeBufferSize = 0 ;
+                               "socket.", "Error." , MB_ICONSTOP ) ;
+        else lbsockets[ c ].writeBufferSize = 0 ;
     }
 }
 
 /*
 ** Get the next message in the socket read queue.
 */
-bool LbNetImp::GetTCPMessage ( int * playerhash , char * message )
+bool LbNetImp::GetTCPMessage ( LbSocket * * s , char * message )
 {
-    if ( !readSocketQueue.empty() )
+    // Get the message out of the buffer and return it in "message".
+    if ( ! readSocketQueue.empty ( ) )
     {
         LbSocket * c = readSocketQueue.front ( ) ;
         readSocketQueue.pop ( ) ;
-
-        // WRONG!
-        *playerhash = 1;
-
-        sprintf( message , (*c).readBuffer );
-        (*c).readBufferSize = 0 ;
+        memcpy ( message , ( * c ) . readBuffer , ( * c ) . readBufferSize );
+        message [ ( * c ) . readBufferSize ] = '\0';
+        ( * c ) . readBufferSize = 0 ;
+        * s = c ;
         return true ;
     }
     return false ;
@@ -373,34 +429,38 @@ bool LbNetImp::GetTCPMessage ( int * playerhash , char * message )
 /*
 ** Add this message to the socket write buffer.
 */
-void LbNetImp::PutTCPMessage ( int playerhash , char * message )
+void LbNetImp::PutTCPMessage ( LbSocket * s , const char * message )
 {
-    // Stick it in the write buffer. SHOULDN'T OVERWRITE OLD BUFFER!
-    sprintf ( ( char* ) & ( connections [ playerhash ] .writeBuffer ) , message ) ;
-    ( connections [ playerhash ] ) . writeBufferSize = strlen ( message ) ;
+    // Stick it in the write buffer.
+    strcpy ( ( char * ) & ( ( * s ) . writeBuffer ) + ( * s ) . writeBufferSize , message ) ;
+    ( * s ) . writeBufferSize += strlen ( message ) ;
 }
 
 /*
 ** Used by server to send a message to all clients.  Doesn't use the
 ** broadcast address, instead just sends a message to all players.
 */
-void LbNetImp::BroadcastTCPMessage ( char * message )
+void LbNetImp::BroadcastTCPMessage ( const char * message )
 {
-    for ( int i = 0 ; i < nCon ; i ++ )
+    // Write to all sockets except the listening one.
+    for ( int i = 0 ; i < lbsockets.size ( ) ; i ++ )
         if ( i != iListCon )
-            PutTCPMessage ( i , message ) ;
+            PutTCPMessage ( & lbsockets [ i ] , message ) ;
 }
 
 /*
 ** Shuts down the network cleanly, closing all sockets.
 */
-LbNetImp::~LbNetImp()
+LbNetImp::~LbNetImp ( )
 {
-    for ( int i = 0 ; i < nCon ; i ++ )
-        closesocket ( connections [ i ] . socket ) ;
+    for ( int i = 0 ; i < lbsockets.size ( ) ; i ++ )
+        closesocket ( lbsockets [ i ] . socket ) ;
 }
 
-LbNetSys *CreateNetSys( LbOSLayerSys *os_sys )
+/*
+** Create.
+*/
+LbNetSys *CreateNetSys ( LbOSLayerSys *os_sys )
 {
     LbNetSys *rval = new LbNetImp;
     assert ( rval != NULL ) ;

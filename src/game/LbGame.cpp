@@ -8,6 +8,7 @@
        David Black
        James Ross
        David Capps
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -66,7 +67,7 @@ int LbGameImp::RunGame()
 
     graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
 
-    sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
+    //sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
     while(!quit_flag)
     {
@@ -165,7 +166,12 @@ int LbGameImp::RunGame()
 
                 // Deal with incoming chat messages.  JUST DISPLAYS THEM.
                 case LB_GAME_CHAT:
-                    MessageBox ( NULL , (char*)&game_event.message , "Chat Message", MB_ICONSTOP ) ;
+                {
+                    char temp[20] ;
+                    itoa ( game_event.playerHash , temp , 10 ) ;
+                    MessageBox ( NULL , game_event.message , temp , MB_ICONSTOP ) ;
+                    net_sys->SendGameEvent ( game_event ) ;
+                }
                 break;
             }
             break;
@@ -200,7 +206,7 @@ void LbGameImp::InitSubsystems()
 
     graph_sys=CreateGraphicsSys(os_sys);
     input_sys=CreateInputSys(os_sys);
-    sound_sys=CreateSoundSys(os_sys);
+    //sound_sys=CreateSoundSys(os_sys);
     net_sys=CreateNetSys(os_sys);
 }
 

@@ -533,10 +533,10 @@ void WA_VSA_SetInfo1(int nch, int srate) { }
 //End of crappy useless Winamp functions
 
 bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp) {
-    
+    /*
     Winamp_GetInModule GetInModule;
     Winamp_GetOutModule GetOutModule;
-    	
+
     WinampIn = LoadLibrary("MUSICIN.DLL");
     if (!WinampIn) return false;
 
@@ -574,7 +574,7 @@ bool LbOSWin32Imp::SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp
     (*outp)->SetVolume(255);    //max volume
     (*outp)->SetPan(0);         //centre pan
 
-    (*inp)->outMod = *outp;
+    (*inp)->outMod = *outp;*/
     return true;
 }
 

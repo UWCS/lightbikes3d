@@ -37,6 +37,9 @@
 #include <deque>
 #include <list>
 #include <iostream>
+#include <vector>
+
+#include <string.h>
 
 #ifdef WIN32
 #   include <windows.h>
@@ -53,6 +56,13 @@
 // The number of bytes for storing text waiting to be sent or processed to/from
 // the network.
 #define SOCKET_BUFFER_SIZE 256
+
+// The number of bytes to read/write from/to the socket in a single attempt.
+#define MAX_READ_SIZE 10
+#define MAX_WRITE_SIZE 10
+
+// Size of buffer allocated for message.
+#define MAX_MESSAGE_LENGTH 256
 
 // The max number of connections, clients only use 1, so really it's the
 // max players per server.
