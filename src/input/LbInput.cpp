@@ -44,7 +44,7 @@ return rval;
 }
 
 void LbInputImp::Poll() {
-}    
+}
 
 void LbInputImp::Init(LbOSLayerSys *os_sys) {
     os = os_sys;
@@ -59,4 +59,9 @@ return os_input->GetOSKey(data,num);
 char LbInputImp::getNextTextKey()
 {
 return os_input->getNextTextKey();
+}
+
+bool LbInputImp::IsTabDown()
+{
+return os_input->IsTabDown();
 }

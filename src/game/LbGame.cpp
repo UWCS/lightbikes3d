@@ -126,6 +126,8 @@ int LbGameImp::RunGame()
                 case 27 : // Escape key.
                     textbuf.erase ( ) ;
                     break ;
+                case '\t': // Tab key, do nothing.
+                    break;
                 case 8 : // Backspace key.
                     if ( textbuf.size ( ) > 0 )
                         textbuf.erase ( textbuf.size ( ) - 1 ) ;
@@ -158,11 +160,14 @@ int LbGameImp::RunGame()
             graph_sys->DrawText ( 0.05f , 0.9f - 0.04 * i , 0.5f , txtmsgs[i].c_str ( ) ) ;
         }
 
-        // Display the players' frag count, overlayed Counter Strike style.
-        for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
+        if ( input_sys->IsTabDown ( ) )
         {
-            graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
-            graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.5f , scoremsgs[i].c_str ( ) ) ;
+            // Display the players' frag count, overlayed Counter Strike style.
+            for ( i = 0 ; i < MAX_SCOREBOARD_LINES ; i ++ )
+            {
+                graph_sys->SetTextColor ( LbRGBAColor ( 0 , 1 , 1 , 1 ) ) ;
+                graph_sys->DrawText ( 0.05f , 0.7f - 0.04 * i , 0.5f , scoremsgs[i].c_str ( ) ) ;
+            }
         }
 
         graph_sys->EndFrame();
@@ -188,8 +193,6 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
-
-
         if ( net_sys->GetStatus ( ) != LB_NET_DISCONNECTED )
         {
 
@@ -200,7 +203,6 @@ int LbGameImp::RunGame()
 
             // Probably won't do this ultimately.
             net_sys->PollSockets ( ) ;
-
 
             // Read in Network messages (Networking)...
             /* Game Events - Messages from network:

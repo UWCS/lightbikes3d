@@ -35,7 +35,7 @@ virtual void Poll();
 virtual void Init(LbOSLayerSys *os_sys);
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual char getNextTextKey();
-
+virtual bool IsTabDown() ;
 private:
 
 LbOSLayerSys *os;

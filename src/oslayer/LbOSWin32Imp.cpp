@@ -252,6 +252,16 @@ LONG WINAPI LbOSWin32Imp::MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM l
                 os_input->OnWmChar(wParam);
         break;
 
+        case WM_KEYDOWN:
+            if(os_input!=NULL)
+                os_input->OnWmKeyDown( (int)wParam );
+        break ;
+
+        case WM_KEYUP:
+            if(os_input!=NULL)
+                os_input->OnWmKeyUp( (int)wParam );
+        break ;
+
         case WM_SIZE:
             PerformResize();
         break;

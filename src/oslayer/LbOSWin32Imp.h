@@ -141,6 +141,9 @@ virtual char getNextTextKey ( ) ;
 virtual void Init(HINSTANCE hInst,HWND hWnd, int TickBegan);
 
 virtual void OnWmChar(char c);
+virtual bool IsTabDown ( ) ;
+virtual void OnWmKeyDown(int c) ;
+virtual void OnWmKeyUp(int c) ;
 
 
 
@@ -153,6 +156,7 @@ LbOSLayerInputImp();
 private:
 
 
+bool tabdown ;
 
 LPDIRECTINPUT7  lpDInput;
 

@@ -66,7 +66,7 @@ bool LbOSLayerInputImp::GetOSKey(LbOSLayerKeypress *data, int *num)
 
         char msg[32];
         sprintf(msg,"Failed buffer oversize: num %d, received %d",*num, dwElements);
-        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
+        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
         return false;
 
         }
@@ -106,6 +106,7 @@ void LbOSLayerInputImp::Init(HINSTANCE hInst,HWND hWnd, int TickBegan)
 {
     TickStart = TickBegan;
     di_InitOK = InitDInput(hInst,hWnd);
+    tabdown = false ;
 }
 
 bool LbOSLayerInputImp::InitDInput(HINSTANCE hInst,HWND hWnd)
@@ -124,7 +125,7 @@ bool LbOSLayerInputImp::InitDInput(HINSTANCE hInst,HWND hWnd)
     if (FAILED(hr)) return false;
     lpDInput->AddRef();
     if (FAILED(lpDInput->Initialize( hInst, DIRECTINPUT_VERSION ))) return false;
-  
+
 
     if ( FAILED(lpDInput->CreateDeviceEx(  GUID_SysKeyboard,
                                 IID_IDirectInputDevice7,
@@ -159,11 +160,25 @@ void LbOSLayerInputImp::OnWmChar(char c)
 textkeybuffer.push_back(c);
 }
 
+void LbOSLayerInputImp::OnWmKeyDown(int c)
+{
+    if ( c == 9 ) tabdown = true ;
+}
+
+void LbOSLayerInputImp::OnWmKeyUp(int c)
+{
+    if ( c == 9 ) tabdown = false ;
+}
+
+bool LbOSLayerInputImp::IsTabDown ( )
+{
+    return tabdown ;
+}
 
 LbOSLayerInputImp::LbOSLayerInputImp()
 {
 lpDInput=NULL;
-lpDIDevKeyb=NULL; 
+lpDIDevKeyb=NULL;
 }
 
 LbOSLayerInputImp::~LbOSLayerInputImp()
