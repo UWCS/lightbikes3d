@@ -272,6 +272,9 @@ void LbNetImp::PollSockets ( )
     }
 }
 
+/**
+ ** Called when starting server or changing remote server.
+ **/
 void LbNetImp::ResetConnections ( )
 {
     // If we are running a server kill it off.  If we already connected,
@@ -433,7 +436,8 @@ void LbNetImp::AcceptConnection (  )
     string m ;
     char buf [ 33 ] ;
     itoa ( SocketToPlayerhash ( & lbsockets [ n ] ) , buf , 10 ) ;
-    m = "WELCOME " + string ( buf ) + string ( "  Lightbikes 2001 (C) Uni. of Warwick Computing Society.\r\n" ) ;
+    m = string ( "WELCOME " ) + string ( buf ) ;
+    m += " Lightbikes 2001 (C) Uni. of Warwick Computing Society.\r\n" ;
     PutTCPMessage ( & lbsockets [ n ] , m.c_str ( ) ) ;
 }
 
