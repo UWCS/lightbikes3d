@@ -40,7 +40,7 @@ enum LbGameEventId
 struct LbGameEvent
 {
     LbGameEventId id ;
-    int playerId;
+    int playerHash ;
     char message[20] ;
 };
 
@@ -50,19 +50,10 @@ class LbNetSys
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
         virtual void Init(LbOSLayerSys *os_sys) = 0 ;
-				virtual void PollSockets ( ) = 0 ;
-				virtual void ConnectToServer ( char *) = 0 ;
-				virtual void InitiateServer ( int ) = 0 ;
-				virtual void InitiateNetwork ( ) = 0 ;
-				virtual void CloseNetwork ( ) = 0 ;
-
-				virtual void AcceptConnection (  ) = 0;
-				virtual void MakeConnection (  ) = 0;
-				virtual void ReadData ( int c  ) = 0;
-				virtual void SendData ( int c  ) = 0;
-
-				virtual bool GetTCPMessage ( char * address , char * message ) = 0 ;
-				virtual void PutTCPMessage ( char * address , char * message ) = 0 ;
+        virtual void PollSockets ( ) = 0 ;
+        virtual void ConnectToServer ( char *) = 0 ;
+        virtual void InitiateServer ( int ) = 0 ;
+        virtual void CloseNetwork ( ) = 0 ;
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}

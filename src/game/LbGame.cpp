@@ -147,7 +147,7 @@ int LbGameImp::RunGame()
            **  Send level data
            */
 
-				net_sys->PollSockets();
+                net_sys->PollSockets();
 
         while ( net_sys->GetNextGameEvent ( game_event ) )
         {
@@ -157,7 +157,7 @@ int LbGameImp::RunGame()
                 case LB_GAME_PLAYERLEAVE:
                 case LB_GAME_HANDCHANGE:
                 case LB_GAME_NEWGAME:
-                    //MessageBox ( NULL , "game message" , "", MB_ICONSTOP ) ;
+                //    MessageBox ( NULL , "game message" , "", MB_ICONSTOP ) ;
                 break;
 
                 // Deal with incoming chat messages.  JUST DISPLAYS THEM.

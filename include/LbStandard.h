@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        David Capps
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,17 +32,27 @@
 #include <math.h>
 #include <assert.h>
 
+// STL stuff.
+#include <queue>
+#include <deque>
+#include <list>
+#include <iostream>
+
 #ifdef WIN32
 #   include <windows.h>
-#   include <winsock.h>
+#   include <winsock2.h>
 #endif
 
 #include <GL/gl.h>
 #include <GL/glu.h>             //DC: Added GLU include
 
 // The port on the server to be used for connections.
-#define LB_SERVER_TCP_PORT 5000
-#define LB_SERVER_UDP_PORT 6000
+#define LB_SERVER_TCP_PORT 32001
+#define LB_SERVER_UDP_PORT 32002
+
+// The number of bytes for storing text waiting to be sent or processed to/from
+// the network.
+#define SOCKET_BUFFER_SIZE 256
 
 // The max number of connections, clients only use 1, so really it's the
 // max players per server.

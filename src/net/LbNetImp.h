@@ -22,10 +22,13 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
+
 #ifndef __LBNETIMP__
 #define __LBNETIMP__
 
 #define SOCKADDR_LEN sizeof(struct sockaddr)
+
+using namespace std;
 
 class LbNetImp : public LbNetSys
 {
@@ -35,47 +38,50 @@ class LbNetImp : public LbNetSys
 
         virtual bool GetNextGameEvent (  LbGameEvent &e ) ;
         virtual void ProcessMessages ( ) ;
-
         virtual void Init(LbOSLayerSys *os_sys);
-				virtual void PollSockets ( );
-        virtual void ConnectToServer( char * ) ;
-				virtual void InitiateServer( int ) ;
-				virtual void InitiateNetwork() ;
-
-				virtual void AcceptConnection (  ) ;
-				virtual void MakeConnection (  ) ;
-				virtual void ReadData ( int c  ) ;
-				virtual void SendData ( int c  ) ;
-
-				virtual void CloseNetwork() ;
-				virtual bool GetTCPMessage ( char * address , char * message ) ;
-				virtual void PutTCPMessage ( char * address , char * message ) ;
+        virtual void PollSockets ( );
 
     private:
+        // LbNet's reference to the OS Layer.
         LbOSLayerSys *os;
 
-    LbGameEvent tempEvent;
-    // Used by the server code
-		struct LbConnection
-		{
-		    SOCKET socket;
-		    SOCKADDR_IN remoteAddress;
-		    char readBuffer [ 100 ] ;
-		    int readBufferSize ;
-		    char writeBuffer [ 100 ] ;
-		    int writeBufferSize ;
-		    int prevInReadQ ;
-		    int prevInWriteQ ;
-		};
-		LbConnection connections [ MAX_CONNECTIONS ] ;
-		int nCon ;
-		int nHeadOfReadQ ;
-		int nTailOfReadQ ;
-		int nHeadOfWriteQ ;
-		int nTailOfWriteQ ;
-		int iListCon ;
+        virtual void ConnectToServer( char * ) ;
+        virtual void InitiateServer( int ) ;
+        virtual void AcceptConnection (  ) ;
+        virtual void MakeConnection (  ) ;
+        virtual void ReadData ( int c  ) ;
+        virtual void SendData ( int c  ) ;
+        virtual void CloseNetwork() ;
+        virtual bool GetTCPMessage ( int * playerHash , char * message ) ;
+        virtual void PutTCPMessage ( int playerHash , char * message ) ;
+        virtual void BroadcastTCPMessage ( char * message ) ;
+
+        // Store the game messages ready to be collected by the game logic.
+        queue<LbGameEvent> gameMessageQueue ;
+
+        // Stores open connections.  Uses a crude queue implementation.
+        struct LbConnection
+        {
+            SOCKET socket ;
+            SOCKADDR_IN remoteAddress ;
+            char readBuffer [ SOCKET_BUFFER_SIZE ] ;
+            int readBufferSize ;
+            char writeBuffer [ SOCKET_BUFFER_SIZE ] ;
+            int writeBufferSize ;
+        };
+
+        // Array of all connections and the number of valid connections.
+        LbConnection connections [ MAX_CONNECTIONS ] ;
+        int nCon ;
+
+        // Socket connections with data available to be read from buffer.
+        queue<LbConnection*> readSocketQueue ;
+
+        // The index of the socket on which, if this is a server, it is listening.
+        int iListCon ;
+
+        // The index of the socket on which, if this is a client, it is connected to the server.
+        int iServCon ;
 };
-
-
 
 #endif

@@ -41,23 +41,55 @@
 // text and added to the queue and sent whenever the network queue is serviced.
 // Similarly received messages are decoded and retreived by the game logic
 // modules.
+//
+// Players are assigned a unique playerHash which is constant while they are
+// connected, the game logic can convert this to players.
+
+// TO DO:
+//        Sort out the text buffering.
+//        Implement broadcasting.
+//        Threading to make polling better.
+//        Use UDP, define UDP packets.
+
+//        MINIMAL WRAPPER STUFF IN LB GAME
 
 LbNetImp::LbNetImp()
 {
 
 }
 
-// -- Methods to translate game messages to data to network data and v. v. --
+/**
+ ** Initialisation of networking subsystem.
+ **/
+void LbNetImp::Init ( LbOSLayerSys *os_sys )
+{
+    // Store the reference to the OS layer.
+    os = os_sys;
+
+    // Start the OS level aspects of the network.
+    os->InitiateNetwork();
+
+    iListCon = -1 ;
+    iServCon = -1 ;
+    nCon = 0 ;
+
+    // THIS LINE WILL BE USED BY THE CLIENT.
+    // os_sys->ConnectToServer ( LB_SERVER_IP_ADDRESS );
+
+    // ASSUME THAT WE ARE RUNNING A SERVER.
+    InitiateServer ( LB_SERVER_TCP_PORT ) ;
+}
 
 /**
  ** Process the messages waiting on the queue.  If this is a server then it
  ** sends out the messages to the clients.
  **/
-void LbNetImp::ProcessMessages()
+void LbNetImp::ProcessMessages ( )
 {
     // Check the TCP message queue.
-    char addStr [20] , mesStr [ 20 ] ;
-    while ( GetTCPMessage ( (char*)&addStr , (char*)&mesStr ) )
+    char mesStr [ 20 ] ;
+    int playerHash ;
+    while ( GetTCPMessage ( & playerHash , ( char* ) & mesStr ) )
     {
         // Translate each of the messages to game messages and add to the game queue.
 
@@ -73,9 +105,12 @@ void LbNetImp::ProcessMessages()
         // CHAT message.
         if ( memcmp ( (char*)&mesStr , "CHAT " , 4 ) == 0 )
         {
-            tempEvent.id = LB_GAME_CHATMESSAGE ;
-            memcpy( (char*)&tempEvent.message , (char*)&mesStr , 19 ) ;
-            tempEvent.playerId = 1 ;
+            LbGameEvent t ;
+            t.id = LB_GAME_CHATMESSAGE ;
+            memcpy( (char*)&t.message , (char*)&mesStr , 19 ) ;
+            t.playerHash = playerHash ;
+
+            gameMessageQueue.push ( t ) ;
         }
         // JOIN message.
         else if ( memcmp ( (char*)&mesStr , "JOIN " , 4 ) == 0 )
@@ -101,98 +136,56 @@ void LbNetImp::ProcessMessages()
  **/
 bool LbNetImp::GetNextGameEvent ( LbGameEvent &e )
 {
-    e.id = tempEvent.id ;
-    memcpy ( (char*)&e.message , (char*)&tempEvent.message  , 19 ) ;
-    e.playerId = tempEvent.playerId ;
-
-    return true;
+    if ( !gameMessageQueue.empty() )
+    {
+        LbGameEvent t = gameMessageQueue.front();
+        gameMessageQueue.pop();
+        e.id = t.id ;
+        memcpy ( (char*)&e.message , (char*)&t.message  , 19 ) ;
+        e.playerHash = t.playerHash ;
+        return true ;
+    }
+    return false ;
 }
-
-
 
 /**
  ** Checks for sockets waiting to be serviced.
  **/
 void LbNetImp::PollSockets ( )
 {
-	// Set the timeout.
-	timeval timeout;
-	timeout.tv_sec = 0 ;
-	timeout.tv_usec = 0 ;
+    // Set the timeout.
+    timeval timeout;
+    timeout.tv_sec = 0 ;
+    timeout.tv_usec = 0 ;
 
-  // Construct read sockets.
-  fd_set readscks , writescks , errscks;
-  errscks.fd_count = writescks.fd_count = readscks.fd_count = nCon ;
-  for (int i = 0 ; i < nCon ; i++ )
- 		errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = connections[i].socket ;
+    // Construct read sockets.
+    fd_set readscks , writescks , errscks;
+    errscks.fd_count = writescks.fd_count = readscks.fd_count = nCon ;
+    for ( int i = 0 ; i < nCon ; i++ )
+    {
+        errscks.fd_array[i] = writescks.fd_array[i] = readscks.fd_array[i] = connections[i].socket ;
+    }
 
-  // Call to check the sockets.
-  select ( 0 , (fd_set * )&readscks , (fd_set * )&writescks , (fd_set * )&errscks , &timeout );
+    // Call to check the sockets.
+    select ( 0 , (fd_set * )&readscks , (fd_set * )&writescks , (fd_set * )&errscks , &timeout );
 
-  // Check for data to read or incoming connections.
-  for ( int i = 0 ; i < readscks.fd_count ; i ++ )
-  {
-		for ( int j = 0 ; j < nCon ; j ++ )
-				if ( readscks.fd_array[i] == connections[j].socket )
-				{
-					if ( j == iListCon ) AcceptConnection ( ) ;
-				  else ReadData ( j ) ;
-			 }
-	}
+    // Check for data to read or incoming connections.
+    for ( int i = 0 ; i < readscks.fd_count ; i ++ )
+    {
+        for ( int j = 0 ; j < nCon ; j ++ )
+                if ( readscks.fd_array [ i ] == connections [ j ].socket )
+                    if ( j == iListCon ) AcceptConnection ( ) ;
+                    else ReadData ( j ) ;
+    }
 
-  // Check for sockets ready to write.
-  for ( int i = 0 ; i < writescks.fd_count ; i ++ )
-  {
-		for ( int j ; j < nCon ; j ++ )
-				if ( writescks.fd_array[i] == connections[j].socket )
-					//if ( j == iServCon ) AcceptConnection ( ) ;
-				  //else
-				  SendData ( j ) ;
-	}
-
-}
-
-/**
- ** Initialisation of networking subsystem.
- **/
-void LbNetImp::Init(LbOSLayerSys *os_sys)
-{
-    // Store the reference to the OS layer.
-    os = os_sys;
-
-    // Start the OS level aspects of the network.
-    InitiateNetwork();
-
-    // THIS LINE WILL BE USED BY THE CLIENT.
-    // os_sys->ConnectToServer ( LB_SERVER_IP_ADDRESS );
-
-    // ASSUME THAT WE ARE RUNNING A SERVER.
-    InitiateServer ( LB_SERVER_TCP_PORT ) ;
-
-    // TO DO: Set up a players list.
-
-    // TO DO: Set up a message queue.
-}
-
-
-/*
-** Set up the networking API.  In this case it's Berkeley sockets for
-** Windows which is called WINSOCK.
-*/
-void LbNetImp::InitiateNetwork()
-{
-    // This structure can be used to get information about the version of
-    // winsock in use.
-    WSAData stWSAData;
-
-    // Startup version 1.1 of Winsock, report errors.
-    if ( WSAStartup ( MAKEWORD ( 2 , 0 ) , &stWSAData ) != 0 )
-        MessageBox( NULL , "An error occured while initialising WinSock." ,
-                    "Error" , MB_ICONSTOP ) ;
-			iListCon = -1 ;
-      nCon = 0;
-      nHeadOfReadQ = -1;
-      nTailOfReadQ = -1;
+    // Check for sockets ready to write.
+    for ( int i = 0 ; i < writescks.fd_count ; i ++ )
+    {
+        for ( int j ; j < nCon ; j ++ )
+            if ( writescks.fd_array [ i ] == connections [ j ].socket )
+                if ( j == iServCon ) MakeConnection ( ) ;
+                else SendData ( j ) ;
+    }
 }
 
 /*
@@ -200,9 +193,6 @@ void LbNetImp::InitiateNetwork()
 */
 void LbNetImp::ConnectToServer( char * dottedServerAddress )
 {
-    // Used for return values.
-    int nRet;
-
     // Get the server address as a long number rather than a string.
     unsigned long serverAddress = inet_addr ( dottedServerAddress ) ;
 
@@ -212,11 +202,14 @@ void LbNetImp::ConnectToServer( char * dottedServerAddress )
         MessageBox ( NULL , "There was an error opening the socket." ,
                      "Error" , MB_ICONSTOP ) ;
 
-    // Request Asynchronous notification for most events.
-    //os -> SetAsync ( hClientSock , FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE ) ;
-
     MessageBox ( NULL, "connecting to server...", "fish", MB_ICONSTOP);
 
+    iServCon = nCon ;
+    connections[nCon].socket = hClientSock ;
+   // connections[nCon].remoteAddress = serverAddress ;
+    connections[nCon].readBufferSize = 0 ;
+    connections[nCon].writeBufferSize = 0 ;
+    nCon ++ ;
 }
 
 /*
@@ -225,9 +218,6 @@ void LbNetImp::ConnectToServer( char * dottedServerAddress )
 */
 void LbNetImp::InitiateServer ( int port )
 {
-    // Used for return values.
-    int nRet;
-
     // Open the socket, reporting any errors.
     //   AF_INET means use IP ADDRESSING
     //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
@@ -237,10 +227,6 @@ void LbNetImp::InitiateServer ( int port )
         MessageBox ( NULL , "There was an error opening socket." ,
                      "Error" , MB_ICONSTOP ) ;
 
-    // Set the socket to Asynchronous, we want to be notified of incoming data
-    // or connections by a windows message.
-    //os -> SetAsync ( hSock , FD_ACCEPT | FD_READ | FD_WRITE | FD_CLOSE ) ;
-
     // Set the port and address, and report the error.
     SOCKADDR_IN sockName;
     PSOCKADDR_IN pSockName;
@@ -248,7 +234,7 @@ void LbNetImp::InitiateServer ( int port )
     pSockName->sin_family = PF_INET;
     pSockName->sin_addr.S_un.S_addr = (u_long) inet_addr ( "127.0.0.1" ) ;
     pSockName->sin_port = htons ( port ) ;
-    nRet = bind ( hSock , (LPSOCKADDR) pSockName, SOCKADDR_LEN ) ;
+    int nRet = bind ( hSock , (LPSOCKADDR) pSockName, SOCKADDR_LEN ) ;
     if ( nRet == SOCKET_ERROR )
     {
        MessageBox ( NULL, "Error binding to the server port.  Another " \
@@ -263,7 +249,8 @@ void LbNetImp::InitiateServer ( int port )
        MessageBox ( NULL, "There was an error starting to listen" \
                     "on the port" , "Error" , MB_ICONSTOP ) ;
     }
-		iListCon = nCon ;
+
+    iListCon = nCon ;
     connections[nCon].socket = hSock ;
     connections[nCon].remoteAddress = sockName ;
     connections[nCon].readBufferSize = 0 ;
@@ -271,135 +258,140 @@ void LbNetImp::InitiateServer ( int port )
     nCon ++ ;
 }
 
-// Called to accept the connection when a client connects.
+/*
+** Called to accept the connection when a client connects.
+*/
 void LbNetImp::AcceptConnection (  )
 {
-	  int nLen = SOCKADDR_LEN , nRet;
+    int nLen = SOCKADDR_LEN ;
     SOCKET hSock = connections[iListCon].socket , hNewSock;
     SOCKADDR_IN remoteName ;
 
-		// Check connection limit not exceeded.
+    // Check connection limit not exceeded.
     if ( nCon >= MAX_CONNECTIONS - 1 )
     {
-    		MessageBox ( NULL, "Too many clients trying to connect " ,
+            MessageBox ( NULL, "Too many clients trying to connect " ,
                            "Error.", MB_ICONSTOP ) ;
     }
 
     // Accept the connection.
     hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , (LPINT) &nLen ) ;
     if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-    		MessageBox ( NULL, "An error occured accepting an incoming "\
+            MessageBox ( NULL, "An error occured accepting an incoming "\
                            "connection.", "Error.", MB_ICONSTOP ) ;
 
-		// Create a new entry in the client connections list.
-		connections[nCon].socket = hNewSock ;
-		connections[nCon].remoteAddress = remoteName ;
-		connections[nCon].readBufferSize = 0 ;
-		sprintf ( connections[nCon].writeBuffer , "Welcome to Lightbikes 2001" );
-		connections[nCon].writeBufferSize = 26 ;
-		connections[nCon].prevInReadQ = -1 ;
-		nCon++;
+    // Create a new entry in the client connections list.
+    connections[nCon].socket = hNewSock ;
+    connections[nCon].remoteAddress = remoteName ;
+    connections[nCon].readBufferSize = 0 ;
+    sprintf ( connections[nCon].writeBuffer , "Welcome to Lightbikes 2001" );
+    connections[nCon].writeBufferSize = 26 ;
+    nCon++;
 }
 
-// Called to read data.
+/*
+** Called to read data.
+*/
 void LbNetImp::ReadData  ( int c )
 {
     int nRet ;
 
-	  // Read the data from the client.  SHOULD READ BIGGER CHUNKS.
-	  nRet = recv ( connections[ c ].socket ,
-	                (LPSTR)&connections[ c ].readBuffer +
-	                connections[c].readBufferSize , 1 , 0 );
-	 if ( nRet == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
-	    MessageBox ( NULL, "An error occured reading data from the "\
-	                 "connection.", "Error.", MB_ICONSTOP ) ;
-	 else connections[c].readBufferSize += nRet ;
+    // Read the data from the client.  SHOULD READ BIGGER CHUNKS.
+    nRet = recv ( connections[ c ].socket ,
+                  (LPSTR)&connections[ c ].readBuffer +
+                  connections[c].readBufferSize , 1 , 0 );
+    if ( nRet == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
+        MessageBox ( NULL, "An error occured reading data from the "\
+                           "connection.", "Error.", MB_ICONSTOP ) ;
+    else connections[c].readBufferSize += nRet ;
 
-	 // See if we have an end of line character indicating the message
-	 // is complete.
-	 if ( connections[ c ].readBuffer[
-	      connections[c].readBufferSize - 1 ] == 10 )
-	 {
-	      // If we do stick this on the tail of the queue.
-	      if (nHeadOfReadQ == -1 ) nHeadOfReadQ = c ;
-	      if ( nTailOfReadQ != c && nTailOfReadQ != -1 )
-	           connections[nTailOfReadQ].prevInReadQ = c;
-	      nTailOfReadQ = c;
-   }
+    // See if we have an end of line character indicating the message
+    // is complete.
+    if ( connections [ c ] . readBuffer[
+         connections [ c ] . readBufferSize - 1 ] == 10 )
+    {
+        // If we do stick this on the tail of the queue.
+        readSocketQueue.push ( &connections[c] ) ;
+    }
 }
 
-// Called by client when server accepts connection.
+/*
+** Called by client when server accepts connection.
+*/
 void LbNetImp::MakeConnection ( )
 {
     MessageBox(NULL, "client connected to server", "fish", MB_ICONSTOP);
-    // Create a new entry in the client connections list.
-
+    // Nothing to do so far.
 }
 
-// Called to send data when socket is available to send data in queue.
+/*
+** Called to send data when socket is available to send data in queue.
+*/
 void LbNetImp::SendData ( int c )
 {
-    int nRet;
-
-		// Find the appropriate connection.
-
-		// Send the contents of the writebuffer, no MTU checking.
-		if ( connections[ c ].writeBufferSize > 0 )
-	  {
-	    nRet = send ( connections[ c ].socket ,
-	                  (LPSTR)&connections[ c ].writeBuffer ,
-                    connections[ c ].writeBufferSize , 0 );
-			if ( nRet == SOCKET_ERROR &&
-							WSAGetLastError() != WSAEWOULDBLOCK )
-				MessageBox ( NULL, "An error occured writing data to the "\
-                                       "socket.", "Error.", MB_ICONSTOP ) ;
-			else connections[ c ].writeBufferSize = 0 ;
-		}
+    // Send the contents of the writebuffer, no MTU checking.
+    if ( connections[ c ] . writeBufferSize > 0 )
+    {
+        int nRet = send ( connections[ c ].socket ,
+                         (LPSTR)&connections[ c ].writeBuffer ,
+                         connections[ c ].writeBufferSize , 0 );
+        if ( nRet == SOCKET_ERROR &&
+             WSAGetLastError() != WSAEWOULDBLOCK )
+            MessageBox ( NULL, "An error occured writing data to the "\
+                               "socket.", "Error.", MB_ICONSTOP ) ;
+        else connections[ c ].writeBufferSize = 0 ;
+    }
 }
 
 /*
-** Get the next message in the queue.
+** Get the next message in the socket read queue.
 */
-bool LbNetImp::GetTCPMessage ( char * address , char * message )
+bool LbNetImp::GetTCPMessage ( int * playerhash , char * message )
 {
-    if ( nHeadOfReadQ == -1 ) return false;
+    if ( !readSocketQueue.empty() )
+    {
+        LbConnection * c = readSocketQueue.front ( ) ;
+        readSocketQueue.pop ( ) ;
 
-    sprintf( address , inet_ntoa ( connections[ nHeadOfReadQ ].remoteAddress.sin_addr ) );
-    sprintf( message , connections[ nHeadOfReadQ ].readBuffer );
-    connections [ nHeadOfReadQ ].readBufferSize = 0 ;
+        // WRONG!
+        *playerhash = 1;
 
-    nHeadOfReadQ = connections[ nHeadOfReadQ ].prevInReadQ;
-    return true;
+        sprintf( message , (*c).readBuffer );
+        (*c).readBufferSize = 0 ;
+        return true ;
+    }
+    return false ;
 }
 
 /*
-** Add this message to the queue.
+** Add this message to the socket write buffer.
 */
-void LbNetImp::PutTCPMessage ( char * address , char * message )
+void LbNetImp::PutTCPMessage ( int playerhash , char * message )
 {
-    // Find the correct socket.
-    unsigned long lAddress = inet_addr ( address ) ;
-    int i;
-    for ( i = 0 ; i < nCon ; i++ )
-        if ( connections [ i ].remoteAddress.sin_addr.S_un.S_addr == lAddress )
-            break;
-
-    // Stick it in the write buffer. SHOULDN'T OVERWRITE OLD BUFFER.
-    sprintf ( (char*)&connections [ i ].writeBuffer , message ) ;
-    connections [ i ].writeBufferSize = strlen ( message ) ;
+    // Stick it in the write buffer. SHOULDN'T OVERWRITE OLD BUFFER!
+    sprintf ( ( char* ) & ( connections [ playerhash ] .writeBuffer ) , message ) ;
+    ( connections [ playerhash ] ) . writeBufferSize = strlen ( message ) ;
 }
 
 /*
-** Shuts down the network cleanly.
+** Used by server to send a message to all clients.  Doesn't use the
+** broadcast address, instead just sends a message to all players.
 */
-void LbNetImp::CloseNetwork()
+void LbNetImp::BroadcastTCPMessage ( char * message )
 {
     for ( int i = 0 ; i < nCon ; i++ )
-        closesocket ( connections [ i ].socket ) ;
+        if ( i != iListCon )
+            PutTCPMessage ( i , message ) ;
 }
 
-
-
+/*
+** Shuts down the network cleanly, closing all sockets.
+*/
+void LbNetImp::CloseNetwork ( )
+{
+    for ( int i = 0 ; i < nCon ; i++ )
+        closesocket ( connections [ i ] . socket ) ;
+}
 
 LbNetImp::~LbNetImp()
 {

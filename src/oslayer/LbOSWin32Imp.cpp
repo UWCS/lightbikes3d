@@ -603,6 +603,21 @@ void LbOSWin32Imp::DestroyOGLContext()
 
 }
 
+/*
+** Set up the networking API.  In this case it's Berkeley sockets for
+** Windows which is called WINSOCK version 2.
+*/
+void LbOSWin32Imp::InitiateNetwork()
+{
+    // This structure can be used to get information about the version of
+    // winsock in use.
+    WSAData stWSAData;
+
+    // Startup version 2.0 of Winsock, report errors.
+    if ( WSAStartup ( MAKEWORD ( 2 , 0 ) , &stWSAData ) != 0 )
+        MessageBox( NULL , "An error occured while initialising WinSock." ,
+                    "Error" , MB_ICONSTOP ) ;
+}
 
 
 LbOSLayerSys *CreateOSLayerSys()

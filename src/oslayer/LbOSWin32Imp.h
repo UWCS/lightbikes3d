@@ -8,6 +8,7 @@
        David Black
        James Ross
        David Capps
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +42,7 @@ virtual int GetMS();
 virtual char* GetDesktop32();
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
+virtual void InitiateNetwork() ;
 
 /*
 ** LbOSWin32Imp methods
