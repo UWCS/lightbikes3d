@@ -25,6 +25,10 @@
 #ifndef __LBNET__
 #define __LBNET__
 
+#define LB_NET_DISCONNECTED 1
+#define LB_NET_CONNECTEDTOSERVER 2
+#define LB_NET_SERVER 3
+
 enum LbGameEventId
 {
     LB_GAME_PLAYERJOIN = 0 ,
@@ -46,13 +50,14 @@ struct LbGameEvent
 class LbNetSys
 {
     public:
+        virtual int GetStatus ( ) = 0 ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) = 0 ;
         virtual void SendGameEvent ( LbGameEvent &e ) = 0 ;
         virtual void ProcessMessages ( ) = 0 ;
         virtual void Init ( LbOSLayerSys *os_sys ) = 0 ;
         virtual void PollSockets ( ) = 0 ;
-        virtual void ConnectToServer ( char * address , int port ) = 0 ;
-        virtual void InitiateServer ( int ) = 0 ;
+        virtual void ConnectToServer ( const char * address , int port ) = 0 ;
+        virtual void InitiateServer ( int port ) = 0 ;
 
         // empty virtual destructor to ensure proper cleanup
         virtual ~LbNetSys(){}

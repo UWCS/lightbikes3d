@@ -57,11 +57,11 @@ LbNetImp::LbNetImp ( )
 }
 
 /**
- ** Is there a server running at the moment.
+ ** Returns LB_NET_CONNECTEDTOSERVER , LB_NET_SERVER or LB_NET_DISCONNECTED.
  **/
-bool LbNetImp::IsServer ( )
+int LbNetImp::GetStatus ( )
 {
-    return true ;
+    return mode ;
 }
 
 // ----- Stuff for translating game messages, to text or packets and v.v. -----
@@ -71,19 +71,23 @@ bool LbNetImp::IsServer ( )
  **/
 void LbNetImp::Init ( LbOSLayerSys *os_sys )
 {
+
+            //MessageBox ( NULL , "Init." ,
+           //          "Error" , MB_ICONSTOP ) ;
+
     // Store the reference to the OS layer.
     os = os_sys;
 
     // Start the OS level aspects of the network.
     os->InitiateNetwork();
 
+    mode = LB_NET_DISCONNECTED ;
+
     iListCon = -1 ;
     iServCon = -1 ;
 
-    if ( IsServer ( ) )
-        InitiateServer ( LB_SERVER_TCP_PORT ) ;
-    else
-        ConnectToServer ( "127.0.0.1" , LB_SERVER_TCP_PORT );
+    InitiateServer ( 32001 ) ;
+
 }
 
 /**
@@ -129,7 +133,7 @@ void LbNetImp::SendGameEvent ( LbGameEvent &e )
     msgtext = cmd + " " + ply + " " + msgtext ;
 
     // If we are a server.
-    if ( IsServer ( ) )
+    if ( mode == LB_NET_SERVER )
         BroadcastTCPMessage ( msgtext.c_str ( ) ) ;
     //else
     //   PutTCPMessage ( SERVER_HASH , msgtext.c_str ( ) ) ;
@@ -177,7 +181,7 @@ void LbNetImp::ProcessMessages ( )
         t.playerHash = playerhash ;
 
         // If we are server check for players sending wrong player numbers.
-        if ( IsServer() &&
+        if ( mode == LB_NET_SERVER &&
              playerhash != socketToPlayerhash ( s ) &&
              t.id != LB_GAME_PLAYERJOIN )
             MessageBox ( NULL , "Client sent invalid data." ,
@@ -258,7 +262,7 @@ void LbNetImp::PollSockets ( )
 /**
  ** Used by a client to connect to a server.
  **/
-void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
+void LbNetImp::ConnectToServer ( const char * dottedServerAddress , int port )
 {
     int n = lbsockets.size ( ) ;
     lbsockets.resize ( n + 1 ) ;
@@ -293,7 +297,7 @@ void LbNetImp::ConnectToServer ( char * dottedServerAddress , int port )
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
 
-    PutTCPMessage ( & lbsockets [ iServCon ] , "JOIN 0 Fish\r\n" ) ;
+    mode = LB_NET_CONNECTEDTOSERVER ;
 }
 
 /**
@@ -326,6 +330,9 @@ void LbNetImp::InitiateServer ( int port )
        MessageBox ( NULL, "Error binding to the server port.  Another " \
                           "application may be using this port." , "Error" ,
                           MB_ICONSTOP ) ;
+
+                                 int q = WSAGetLastError() ;
+                                 assert ( q == 0 );
     }
 
     // Start listening for connections on the port.
@@ -334,6 +341,10 @@ void LbNetImp::InitiateServer ( int port )
     {
        MessageBox ( NULL, "There was an error starting to listen" \
                     "on the port" , "Error" , MB_ICONSTOP ) ;
+
+                                                     int q = WSAGetLastError() ;
+      assert(q == 0);
+
     }
 
     iListCon = n ;
@@ -341,6 +352,8 @@ void LbNetImp::InitiateServer ( int port )
     lbsockets [ n ] .remoteAddress = sockName ;
     lbsockets [ n ] .readBufferSize = 0 ;
     lbsockets [ n ] .writeBufferSize = 0 ;
+
+    mode = LB_NET_SERVER ;
 }
 
 /**

@@ -47,19 +47,18 @@ class LbNetImp : public LbNetSys
         LbNetImp();
         ~LbNetImp();
 
+        virtual int GetStatus ( ) ;
         virtual bool GetNextGameEvent (  LbGameEvent &e ) ;
         virtual void SendGameEvent ( LbGameEvent &e ) ;
         virtual void ProcessMessages ( ) ;
         virtual void Init(LbOSLayerSys *os_sys);
         virtual void PollSockets ( );
+        virtual void ConnectToServer( const char * address , int port ) ;
+        virtual void InitiateServer( int port ) ;
 
     private:
         // LbNet's reference to the OS Layer.
         LbOSLayerSys *os;
-
-        virtual bool LbNetImp::IsServer ( ) ;
-        virtual void ConnectToServer( char * , int port ) ;
-        virtual void InitiateServer( int ) ;
         virtual void AcceptConnection (  ) ;
         virtual void ReadData ( int c  ) ;
         virtual void SendData ( int c  ) ;
@@ -83,6 +82,9 @@ class LbNetImp : public LbNetSys
 
         // The index of the socket on which, if this is a client, it is connected to the server.
         int iServCon ;
+
+        // type of operation ( client, server, disconnected )
+        int mode ;
 };
 
 #endif

@@ -45,6 +45,8 @@ private:
     LbInputSys *input_sys;
     LbSoundSys *sound_sys;
     LbNetSys *net_sys;
+
+    bool quit_flag;
 };
 
 /*** Block implimentations...*/

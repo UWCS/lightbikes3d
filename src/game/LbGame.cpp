@@ -46,7 +46,6 @@ LbGameImp::~LbGameImp()
 
 int LbGameImp::RunGame()
 {
-    bool quit_flag;
     LbOSLayerEvent os_event;
     LbGameEvent game_event;
     LbVector target(0,0,0), up(0,1,0);
@@ -106,12 +105,13 @@ int LbGameImp::RunGame()
         // Get text entered.
         while ( ( k = os_sys->getNextTextKey ( ) ) != 0 )
         {
-            textbuf += k ;
-            if ( textbuf [ textbuf.size() - 1 ] == '\r' )
+            if ( k == '\r' )
             {
                 ProcessCommand ( textbuf ) ;
                 textbuf.erase() ;
             }
+            else
+                textbuf += k ;
         }
 
         graph_sys->StartFrame();
@@ -159,13 +159,15 @@ int LbGameImp::RunGame()
             // ignore unknown events...
         }
 
-        // Probably won't do this ultimately.
-        net_sys->PollSockets();
-
+        if ( net_sys->GetStatus ( ) != LB_NET_DISCONNECTED )
+        {
         // Process Network messages (Networking) ie. convert them from strings
         // and packets to game messages, and add them to the network module's
         // queue of game messages.
         net_sys->ProcessMessages();
+
+        // Probably won't do this ultimately.
+        net_sys->PollSockets();
 
         // Read in Network messages (Networking)...
             /* Game Events - Messages from network:
@@ -203,8 +205,9 @@ int LbGameImp::RunGame()
                 }
                 break;
             }
-            break;
         }
+
+    }
 
         // Update game state (Game Logic)...
             /* Updateing actions:
@@ -235,22 +238,42 @@ int LbGameImp::RunGame()
 void LbGameImp::ProcessCommand ( string t )
 {
     LbGameEvent e ;
-    if ( t.substr ( 0 , 1 ) == "\\" )
+    t += " " ;
+    if ( t.substr ( 0 , 1 ) == "\\" || t.substr ( 0 , 1 ) == "/" )
     {
+        int m = t.find_first_of ( " " ) ;
+        string cmd = t.substr ( 1 , m - 1 ) ,
+               prm = t.substr ( m + 1 , t.size ( ) - m - 2 ) ;
+
+        if ( cmd == "quit" )
+            { quit_flag = true ; return ; }
+        //else if ( cmd == "connect" )
+         //   { net_sys->ConnectToServer ( prm.c_str() , LB_SERVER_TCP_PORT ) ; return ; }
+        else if ( cmd == "startserver" )
+            { net_sys->InitiateServer ( LB_SERVER_TCP_PORT ) ; return ; }
+        else if ( cmd == "join" )
+            e.id = LB_GAME_PLAYERJOIN ;
+        else if ( cmd == "hand" )
+            e.id = LB_GAME_HANDCHANGE ;
+        else if ( cmd == "leave" )
+            e.id = LB_GAME_PLAYERLEAVE ;
+
+        //strcpy ( e.message , prm.c_str ( ) ) ;
+        //e.playerHash = 0 ;
+        //net_sys->SendGameEvent ( e ) ;
     }
     else
     {
-        e.id = LB_GAME_CHAT ;
-        strcpy ( e.message , t.c_str() ) ;
-        e.playerHash = 0 ;
-        net_sys->SendGameEvent ( e ) ;
+        //e.id = LB_GAME_CHAT ;
+        //strcpy ( e.message , t.c_str ( ) ) ;
+        //e.playerHash = 0 ;
+        //net_sys->SendGameEvent ( e ) ;
     }
 }
 
 void LbGameImp::InitSubsystems()
 {
     os_sys=CreateOSLayerSys();
-
     graph_sys=CreateGraphicsSys(os_sys);
     input_sys=CreateInputSys(os_sys);
     //sound_sys=CreateSoundSys(os_sys);
