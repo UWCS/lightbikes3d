@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        James Ross
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,19 +46,50 @@ LbGameImp::~LbGameImp()
 
 int LbGameImp::RunGame()
 {
-	bool quit_flag;
-	LbOSLayerEvent os_event;
-	
+    bool quit_flag;
+    LbOSLayerEvent os_event;
+    LbVector target(0,0,0), up(0,1,0);
+    LbVector eye;
+    float scroll,change;
+    int count=0,lastms=0,fps=0;
+    char msg[16] = "";
+
 	InitSubsystems();
 	
 	quit_flag=false;
-	
+
+    eye = LbVector(0,0,0);
+    change = 0.1f;
+    lastms = os_sys->GetMS();
+
+    graph_sys->TriggerEffect(LB_GFX_FADEINTEXTURE);
+
 	while(!quit_flag)
 	{
+        scroll = scroll + change;
+        if (scroll > 15) change=-0.1f;
+        if (scroll < -15) change=0.1f;
+        if ( !(count++ % 20) ) {
+            lastms = (os_sys->GetMS() - lastms);
+            fps = lastms? (20000 / lastms) : 0;
+            lastms = os_sys->GetMS();
+            sprintf(msg,"FPS:%d",fps);
+        }
+
+        eye = LbVector(scroll,0,-20);
+        graph_sys->SetCamera(eye,target,up);
+
+
 		graph_sys->StartFrame();
 		// draw here
+        graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
+        graph_sys->DrawText(0,0.5,"LightBikes3d");
+        graph_sys->SetTextColor(LbRGBAColor(0,1,0,1));
+        graph_sys->DrawText(0.8,0.5,"ABHDE");
+        graph_sys->SetTextColor(LbRGBAColor(0,0,1,1));
+        graph_sys->DrawText(0.5,0.9,msg);
+    
 		graph_sys->EndFrame();
-		os_sys->SwapDoubleBuffers();
 		
 		// poll the event queue.
 		while(os_sys->PollEvent(os_event))
@@ -98,7 +130,8 @@ int LbGameImp::RunGame()
 			*/
 		// Send Network messages (Networking)...
 	}
-	
+
+
 	DeInitSubsystems();
 	
 	return 0;

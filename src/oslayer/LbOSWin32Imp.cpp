@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        James Ross
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,38 +68,83 @@ void LbOSWin32Imp::SwapDoubleBuffers()
 	SwapBuffers(hDC);
 }
 
+int LbOSWin32Imp::GLTextListBase()
+{
+    return TextBase;
+}
+
+int LbOSWin32Imp::GetMS()
+{
+    LARGE_INTEGER rslt;
+    QueryPerformanceCounter(&rslt);
+    return (int)( 1000 * rslt.QuadPart / freq.QuadPart);
+}
+
+char* LbOSWin32Imp::GetDesktop32()
+{
+    char *rslt = new char[1024 * 512 * 4];
+    memcpy(rslt, desktop, 1024*512*4);
+    return rslt;
+}
+
+void LbOSWin32Imp::GetDesktopImage()
+{
+    HWND dWnd = GetDesktopWindow();
+    HDC dDC = GetDC(0);
+    //for the moment, just get 640x480
+    desktop = new char[1024 * 512 * 4];
+    int *pixel = (int*)desktop;
+
+    for (int y=0; y < 480; y++) {
+        for (int x=0; x < 640; x++) {
+            *pixel = GetPixel(dDC,x,y);
+            (*pixel) |= 0xff000000;
+            pixel++;
+        }
+        pixel += (1024-640);
+    }
+}
 
 /*
 ** LbOSWin32Imp methods
 */
 void LbOSWin32Imp::Init()
 {
-hInstance=GetModuleHandle(NULL);
-
-CreateMainWindow();
+    hInstance=GetModuleHandle(NULL);
+    TextBase=-1;
+    GetDesktopImage();
+    CreateMainWindow();
 }
 
 LbOSWin32Imp::LbOSWin32Imp()
 {
 // there can only be one...
-assert(the_oslayer==NULL);
+    assert(the_oslayer==NULL);
 
-the_oslayer=this;
+    the_oslayer=this;
 
-hwnd_main=NULL;
-hInstance=NULL;
-hwnd_main=NULL;
-hDC=NULL;
-hRC=NULL;
-quit_flag=false;
+    hwnd_main=NULL;
+    hInstance=NULL;
+    hwnd_main=NULL;
+    hDC=NULL;
+    hRC=NULL;
+    
+    quit_flag=false;
+    
+    desktop=NULL;
 }
 
 LbOSWin32Imp::~LbOSWin32Imp()
 {
-DestroyMainWindow();
+    DestroyMainWindow();
 
-assert(the_oslayer==this);
-the_oslayer=NULL;
+    if(desktop!=NULL) {
+        delete[] desktop;
+        desktop=NULL;
+        }
+    
+    assert(the_oslayer==this);
+    the_oslayer=NULL;
 }
 
 void LbOSWin32Imp::CreateMainWindow()
@@ -127,11 +173,16 @@ assert(rval);
 /*
 ** create the window
 */    /* Create the frame */
+							  
 hwnd_main=CreateWindow("LightBikes3D WndClass",
 							  "LightBikes",
-							  WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | 
-							  WS_CLIPCHILDREN,
-							  CW_USEDEFAULT,CW_USEDEFAULT,
+//                            WS_OVERLAPPEDWINDOW |
+                              WS_POPUP |
+                              WS_CLIPSIBLINGS |
+                              WS_VISIBLE |
+                              WS_CLIPCHILDREN,
+//                            CW_USEDEFAULT,CW_USEDEFAULT,
+                              0,0,
 							  640,480,
 							  NULL,NULL,
 							  hInstance,
@@ -140,6 +191,8 @@ assert(hwnd_main!=NULL);
 	
 ShowWindow(hwnd_main,SW_SHOWNORMAL);
 UpdateWindow (hwnd_main);
+
+QueryPerformanceFrequency(&freq);   //DC: Get ready to use hi-performance counter
 }
 
 void LbOSWin32Imp::DestroyMainWindow()
@@ -187,22 +240,26 @@ return DefWindowProc (hwnd,uMsg,wParam,lParam);
 
 void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
 {
-DestroyOGLContext();
+    DestroyOGLContext();
 
-// create device context
-hDC=GetDC(hwnd);
-assert(hDC!=NULL);
+    // create device context
+    hDC=GetDC(hwnd);
+    assert(hDC!=NULL);
 
-// setup pixel format
+    // setup pixel format
 
-SetupPixelFormat(hDC);
+    SetupPixelFormat(hDC);
 
-// create and make current rendering context
-hRC=wglCreateContext(hDC);
-assert(hRC!=NULL);
+    // create and make current rendering context
+    hRC=wglCreateContext(hDC);
+    assert(hRC!=NULL);
 
-BOOL rval=wglMakeCurrent(hDC,hRC);
-assert(rval);
+    BOOL rval=wglMakeCurrent(hDC,hRC);
+    assert(rval);
+
+    TextBase = glGenLists(256); //init for standard ASCII text
+    wglUseFontBitmaps(hDC,0,255,TextBase);
+    //actually send the font bitmaps to OGL
 }
 
 void LbOSWin32Imp::SetupPixelFormat(HDC dc)
@@ -215,7 +272,7 @@ pfd.dwFlags=PFD_DRAW_TO_WINDOW |
 				PFD_SUPPORT_OPENGL |
 				PFD_DOUBLEBUFFER;
 pfd.iPixelType=PFD_TYPE_RGBA;
-pfd.cColorBits=24;
+pfd.cColorBits=16;
 pfd.cRedBits=0; 
 pfd.cRedShift=0;
 pfd.cGreenBits=0; 
@@ -229,7 +286,7 @@ pfd.cAccumRedBits=0;
 pfd.cAccumGreenBits=0; 
 pfd.cAccumBlueBits=0; 
 pfd.cAccumAlphaBits=0; 
-pfd.cDepthBits=32;
+pfd.cDepthBits=16;
 pfd.cStencilBits=0;
 pfd.cAuxBuffers=0; 
 pfd.iLayerType=PFD_MAIN_PLANE;
@@ -274,18 +331,23 @@ InvalidateRect(hwnd_main,NULL,TRUE);
 
 void LbOSWin32Imp::DestroyOGLContext()
 {
-if(hDC!=NULL)
-	{
-	assert(hwnd_main!=NULL);
-	ReleaseDC(hwnd_main,hDC);
-	hDC=NULL;
-	}
-if(hRC!=NULL)
-	{
-	wglMakeCurrent(NULL,NULL);
-	wglDeleteContext(hRC);
-	hRC=NULL;
-	}
+    if(TextBase!=-1) {
+        glDeleteLists(TextBase,256);
+        TextBase=-1;
+    }
+    
+    if(hDC!=NULL)
+    	{
+    	assert(hwnd_main!=NULL);
+    	ReleaseDC(hwnd_main,hDC);
+    	hDC=NULL;
+    	}
+    if(hRC!=NULL)
+    	{
+    	wglMakeCurrent(NULL,NULL);
+    	wglDeleteContext(hRC);
+    	hRC=NULL;
+    	}
 }
 
 

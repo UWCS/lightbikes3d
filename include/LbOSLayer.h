@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        James Ross
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +44,9 @@ public:
 
 virtual bool PollEvent(LbOSLayerEvent &os_event)=0;
 virtual void SwapDoubleBuffers()=0;
+virtual int GLTextListBase()=0;
+virtual int GetMS()=0; //get accurate millisecond count
+virtual char* GetDesktop32()=0; //get an image of the desktop. Bwahaha!
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +37,8 @@ virtual void CreateGraphicsLevel(int x,int y);
 
 virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up);
 
+virtual void TriggerEffect(LbGraphicsEffect effect);
+
 virtual void DrawText(float x,float y,const char *str);
 
 virtual void StartFrame();
@@ -52,6 +55,27 @@ void Init();
 
 private:
 
+void DrawEffect();
+void SetupOrtho();
+void FinishOrtho();
+int LoadBMPTexture(char *fname, int transcolour);
+int LoadMemTexture( char *pixels, int xsize, int ysize);
+void ActivateTexture(int texID);
+void DeleteTexture(int texID);
+
+//effect stuff
+LbGraphicsEffect cureffect;
+int effectprogress;
+int sfxID;
+
+// text stuff
+LbRGBAColor textcolor;
+int fontID
+
+// camera setup
+LbVector campos, camtgt, camup;
+
+LbOSLayerSys *os;
 int frameCount;
 };
 

@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +24,16 @@
 *********************************************************************************/
 #ifndef __LBGRAPHICS__
 #define __LBGRAPHICS__
+
+enum LbGraphicsEffect
+	{
+    LB_GFX_NONE             = 0,
+    LB_GFX_FADEIN           = 1,
+    LB_GFX_FADEOUT          = 2,
+    LB_GFX_FADEINTEXTURE    = 3,
+    LB_GFX_FADEOUTTEXTURE   = 4,
+	};
+
 
 class LbGraphicsBike
 {
@@ -67,6 +78,9 @@ virtual void CreateGraphicsLevel(int x,int y)=0;
 virtual void SetCamera(const LbVector &pos,const LbVector &target,const LbVector &up)=0;
 
 virtual void DrawText(float x,float y,const char *str)=0;
+virtual void SetTextColor(LbRGBAColor color)=0;
+
+virtual void TriggerEffect(LbGraphicsEffect effect)=0;
 
 virtual void StartFrame()=0;
 virtual void EndFrame()=0;

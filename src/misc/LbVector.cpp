@@ -55,7 +55,7 @@ LbVector::~LbVector() {
 /**************** Access methods **********************/
 
 /* Return the modulus of the Vector */
-float LbVector::mod() {
+float LbVector::mod() const{
   return (float)sqrt( (m_x*m_x) +
 	       (m_y*m_y) +
 	       (m_z*m_z) );
@@ -71,14 +71,14 @@ void LbVector::toString(char* rv) {
 
 
 /**************** Scalar Arithmetic *******************/
-LbVector LbVector::operator *(float f) {
+LbVector LbVector::operator *(float f) const {
   return LbVector ( m_x * f,
 		    m_y * f,
 		    m_z * f
 		    );
 }
 
-LbVector LbVector::operator /(float f) {
+LbVector LbVector::operator /(float f) const {
   return LbVector ( m_x / f,
 		    m_y / f,
 		    m_z / f
@@ -87,14 +87,14 @@ LbVector LbVector::operator /(float f) {
 
 
 /**************** Vector Arithmetic *******************/
-LbVector LbVector::operator +(LbVector& v) {
+LbVector LbVector::operator +(LbVector& v) const {
   return LbVector ( m_x + v.getX(),
 		    m_y + v.getY(),
 		    m_z + v.getZ() 
 		    );
 }
 
-LbVector LbVector::operator -(LbVector& v) {
+LbVector LbVector::operator -(LbVector& v) const {
   return LbVector ( m_x - v.getX(),
 		    m_y - v.getY(),
 		    m_z - v.getZ() 
@@ -104,7 +104,7 @@ LbVector LbVector::operator -(LbVector& v) {
 /*************** Vector Multiplication ****************/
 // dammit if Soustroup can use >> and << for a stream
 // IO then I can use ^ for dot-product!
-float LbVector::operator ^(LbVector& v) {
+float LbVector::operator ^(LbVector& v) const {
   return ( (m_x * v.getX()) +
 	   (m_y * v.getY()) +
 	   (m_z * v.getZ()) );
@@ -112,7 +112,7 @@ float LbVector::operator ^(LbVector& v) {
 
 
 /*************** Matrix Multiplication ****************/
-LbVector LbVector::operator *(LbMatrix& M ){
+LbVector LbVector::operator *(LbMatrix& M ) const{
   return LbVector( m_x*M.getXY(0,0) + m_y*M.getXY(0,1) + m_z*M.getXY(0,2),
 		   m_x*M.getXY(1,0) + m_y*M.getXY(1,1) + m_z*M.getXY(1,2),
 		   m_x*M.getXY(2,0) + m_y*M.getXY(2,1) + m_z*M.getXY(2,2) );

@@ -7,6 +7,7 @@
     Contributors to this file:
        David Black
        James Ross
+       David Capps
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,7 +36,9 @@ public:
 
 virtual bool PollEvent(LbOSLayerEvent &os_event);
 virtual void SwapDoubleBuffers();
-
+virtual int GLTextListBase();
+virtual int GetMS();
+virtual char* GetDesktop32();
 /*
 ** LbOSWin32Imp methods
 */
@@ -53,7 +56,7 @@ void SetupPixelFormat(HDC dc);
 void SetupPalette(HDC dc);
 void PerformResize();
 void DestroyOGLContext();
-
+void GetDesktopImage();
 
 static LONG WINAPI MainWndProcRedir(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 LONG WINAPI MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
@@ -65,6 +68,10 @@ HWND hwnd_main;
 HDC hDC;
 HGLRC hRC;
 bool quit_flag;
+
+int TextBase;
+LARGE_INTEGER freq;
+char *desktop;
 };
 
 #endif
