@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,9 +26,46 @@
 #include "LbPublic.h"
 #include "LbNetImp.h"
 
-
 LbNetImp::LbNetImp()
 {
+}
+
+/**
+ ** Process the messages waiting on the queue.  If this is a server sends out
+ ** the messages to the clients.
+ **/
+void LbNetImp::ProcessMessages()
+{
+}
+
+/**
+ ** Return the next message from the game message queue.
+ ** things like "start game" etc.
+ **/
+void LbNetImp::GetNextGameMessage ( )
+{
+}
+
+/**
+ ** Initialisation of networking subsystem.
+ **/
+void LbNetImp::Init(LbOSLayerSys *os_sys)
+{
+    // Store the reference to the OS layer.
+    os = os_sys;
+
+    // Start the OS level aspects of the network.
+    os->InitiateNetwork();
+
+    // THIS LINE WILL BE USED BY THE CLIENT.
+    // os_sys->ConnectToServer ( LB_SERVER_IP_ADDRESS );
+
+    // ASSUME THAT WE ARE RUNNING A SERVER.
+    os->InitiateServer ( LB_SERVER_TCP_PORT ) ;
+
+    // TO DO: Set up a players list.
+
+    // TO DO: Set up a message queue.
 }
 
 LbNetImp::~LbNetImp()
@@ -36,8 +74,10 @@ LbNetImp::~LbNetImp()
 
 LbNetSys *CreateNetSys(LbOSLayerSys *os_sys)
 {
-LbNetSys *rval=new LbNetImp;
-assert(rval!=NULL);
+    LbNetSys *rval=new LbNetImp;
+    assert(rval!=NULL);
 
-return rval;
+    rval->Init(os_sys);
+
+    return rval;
 }

@@ -27,27 +27,26 @@
 #include "LbPublic.h"
 #include "LbGameImp.h"
 
-
 LbGameImp::LbGameImp()
 {
-	os_sys=NULL;
-	graph_sys=NULL;
-	input_sys=NULL;
-	sound_sys=NULL;
-	net_sys=NULL;
+    os_sys=NULL;
+    graph_sys=NULL;
+    input_sys=NULL;
+    sound_sys=NULL;
+    net_sys=NULL;
 }
 
 LbGameImp::~LbGameImp()
 {
-	// make double sure things have been cleaned up.
-	DeInitSubsystems();
+    // make double sure things have been cleaned up.
+    DeInitSubsystems();
 }
 
 
 int LbGameImp::RunGame()
 {
-	bool quit_flag;
-	LbOSLayerEvent os_event;
+    bool quit_flag;
+    LbOSLayerEvent os_event;
     LbVector target(0,0,0), up(0,1,0);
     LbVector *eye;
     float scroll,change;
@@ -56,9 +55,9 @@ int LbGameImp::RunGame()
     char msg[16] = "", inp[32] = "", keymsg[32] = "";
     LbOSLayerKeypress keys[32];
 
-	InitSubsystems();
-	
-	quit_flag=false;
+    InitSubsystems();
+
+    quit_flag=false;
 
     eye = new LbVector(0,0,0);
     change = 0.1f;
@@ -68,8 +67,8 @@ int LbGameImp::RunGame()
 
     sound_sys->PlayMusicFile("TRACK1.MP3"); //just for the moment
 
-	while(!quit_flag)
-	{
+    while(!quit_flag)
+    {
         scroll = scroll + (change* ( os_sys->GetMS() - startms) / 50.0f );
         startms = os_sys->GetMS();
         if (scroll > 15) change=-0.1f;
@@ -98,8 +97,8 @@ int LbGameImp::RunGame()
             if (keycount>0) sprintf(keymsg, "Left: %d, Right: %d", lpress, rpress);
         } else sprintf(inp, "Input Error");
 
-		graph_sys->StartFrame();
-		// draw here
+        graph_sys->StartFrame();
+        // draw here
         graph_sys->SetTextColor(LbRGBAColor(1,0,0,1));
         graph_sys->DrawText(0,0.5,"LightBikes3d");
         graph_sys->SetTextColor(LbRGBAColor(0,1,0,1));
@@ -112,102 +111,113 @@ int LbGameImp::RunGame()
         graph_sys->DrawText(0,0.1,keymsg);
 
 
-		graph_sys->EndFrame();
-		
-		// poll the event queue.
-		while(os_sys->PollEvent(os_event))
-		{
-			/* OS event:
-			**	Minimise/retstore
-			**	Active/deactivate
-			**	Close
-			**	Normal keypress (for menus, etc.)
-			**	Return: Send player quip
-			*/
-			// handle the event.
-			switch(os_event.id)
-			{
-				case LB_OSEVENT_QUIT:
-					quit_flag=true;// bye bye...
-					break;
-			}
-			// ignore unknown events...
-		}
-		// Read in Network messages (Networking)...
-			/* Messages from network:
-			**	Start game
-			**	Player position updates
-			**	End game
-			**	Send level data
-			*/
-		// Update game state (Game Logic)...
-			/* Updateing actions:
-			**	Poll for Input events
-			**	Interpret player input
-			**	Proccess Network messages
-			**	Updating bikes
-			**	Check for collisions
-			**	MENU (stuff)
-			**		Interface?
-			**		Messages --> Network
-			*/
-		// Send Network messages (Networking)...
-	}
+        graph_sys->EndFrame();
+
+        // poll the event queue.
+        while(os_sys->PollEvent(os_event))
+        {
+            /* OS event:
+            **  Minimise/retstore
+            **  Active/deactivate
+            **  Close
+            **  Normal keypress (for menus, etc.)
+            **  Return: Send player quip
+            */
+            // handle the event.
+            switch(os_event.id)
+            {
+                case LB_OSEVENT_QUIT:
+                    quit_flag=true;// bye bye...
+                    break;
+            }
+            // ignore unknown events...
+        }
+
+        // Process Network messages (Networking)...
+        // Convert network messages i.e. strings and packets to game messages.
+        net_sys->ProcessMessages();
+
+        // Read in Network messages (Networking)...
+        //while ( netsys->GetNextGameMessage() )
+        //{
+            /* Messages from network:
+            **  Start game
+            **  Player position updates
+            **  End game
+            **  Send level data
+            */
+        //}
+
+        // Update game state (Game Logic)...
+            /* Updateing actions:
+            **  Poll for Input events
+            **  Interpret player input
+            **  Proccess Network messages
+            **  Updating bikes
+            **  Check for collisions
+            **  MENU (stuff)
+            **      Interface?
+            **      Messages --> Network
+            */
+
+        // Send network -> send game messages
+        // send messages to network module to send to server.
+    }
 
     delete eye;
 
-	DeInitSubsystems();
-	
-	return 0;
+    DeInitSubsystems();
+
+    return 0;
 }
 
 void LbGameImp::InitSubsystems()
 {
-	os_sys=CreateOSLayerSys();
-	
-	graph_sys=CreateGraphicsSys(os_sys);
-	input_sys=CreateInputSys(os_sys);
-	sound_sys=CreateSoundSys(os_sys);
-	net_sys=CreateNetSys(os_sys);
+    os_sys=CreateOSLayerSys();
+
+    graph_sys=CreateGraphicsSys(os_sys);
+    input_sys=CreateInputSys(os_sys);
+    sound_sys=CreateSoundSys(os_sys);
+    net_sys=CreateNetSys(os_sys);
 }
 
 void LbGameImp::DeInitSubsystems()
 {
-	if(graph_sys!=NULL)
-	{
-		delete graph_sys;
-		graph_sys=NULL;
-	}
-	
-	if(input_sys!=NULL)
-	{
-		delete input_sys;
-		input_sys=NULL;
-	}
-	
-	if(sound_sys!=NULL)
-	{
-		delete sound_sys;
-		sound_sys=NULL;
-	}
-	
-	if(net_sys!=NULL)
-	{
-		delete net_sys;
-		net_sys=NULL;
-	}
-	
-	if(os_sys!=NULL)
-	{
-		delete os_sys;
-		os_sys=NULL;
-	}
+    if(graph_sys!=NULL)
+    {
+        delete graph_sys;
+        graph_sys=NULL;
+    }
+
+    if(input_sys!=NULL)
+    {
+        delete input_sys;
+        input_sys=NULL;
+    }
+
+    if(sound_sys!=NULL)
+    {
+        delete sound_sys;
+        sound_sys=NULL;
+    }
+
+    if(net_sys!=NULL)
+    {
+        delete net_sys;
+        net_sys=NULL;
+    }
+
+    if(os_sys!=NULL)
+    {
+        delete os_sys;
+        os_sys=NULL;
+    }
 };
 
 LbGameSys *CreateGameSys()
 {
-	LbGameSys *rval=new LbGameImp;
-	assert(rval!=NULL);
-	
-	return rval;
+    LbGameSys *rval=new LbGameImp;
+    assert(rval!=NULL);
+
+    return rval;
 }

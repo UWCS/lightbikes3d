@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,12 +27,17 @@
 
 class LbNetImp : public LbNetSys
 {
-public:
+    public:
+        LbNetImp();
+        ~LbNetImp();
 
-LbNetImp();
-~LbNetImp();
+        virtual void GetNextGameMessage ( ) ;
+        virtual void ProcessMessages ( ) ;
 
-private:
+        virtual void Init(LbOSLayerSys *os_sys);
+
+    private:
+        LbOSLayerSys *os;
 };
 
 #endif

@@ -8,6 +8,7 @@
        David Black
        James Ross
        David Capps
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,9 +31,9 @@ typedef Winamp_Input_Module* WA_InputPtr;
 typedef Winamp_Output_Module* WA_OutputPtr;
 
 enum LbOSLayerEventId
-	{
-	LB_OSEVENT_QUIT		=0,
-	};
+    {
+    LB_OSEVENT_QUIT     =0,
+    };
 
 enum LbOSLayerKey
     {
@@ -40,7 +41,7 @@ enum LbOSLayerKey
     LB_OSKEY_RIGHT      =1,
     };
 
-struct LbOSLayerEvent 
+struct LbOSLayerEvent
 {
 LbOSLayerEventId id;
 };
@@ -66,6 +67,14 @@ virtual bool GetOSKey(LbOSLayerKeypress *data, int *num)=0;
     //I'm intending to mean fast accurate (eg. DirectInput under Win32) here
 
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp)=0;
+
+virtual void ConnectToServer ( char *) = 0 ;
+virtual void InitiateServer ( int ) = 0 ;
+virtual void InitiateNetwork ( ) = 0 ;
+virtual void CloseNetwork ( ) = 0 ;
+virtual void ProcessClientEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
+virtual void ProcessServerEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError) = 0 ;
+
 
 // empty virtual destructor to ensure proper cleanup
 virtual ~LbOSLayerSys(){}

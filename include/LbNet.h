@@ -6,6 +6,7 @@
 
     Contributors to this file:
        David Black
+       Chris Skepper
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,10 +27,14 @@
 
 class LbNetSys
 {
-public:
+    public:
+        virtual void GetNextGameMessage ( ) = 0 ;
+        virtual void ProcessMessages ( ) = 0 ;
 
-// empty virtual destructor to ensure proper cleanup
-virtual ~LbNetSys(){}
+        virtual void Init(LbOSLayerSys *os_sys) = 0 ;
+
+        // empty virtual destructor to ensure proper cleanup
+        virtual ~LbNetSys(){}
 };
 
 LbNetSys *CreateNetSys(LbOSLayerSys *os_sys);

@@ -42,6 +42,13 @@ virtual char* GetDesktop32();
 virtual bool GetOSKey(LbOSLayerKeypress *data, int *num);
 virtual bool SetupWinampCompatPlugins(WA_InputPtr *inp, WA_OutputPtr *outp);
 
+virtual void ConnectToServer( char * ) ;
+virtual void InitiateServer( int )  ;
+virtual void InitiateNetwork() ;
+virtual void ProcessClientEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError);
+virtual void ProcessServerEvent (SOCKET hSock, WORD WSAEvent , WORD WSAError);
+virtual void CloseNetwork() ;
+
 /*
 ** LbOSWin32Imp methods
 */

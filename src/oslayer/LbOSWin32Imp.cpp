@@ -24,11 +24,16 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *********************************************************************************/
 #include <dinput.h>
+#include <winsock.h>
 #include "LbStandard.h"
 #include "LbPublic.h"
 #include "LbOSWin32Imp.h"
 
 #define DINPUT_BUFFERSIZE 32; //size of buffer for DirectInput
+
+#define WM_USER_SERVER_TCP_EVENT WM_USER+1
+#define WM_USER_CLIENT_TCP_EVENT WM_USER+2
+#define SOCKADDR_LEN sizeof(struct sockaddr)
 
 const int KeyMapping[] = { DIK_LEFT, DIK_RIGHT };
 const int NumKeys = 2;
@@ -44,34 +49,34 @@ MSG msg;
 
 // dispatch any windows messages
 while(PeekMessage(&msg,NULL,0,0,PM_NOREMOVE))
-	{
-	if(GetMessage(&msg,NULL,0,0)>0)
-		{
-		assert(msg.message!=WM_CLOSE);
+    {
+    if(GetMessage(&msg,NULL,0,0)>0)
+        {
+        assert(msg.message!=WM_CLOSE);
 
-		DispatchMessage(&msg);// send to window proc
-		}
-	}
+        DispatchMessage(&msg);// send to window proc
+        }
+    }
 
 /*
 ** TODO: we should impliment a queue of LB events.
-** window proc creates events, then we return 
+** window proc creates events, then we return
 ** them(one by one).
 */
 if(quit_flag)
-	{
-	quit_flag=false;// reset quit flag.
-	
-	os_event.id=LB_OSEVENT_QUIT;
-	return true;
-	}
+    {
+    quit_flag=false;// reset quit flag.
+
+    os_event.id=LB_OSEVENT_QUIT;
+    return true;
+    }
 
 return false;
 }
 
 void LbOSWin32Imp::SwapDoubleBuffers()
 {
-	SwapBuffers(hDC);
+    SwapBuffers(hDC);
 }
 
 int LbOSWin32Imp::GLTextListBase()
@@ -189,7 +194,7 @@ assert(rval);
 ** create the window
 */    /* Create the frame */
 hwnd_main=CreateWindow("LightBikes3D WndClass",
-							  "LightBikes",
+                              "LightBikes",
 //                            WS_OVERLAPPEDWINDOW |
                               WS_POPUP |
                               WS_CLIPSIBLINGS |
@@ -197,18 +202,18 @@ hwnd_main=CreateWindow("LightBikes3D WndClass",
                               WS_CLIPCHILDREN,
 //                            CW_USEDEFAULT,CW_USEDEFAULT,
                               0,0,
-							  640,480,
-							  NULL,NULL,
-							  hInstance,
-							  NULL);
+                              640,480,
+                              NULL,NULL,
+                              hInstance,
+                              NULL);
 assert(hwnd_main!=NULL);
-	
+
 }
 
 void LbOSWin32Imp::DestroyMainWindow()
 {
 if(hwnd_main!=NULL)
-	DestroyWindow(hwnd_main);
+    DestroyWindow(hwnd_main);
 
 // pump any remaining messages from the message que.
 LbOSLayerEvent dummy_event;
@@ -223,29 +228,39 @@ return the_oslayer->MainWndProc(hwnd,uMsg,wParam,lParam);
 LONG WINAPI LbOSWin32Imp::MainWndProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 switch(uMsg)
-	{
-	case WM_CREATE:
-		hwnd_main=hwnd;
+    {
+    case WM_CREATE:
+        hwnd_main=hwnd;
 
-		CreateOGLContext(hwnd);
-	break; 
-	
-	case WM_SIZE:
-		PerformResize();
-	break;
-	
-	case WM_CLOSE:
-		quit_flag=true;
-	break;
+        CreateOGLContext(hwnd);
+    break;
 
-	case WM_DESTROY:
-		DestroyOGLContext();
-		PostQuitMessage(0);
-		hwnd_main=NULL;
-	break;
-	}
+    case WM_SIZE:
+        PerformResize();
+    break;
 
-return DefWindowProc (hwnd,uMsg,wParam,lParam); 
+    case WM_CLOSE:
+        quit_flag=true;
+    break;
+
+    case WM_DESTROY:
+        DestroyOGLContext();
+        PostQuitMessage(0);
+        hwnd_main=NULL;
+    break;
+    case WM_USER_SERVER_TCP_EVENT:
+        ProcessServerEvent ( (SOCKET) wParam ,
+                             WSAGETSELECTEVENT ( lParam ) ,
+                             WSAGETSELECTERROR ( lParam ) );
+    break;
+    case WM_USER_CLIENT_TCP_EVENT:
+        ProcessClientEvent ( (SOCKET) wParam ,
+                             WSAGETSELECTEVENT ( lParam ) ,
+                             WSAGETSELECTERROR ( lParam ) );
+    break;
+    }
+
+return DefWindowProc (hwnd,uMsg,wParam,lParam);
 }
 
 void LbOSWin32Imp::CreateOGLContext(HWND hwnd)
@@ -279,30 +294,30 @@ PIXELFORMATDESCRIPTOR pfd;
 pfd.nSize=sizeof(PIXELFORMATDESCRIPTOR);
 pfd.nVersion=1;
 pfd.dwFlags=PFD_DRAW_TO_WINDOW |
-				PFD_SUPPORT_OPENGL |
-				PFD_DOUBLEBUFFER;
+                PFD_SUPPORT_OPENGL |
+                PFD_DOUBLEBUFFER;
 pfd.iPixelType=PFD_TYPE_RGBA;
 pfd.cColorBits=16;
-pfd.cRedBits=0; 
+pfd.cRedBits=0;
 pfd.cRedShift=0;
-pfd.cGreenBits=0; 
-pfd.cGreenShift=0; 
-pfd.cBlueBits=0; 
-pfd.cBlueShift=0; 
-pfd.cAlphaBits=0; 
-pfd.cAlphaShift=0; 
-pfd.cAccumBits=0; 
-pfd.cAccumRedBits=0; 
-pfd.cAccumGreenBits=0; 
-pfd.cAccumBlueBits=0; 
-pfd.cAccumAlphaBits=0; 
+pfd.cGreenBits=0;
+pfd.cGreenShift=0;
+pfd.cBlueBits=0;
+pfd.cBlueShift=0;
+pfd.cAlphaBits=0;
+pfd.cAlphaShift=0;
+pfd.cAccumBits=0;
+pfd.cAccumRedBits=0;
+pfd.cAccumGreenBits=0;
+pfd.cAccumBlueBits=0;
+pfd.cAccumAlphaBits=0;
 pfd.cDepthBits=16;
 pfd.cStencilBits=0;
-pfd.cAuxBuffers=0; 
+pfd.cAuxBuffers=0;
 pfd.iLayerType=PFD_MAIN_PLANE;
-pfd.bReserved=0; 
-pfd.dwLayerMask=0; 
-pfd.dwVisibleMask=0; 
+pfd.bReserved=0;
+pfd.dwLayerMask=0;
+pfd.dwVisibleMask=0;
 pfd.dwDamageMask=0;
 
 int pixel_fmt=ChoosePixelFormat(dc,&pfd);
@@ -329,14 +344,14 @@ assert(!(pfd.dwFlags & PFD_NEED_PALETTE));
 void LbOSWin32Imp::PerformResize()
 {
 if(hRC==NULL)
-	return;
+    return;
 
 RECT client_rect;
 GetWindowRect(hwnd_main,&client_rect);
 
 glViewport(0,0,client_rect.right,client_rect.bottom);
 
-InvalidateRect(hwnd_main,NULL,TRUE); 
+InvalidateRect(hwnd_main,NULL,TRUE);
 }
 
 bool LbOSWin32Imp::Init_DInput() {
@@ -354,7 +369,7 @@ bool LbOSWin32Imp::Init_DInput() {
     if (!SUCCEEDED(hr)) return false;
     g_DI->AddRef();
     g_DI->Initialize( hInstance, DIRECTINPUT_VERSION );
-  
+
 
 /*  if ( DirectInputCreateEx(   hInstance,
                                 DIRECTINPUT_VERSION,
@@ -431,7 +446,7 @@ bool LbOSWin32Imp::GetOSKey(LbOSLayerKeypress *data, int *num) {
 
         char msg[32];
         sprintf(msg,"Failed buffer oversize: num %d, received %d",*num, dwElements);
-        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
+        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
         return false;
 
         }
@@ -451,7 +466,7 @@ bool LbOSWin32Imp::GetOSKey(LbOSLayerKeypress *data, int *num) {
     } else {
         char msg[32];
         sprintf(msg,"Failed buffer get on %d",hr);
-//        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);        
+//        MessageBox(NULL, msg, "LbOSWin32Imp::GetOSKey()", MB_ICONSTOP);
         return false;
     }
 //      The above code implements buffered input key reading. This is
@@ -578,7 +593,7 @@ void LbOSWin32Imp::Deinit_WinampPlugins() {
     if (WinampOut) FreeLibrary(WinampOut);
     WinampIn = WinampOut = 0;
 }
- 
+
 void LbOSWin32Imp::DestroyOGLContext()
 {
     if(TextBase!=-1) {
@@ -601,13 +616,194 @@ void LbOSWin32Imp::DestroyOGLContext()
 
 }
 
+// ---------- Network functions. ----------
+
+/*
+** Set up the networking API.  In this case it's Berkeley sockets for
+** Windows which is called WINSOCK.
+*/
+void LbOSWin32Imp::InitiateNetwork()
+{
+    // This structure can be used to get information about the version of
+    // winsock in use.
+    WSAData stWSAData;
+
+    // Startup version 1.1 of Winsock, report errors.
+    if ( WSAStartup ( MAKEWORD ( 2 , 0 ) , &stWSAData ) != 0 )
+        MessageBox( NULL , "An error occured while initialising WinSock." ,
+                    "Error" , MB_ICONSTOP ) ;
+}
+
+/*
+** Used by a client to connect to a server.
+*/
+void LbOSWin32Imp::ConnectToServer( char * dottedServerAddress )
+{
+    // Used for return values.
+    int nRet;
+
+    // Get the server address as a long number rather than a string.
+    unsigned long serverAddress = inet_addr ( dottedServerAddress ) ;
+
+    // Set up a socket to connect to the server.
+    SOCKET hClientSock = socket ( AF_INET , SOCK_STREAM , 0 ) ;
+    if ( hClientSock == INVALID_SOCKET )
+        MessageBox ( NULL , "There was an error opening the socket." ,
+                     "Error" , MB_ICONSTOP ) ;
+
+    // Request Asynchronous notification for most events.
+    nRet = WSAAsyncSelect ( hClientSock , hwnd_main ,WM_USER_CLIENT_TCP_EVENT ,
+                            ( FD_CONNECT | FD_READ | FD_WRITE | FD_CLOSE ) ) ;
+    if ( nRet == SOCKET_ERROR )
+        MessageBox ( NULL , "There was an error setting the socket to " \
+                     "asynchrous mode." , "Error" , MB_ICONSTOP ) ;
+
+    MessageBox ( NULL, "connecting to server...", "fish", MB_ICONSTOP);
+
+    // Open
+}
+
+/*
+** Used by a server to set up the listening on a port which picks up clients
+** attempting to connect.
+*/
+void LbOSWin32Imp::InitiateServer ( int port )
+{
+    // Used for return values.
+    int nRet;
+
+    // Open the socket, reporting any errors.
+    //   AF_INET means use IP ADDRESSING
+    //   SOCK_STREAM means a stream as opposed to datagram ie. TCP not UDP.
+    //   0 means use TCP/IP protocol suite.
+    SOCKET hSock = socket ( AF_INET , SOCK_STREAM , 0 );
+    if ( hSock == INVALID_SOCKET )
+        MessageBox ( NULL , "There was an error opening socket." ,
+                     "Error" , MB_ICONSTOP ) ;
+
+    // Set the socket to Asynchronous, we want to be notified of incoming data
+    // or connections by a windows message.
+    nRet = WSAAsyncSelect ( hSock , hwnd_main , WM_USER_SERVER_TCP_EVENT ,
+                            ( FD_ACCEPT | FD_READ | FD_WRITE | FD_CLOSE ) ) ;
+    if ( nRet == SOCKET_ERROR)
+        MessageBox ( NULL , "There was an error setting up the socket" ,
+                     "Error" , MB_ICONSTOP ) ;
+
+    // Set the port and address, and report the error.
+    SOCKADDR_IN sockName;
+    PSOCKADDR_IN pSockName;
+    pSockName = &sockName;
+    pSockName->sin_family = PF_INET;
+    pSockName->sin_addr.S_un.S_addr = (u_long) inet_addr ( "127.0.0.1" ) ;
+    pSockName->sin_port = htons ( port ) ;
+    nRet = bind ( hSock , (LPSOCKADDR) pSockName, SOCKADDR_LEN ) ;
+    if ( nRet == SOCKET_ERROR )
+    {
+       MessageBox ( NULL, "Error binding to the server port.  Another " \
+                          "application may be using this port." , "Error" ,
+                          MB_ICONSTOP ) ;
+    }
+
+    // Start listening for connections on the port.
+    nRet = listen ( hSock , 20 ); // 20 = Max players.
+    if ( nRet == SOCKET_ERROR )
+    {
+       MessageBox ( NULL, "There was an error starting to listen" \
+                    "on the port" , "Error" , MB_ICONSTOP ) ;
+    }
+}
+
+/*
+** Deal with server issues, like a client connecting, disconnecting or sending
+** their chat.  When a client connects we may need to:
+**  - act on the message.
+**  - send back response.
+**  - forward the message to the other clients.
+*/
+void LbOSWin32Imp::ProcessServerEvent ( SOCKET hSock ,
+                                        WORD WSAEvent ,
+                                        WORD WSAError )
+{
+    int nLen = SOCKADDR_LEN , nRet;
+    SOCKET hNewSock;
+    SOCKADDR_IN remoteName ;
+    char recvBuff[50];
+
+    switch ( WSAEvent )
+    {
+        case FD_ACCEPT:
+            // Accept the connection.
+            hNewSock = accept ( hSock , (LPSOCKADDR)&remoteName , (LPINT) &nLen ) ;
+            if ( hNewSock == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
+                MessageBox ( NULL, "An error occured accepting an incoming "\
+                                   "connection.", "Error.", MB_ICONSTOP ) ;
+
+            // Create a new entry in the client connections list.
+            MessageBox(NULL, "server accepting connection", "fish", MB_ICONSTOP);
+        break;
+        case FD_READ:
+            // Read the data from the client.
+            nRet = recv ( hSock , (LPSTR)&recvBuff , 1 , 0 );
+            if ( nRet == SOCKET_ERROR && WSAGetLastError() != WSAEWOULDBLOCK )
+                MessageBox ( NULL, "An error occured reading data from the "\
+                                   "connection.", "Error.", MB_ICONSTOP ) ;
+
+            MessageBox(NULL, recvBuff , "Data recv", MB_ICONSTOP);
+            // Stick it ont stack.
+        break;
+        case FD_WRITE:
+            // Send anything waiting to be sent.
+        break;
+        case FD_CLOSE:
+            // Read anything remaining.  Remove the client from the
+            // connections list.
+        break;
+    }
+}
+
+/*
+** Deal with client issues, like receiving game/chat data:
+**  - process the message (add it to the queue?).
+*/
+void LbOSWin32Imp::ProcessClientEvent ( SOCKET hSock ,
+                                        WORD WSAEvent ,
+                                        WORD WSAError )
+{
+    switch ( WSAEvent )
+    {
+        case FD_CONNECT:
+            MessageBox(NULL, "client connected", "fish", MB_ICONSTOP);    switch ( WSAEvent )
+            // Create a new entry in the client connections list.
+        break;
+        case FD_READ:
+            // Read the data from the client.
+            // Stick it ont stack.
+        break;
+        case FD_WRITE:
+            // Send anything waiting to be sent.
+        break;
+        case FD_CLOSE:
+            // Shutdown or change server.
+        break;
+    }
+}
+
+/*
+** Shuts down the network cleanly.
+*/
+void LbOSWin32Imp::CloseNetwork()
+{
+    //closesocket(hSock) ;
+}
+
+// ---------- End of network functions. ----------
 
 LbOSLayerSys *CreateOSLayerSys()
 {
-LbOSWin32Imp *rval=new LbOSWin32Imp;
-assert(rval!=NULL);
+    LbOSWin32Imp *rval=new LbOSWin32Imp;
+    assert(rval!=NULL);
 
-rval->Init();
+    rval->Init();
 
-return rval;
+    return rval;
 }
