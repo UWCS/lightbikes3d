@@ -7,5 +7,7 @@
 *.opt
 *.plg
 *.ilk
+*.pdb
+*.zip
 Debug
 Release

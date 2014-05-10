@@ -29,7 +29,7 @@
 #include "LbPublic.h"
 #include "LbGameImp.h"
 
-#include "graphics/LbGraphicsImp.h"
+#include "../graphics/LbGraphicsImp.h"
 
 LbGameImp::LbGameImp()
 {

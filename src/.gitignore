@@ -8,5 +8,6 @@
 *.plg
 *.ilk
 *.rsp
+*.pdb
 Debug
 Release

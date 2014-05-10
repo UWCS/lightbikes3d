@@ -1,0 +1,168 @@
+# This file is the nmake makefile for use with the Visual C/C++ compiler + linker
+# If you're not sure then you probably want to install Visual Studio Express for Desktop 2013+
+# and run 'Make-VC' from a developer command line in the src directory
+# dinput.lib is in the August 2007 DirectX SDK and older
+
+LIB_FILES=\
+    "%DXSDK_DIR%Lib\x86\dinput.lib" \
+	"%DXSDK_DIR%Lib\x86\dxguid.lib" \
+	User32.lib \
+	Gdi32.lib \
+	Opengl32.lib \
+	Glu32.lib \
+	Ws2_32.lib \
+	Ole32.lib \
+	Winmm.lib
+#    dxextra.lib
+
+MISC_H_FILES=\
+    ..\include\LbStandard.h \
+    ..\include\LbPublic.h \
+    ..\include\LbGraphics.h \
+    ..\include\LbInput.h \
+    ..\include\LbSound.h \
+    ..\include\LbNet.h \
+    ..\include\LbGame.h \
+    ..\include\LbMath.h \
+    ..\include\LbOSLayer.h \
+    ..\include\LbMiscTypes.h \
+    ..\include\LbPlayer.h \
+    ..\include\LbXmlParse.h
+
+MISC_C_FILES=\
+    misc\LbMatrix.cpp \
+    misc\LbMatrix4.cpp \
+    misc\LbVector.cpp \
+    misc\LbVector4.cpp \
+    misc\LbXmlParse.cpp \
+    LbMain.cpp
+
+GAME_H_FILES=\
+    game\LbGameImp.h
+GAME_C_FILES=\
+    game\LbGameBlocks.cpp \
+    game\LbLevelImp.cpp \
+    game\LbArenaImp.cpp \
+    game\LbPlayer.cpp \
+    game\LbGame.cpp 
+
+GRAPHICS_H_FILES=\
+    graphics\LbGraphicsImp.h
+GRAPHICS_C_FILES=\
+    graphics\LbGraphics.cpp \
+    graphics\LbGraphicsBike.cpp \
+    graphics\LbGraphicsLevel.cpp \
+    graphics\LbGraphTexture.cpp
+
+INPUT_H_FILES=\
+    input\LbInputImp.h
+INPUT_C_FILES=\
+    input\LbInput.cpp
+
+NET_H_FILES=\
+    net\LbNetImp.h
+NET_C_FILES=\
+    net\LbNet.cpp
+
+SOUND_H_FILES=\
+    sound\LbSoundImp.h
+SOUND_C_FILES=\
+    sound\LbSound.cpp
+
+OSLAYER_H_FILES=\
+    oslayer\LbOSWin32Imp.h
+OSLAYER_C_FILES=\
+    oslayer\LbOSWin32Imp.cpp \
+    oslayer\LbOSWin32InputImp.cpp \
+    oslayer\LbOSWin32SoundImp.cpp
+
+ALL_C_FILES=\
+    $(MISC_C_FILES) \
+    $(GAME_C_FILES) \
+    $(GRAPHICS_C_FILES) \
+    $(INPUT_C_FILES) \
+    $(NET_C_FILES) \
+    $(SOUND_C_FILES) \
+    $(OSLAYER_C_FILES)
+
+ALL_H_FILES=\
+    $(MISC_H_FILES) \
+    $(GAME_H_FILES) \
+    $(GRAPHICS_H_FILES) \
+    $(INPUT_H_FILES) \
+    $(NET_H_FILES) \
+    $(SOUND_H_FILES) \
+    $(OSLAYER_H_FILES)
+
+OSLAYER_OBJ_FILES=\
+    ..\bin\temp\LbOSWin32Imp.obj \
+    ..\bin\temp\LbOSWin32InputImp.obj \
+    ..\bin\temp\LbOSWin32SoundImp.obj
+ 
+MISC_OBJ_FILES=\
+    ..\bin\temp\LbMatrix.obj \
+    ..\bin\temp\LbMatrix4.obj \
+    ..\bin\temp\LbVector.obj \
+    ..\bin\temp\LbVector4.obj \
+    ..\bin\temp\LbXmlParse.obj \
+    ..\bin\temp\LbMain.obj
+
+GAME_OBJ_FILES=\
+    ..\bin\temp\LbGameBlocks.obj \
+    ..\bin\temp\LbLevelImp.obj \
+    ..\bin\temp\LbArenaImp.obj \
+    ..\bin\temp\LbPlayer.obj \
+    ..\bin\temp\LbGame.obj
+
+GRAPHICS_OBJ_FILES=\
+    ..\bin\temp\LbGraphics.obj \
+    ..\bin\temp\LbGraphicsBike.obj \
+    ..\bin\temp\LbGraphicsLevel.obj \
+    ..\bin\temp\LbGraphTexture.obj
+
+INPUT_OBJ_FILES=\
+    ..\bin\temp\LbInput.obj
+
+NET_OBJ_FILES=\
+    ..\bin\temp\LbNet.obj
+
+SOUND_OBJ_FILES=\
+    ..\bin\temp\LbSound.obj
+
+ALL_OBJ_FILES=\
+    $(OSLAYER_OBJ_FILES)\
+    $(MISC_OBJ_FILES)\
+    $(GAME_OBJ_FILES)\
+    $(GRAPHICS_OBJ_FILES)\
+    $(INPUT_OBJ_FILES)\
+    $(NET_OBJ_FILES)\
+    $(SOUND_OBJ_FILES) 
+
+INCLUDE_DIRS=..\include
+COMP_DEFINES=/DWIN32 /DHAVE_OPENGL /O2
+
+OBJC=$(COMP_DEFINES) /Zi /c /I$(INCLUDE_DIRS) /Fo..\bin\temp\ $(LIB_FILES) 
+
+..\bin\lb3d.exe: $(ALL_OBJ_FILES)
+	CL $(COMP_DEFINES) /Zi /I$(INCLUDE_DIRS) /Fe$@ $** $(LIB_FILES)
+
+$(OSLAYER_OBJ_FILES) : $(OSLAYER_C_FILES) $(ALL_H_FILES)
+	CL $(OBJC) $(OSLAYER_C_FILES)
+
+$(MISC_OBJ_FILES) : $(MISC_C_FILES) $(MISC_H_FILES)
+	CL $(OBJC) $(MISC_C_FILES)
+
+$(GAME_OBJ_FILES) : $(GAME_C_FILES) $(GAME_H_FILES)
+	CL $(OBJC) $(GAME_C_FILES)
+        
+$(GRAPHICS_OBJ_FILES) : $(GRAPHICS_C_FILES) $(GRAPHICS_H_FILES)
+	CL $(OBJC) $(GRAPHICS_C_FILES)
+
+$(INPUT_OBJ_FILES) : $(INPUT_C_FILES) $(INPUT_H_FILES)
+	CL $(OBJC) $(INPUT_C_FILES)
+
+$(NET_OBJ_FILES) : $(NET_C_FILES) $(NET_H_FILES)
+	CL $(OBJC) $(NET_C_FILES)
+
+$(SOUND_OBJ_FILES) : $(SOUND_C_FILES) $(SOUND_H_FILES)
+	CL $(OBJC) $(SOUND_C_FILES)

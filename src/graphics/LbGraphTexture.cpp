@@ -138,7 +138,7 @@ bool LbGraphTexture::LoadTextureBMP(const char *fname,const LbRGBAColor &trans_c
 
         idx_data=new unsigned char[(width+pad)*height];
         rgb_fdata=new LbRGBAColor[width*height];
-        rgb_data = (char*)rgb_fdata;
+        rgb_data = (byte*)rgb_fdata;
         tex_format=GL_RGBA;
         
         if((idx_data==NULL)||(rgb_data==NULL))
