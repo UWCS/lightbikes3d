@@ -4,7 +4,7 @@
 # dinput.lib is in the August 2007 DirectX SDK and older
 
 LIB_FILES=\
-    "%DXSDK_DIR%Lib\x86\dinput.lib" \
+    "%DXSDK_DIR%Lib\x86\dinput8.lib" \
 	"%DXSDK_DIR%Lib\x86\dxguid.lib" \
 	User32.lib \
 	Gdi32.lib \

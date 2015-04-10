@@ -104,8 +104,7 @@ void LbOSWin32Imp::GetDesktopImage()
 
     for (int y=0; y < 480; y++) {
         for (int x=0; x < 640; x++) {
-            *pixel = GetPixel(dDC,x,y);
-            (*pixel) |= 0xff000000;
+            *pixel = 0;
             pixel++;
         }
         pixel += (1024-640);
